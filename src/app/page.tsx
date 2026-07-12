@@ -41,7 +41,9 @@ export default async function Home() {
           <Link href="/catalog" className="btn btn-ink">
             {t.findPro} <ArrowRight size={16} />
           </Link>
-          <button className="btn btn-ghost">{t.becomePro}</button>
+          <Link href="/signup?role=pro" className="btn btn-ghost">
+            {t.becomePro}
+          </Link>
         </div>
       </div>
 
