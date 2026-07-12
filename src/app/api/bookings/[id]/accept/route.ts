@@ -6,10 +6,11 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireUser(req);
   const booking = await prisma.booking.findUniqueOrThrow({
-    where: { id: params.id },
+    where: { id },
     include: { payment: true },
   });
 
