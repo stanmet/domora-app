@@ -36,7 +36,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
   const rating = Number(provider.ratingCached);
   const reviews = provider.user.reviewsGot;
-  const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE");
+  const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE" && !l.quoteFirst);
   const cheapest = priced.length ? priced.reduce((a, b) => (b.priceCents < a.priceCents ? b : a)) : null;
 
   return (
@@ -145,9 +145,19 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               <span style={{ fontSize: 18 }}>{t.byQuote}</span>
             )}
           </div>
-          <button className="btn btn-green" style={{ width: "100%", justifyContent: "center" }}>
-            {t.request}
-          </button>
+          {cheapest ? (
+            <Link
+              href={`/providers/${provider.userId}/book`}
+              className="btn btn-green"
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              {t.request}
+            </Link>
+          ) : (
+            <button className="btn btn-green" style={{ width: "100%", justifyContent: "center" }} disabled>
+              {t.request}
+            </button>
+          )}
           <div className="note">
             <ShieldCheck size={15} /> {t.sideNote}
           </div>
