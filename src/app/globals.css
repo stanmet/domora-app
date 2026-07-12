@@ -148,6 +148,60 @@ html,body{min-height:100%}
 /* footer */
 .dm footer{border-top:1px solid var(--line);padding:28px 0;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 
+/* header: имя пользователя и выход */
+.dm .userpill{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex}
+.dm .userpill svg{flex-shrink:0}
+
+/* page head (из prototypes/HostDashboard.jsx) */
+.dm h1.page{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(24px,6vw,32px);margin:22px 0 4px}
+.dm .sub{font-size:13.5px;color:var(--muted);margin-bottom:20px}
+
+/* cards (из prototypes/HostDashboard.jsx) */
+.dm .card{border:1px solid var(--line);border-radius:18px;padding:20px;background:#fff;margin-bottom:14px}
+.dm .icircle.or{background:#FDEBE0;color:var(--orange)}
+
+/* onboarding (из prototypes/HostDashboard.jsx) */
+.dm .ob-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.dm .ob-head .icircle{width:46px;height:46px;margin:0}
+.dm .ob-head h3{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:17px;text-transform:uppercase;margin-bottom:3px}
+.dm .ob-head p{font-size:13px;color:var(--muted);line-height:1.45}
+.dm .prog{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px}
+.dm .prog b{color:var(--orange)}
+.dm .bar{height:6px;background:#f0f0eb;border-radius:99px;overflow:hidden;margin-bottom:16px}
+.dm .bar i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .4s ease}
+.dm .ob-step{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
+.dm .ob-step.next{border-color:var(--green);background:var(--sage)}
+.dm .ob-step.ok{opacity:.65}
+.dm .ob-step .num{width:30px;height:30px;border:2px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;background:#fff;margin:0}
+.dm .ob-step .num.ok{background:var(--green);border-color:var(--green);color:#fff}
+.dm .ob-step h4{font-size:14px;font-weight:700;flex:1}
+.dm .ob-step .tagnext{font-size:10px;font-weight:800;letter-spacing:.1em;background:var(--orange);color:#fff;border-radius:99px;padding:3px 8px;margin-left:6px;text-transform:uppercase}
+.dm .ob-step .donel{font-size:12px;font-weight:700;color:var(--green)}
+.dm .btn-line{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.dm .btn-line:hover{border-color:var(--ink)}
+
+/* формы входа и аккаунта (поля из prototypes/HostDashboard.jsx) */
+.dm .auth{max-width:480px;margin:0 auto;padding:10px 0 64px}
+.dm .form label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.dm input.f,.dm select.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14.5px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink)}
+.dm input.f:focus,.dm select.f:focus{outline:2px solid var(--green)}
+.dm .rolecards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dm .rolecard{display:flex;flex-direction:column;gap:10px;padding:16px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;text-align:left;color:var(--ink)}
+.dm .rolecard.on{border-color:var(--green);background:var(--sage)}
+.dm .rolecard .icircle{width:42px;height:42px;margin:0}
+.dm .rolecard h4{font-size:14px;font-weight:700}
+.dm .rolecard p{font-size:12px;color:var(--muted);line-height:1.45;margin-top:2px}
+.dm .err{background:#fae6e2;color:#c23b22;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;margin-top:14px;line-height:1.45}
+.dm .authnote{font-size:13.5px;color:var(--muted);margin-top:22px}
+.dm .authnote a{color:var(--green-dark);font-weight:700}
+.dm .sentcard{text-align:center;padding:34px 22px}
+.dm .sentcard .icircle{margin:0 auto 16px}
+.dm .sentcard h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;margin-bottom:8px}
+.dm .sentcard p{font-size:13.5px;color:var(--muted);line-height:1.55}
+.dm .sentcard b{color:var(--ink);font-weight:700}
+.dm .acc-val{font-size:15px;font-weight:600;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.dm .acc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+
 /* mobile */
 @media(max-width:560px){
   .dm .wrap{padding-left:20px;padding-right:20px}
@@ -167,4 +221,6 @@ html,body{min-height:100%}
   .dm .pcard2 .t{font-size:13.5px}
   .dm .photo{aspect-ratio:1/1;border-radius:14px}
   .dm .tabs{gap:18px}
+  .dm .rolecards{grid-template-columns:1fr}
+  .dm .userpill{max-width:110px}
 }
