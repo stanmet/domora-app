@@ -1,0 +1,79 @@
+// POST /api/stripe/webhook
+// Вебхуки: единственный источник правды по деньгам.
+// Обязательно проверяем подпись и обрабатываем идемпотентно.
+import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
+import type Stripe from "stripe";
+
+export async function POST(req: Request) {
+  const sig = req.headers.get("stripe-signature")!;
+  const raw = await req.text();
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch {
+    return NextResponse.json({ error: "bad_signature" }, { status: 400 });
+  }
+
+  switch (event.type) {
+    // Исполнитель прошел онбординг: включаем выплаты в профиле
+    case "account.updated": {
+      const acc = event.data.object as Stripe.Account;
+      await prisma.providerProfile.updateMany({
+        where: { stripeAccountId: acc.id },
+        data: { payoutsEnabled: !!acc.payouts_enabled },
+      });
+      break;
+    }
+
+    // Холд отклонен банком: бронь не создалась платежно
+    case "payment_intent.payment_failed": {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const bookingId = pi.metadata.bookingId;
+      if (bookingId) {
+        await prisma.booking.update({ where: { id: bookingId }, data: { status: "DRAFT" } });
+        await prisma.payment.updateMany({
+          where: { stripePaymentIntentId: pi.id },
+          data: { status: "FAILED" },
+        });
+      }
+      break;
+    }
+
+    // Возврат проведен
+    case "charge.refunded": {
+      const charge = event.data.object as Stripe.Charge;
+      const pi = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+      if (pi) {
+        const full = charge.amount_refunded >= charge.amount;
+        await prisma.payment.updateMany({
+          where: { stripePaymentIntentId: pi },
+          data: { status: full ? "REFUNDED" : "PARTIAL_REFUND" },
+        });
+      }
+      break;
+    }
+
+    // Чарджбек от банка клиента: замораживаем выплату, собираем доказательства
+    case "charge.dispute.created": {
+      const dis = event.data.object as Stripe.Dispute;
+      const pi = typeof dis.payment_intent === "string" ? dis.payment_intent : dis.payment_intent?.id;
+      if (pi) {
+        const payment = await prisma.payment.findFirst({ where: { stripePaymentIntentId: pi } });
+        if (payment) {
+          await prisma.transfer.updateMany({
+            where: { bookingId: payment.bookingId, status: "SCHEDULED" },
+            data: { status: "FROZEN" },
+          });
+          // TODO: notifyAdmins("chargeback", payment.bookingId)
+          // Доказательства для ответа: переписка, фото работ, booking_events с геометками.
+        }
+      }
+      break;
+    }
+  }
+
+  return NextResponse.json({ received: true });
+}

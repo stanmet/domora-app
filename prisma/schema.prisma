@@ -1,0 +1,390 @@
+// Domora · схема базы данных · PostgreSQL
+// Все суммы в центах (Int). Все время в UTC.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  PROVIDER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  RESTRICTED   // после 2 страйков: только предоплата, без поздних отмен
+  FROZEN
+  BANNED
+}
+
+enum ProviderStatus {
+  DRAFT        // регистрируется
+  MODERATION   // ждет проверки первой плашки
+  ACTIVE
+  PAUSED       // сам скрылся (отпуск)
+  FROZEN       // санкция платформы
+  BANNED
+}
+
+enum ListingStatus {
+  DRAFT
+  MODERATION
+  ACTIVE
+  PAUSED
+  REJECTED
+}
+
+enum PriceUnit {
+  PER_GUEST
+  PER_M2
+  PER_HOUR
+  PER_SESSION
+  PER_EVENT
+  FIXED_QUOTE  // цена по смете
+}
+
+enum BookingStatus {
+  DRAFT
+  REQUESTED          // холд на карте
+  ACCEPTED           // списание выполнено
+  DECLINED
+  EXPIRED            // исполнитель молчал 72 часа
+  IN_PROGRESS
+  COMPLETED          // ждет выплату / окно спора
+  DISPUTED
+  CANCELLED_BY_CLIENT
+  CANCELLED_BY_PROVIDER
+  CLOSED             // выплата проведена
+}
+
+enum PaymentStatus {
+  HOLD
+  CAPTURED
+  PARTIAL_REFUND
+  REFUNDED
+  FAILED
+}
+
+enum TransferStatus {
+  SCHEDULED
+  FROZEN     // открыт спор
+  DONE
+  REVERSED
+}
+
+enum DisputeStatus {
+  NEGOTIATION   // 24 часа на самостоятельную договоренность
+  ARBITRATION
+  RESOLVED
+}
+
+enum StrikeType {
+  PROVIDER_CANCEL
+  PROVIDER_NO_SHOW
+  QUALITY_CONFIRMED
+  OFFLINE_ATTEMPT
+  ABUSE_CHAT
+  FAKE_EVIDENCE
+  CLIENT_UNFOUNDED_DISPUTES
+  CLIENT_LATE_CANCELS
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  phone         String?    @unique
+  name          String
+  locale        String     @default("en") // en ru uk pl es pt
+  city          String?
+  roles         Role[]     @default([CLIENT])
+  status        UserStatus @default(ACTIVE)
+  stripeCustomerId String? @unique
+  createdAt     DateTime   @default(now())
+
+  providerProfile ProviderProfile?
+  bookingsAsClient Booking[] @relation("client")
+  favorites     Favorite[]
+  strikes       Strike[]
+  reviewsWritten Review[]  @relation("author")
+  reviewsGot    Review[]   @relation("target")
+  messages      Message[]
+  notifications Notification[]
+}
+
+model ProviderProfile {
+  userId            String  @id
+  user              User    @relation(fields: [userId], references: [id])
+  displayName       String
+  customProfession  String? // "Диджей", "Официант" и т.д., пишет сам
+  bio               String?
+  bioLang           String  @default("en") // язык оригинала, переводим на лету
+  city              String
+  travelRadiusKm    Int     @default(20)
+  stripeAccountId   String? @unique        // Connect Express
+  payoutsEnabled    Boolean @default(false)
+  identityVerifiedAt DateTime?
+  insuranceDocUrl   String?
+  insuranceExpiresAt DateTime?
+  gardaVetted       Boolean @default(false)
+  ratingCached      Decimal @default(0) @db.Decimal(3, 2)
+  jobsCount         Int     @default(0)
+  acceptanceRate    Decimal @default(1) @db.Decimal(4, 3)
+  responseMinutes   Int     @default(0)
+  status            ProviderStatus @default(DRAFT)
+
+  listings  Listing[]
+  bookings  Booking[] @relation("provider")
+
+  @@index([city, status])
+}
+
+model Category {
+  id                 String  @id @default(cuid())
+  slug               String  @unique // chef clean handy massage beauty events other
+  nameEn             String
+  nameRu             String
+  unitDefault        PriceUnit
+  cancellationTier   String  @default("standard") // standard | event
+  clientFeePct       Decimal @default(12) @db.Decimal(5, 2)
+  providerFeePct     Decimal @default(10) @db.Decimal(5, 2)
+  minProvidersToOpen Int     @default(5)
+  listings           Listing[]
+}
+
+model Listing {
+  id           String        @id @default(cuid())
+  providerId   String
+  provider     ProviderProfile @relation(fields: [providerId], references: [userId])
+  categoryId   String
+  category     Category      @relation(fields: [categoryId], references: [id])
+  professionLabel String?    // из плашки: "Диджей"
+  title        String
+  titleLang    String        @default("en")
+  description  String?
+  priceCents   Int
+  unit         PriceUnit
+  materialsIncluded Boolean  @default(true)
+  quoteFirst   Boolean       @default(false)
+  photos       String[]
+  status       ListingStatus @default(MODERATION)
+  moderationNote String?
+  createdAt    DateTime      @default(now())
+
+  bookings Booking[]
+
+  @@index([categoryId, status])
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  clientId     String
+  client       User          @relation("client", fields: [clientId], references: [id])
+  providerId   String
+  provider     ProviderProfile @relation("provider", fields: [providerId], references: [userId])
+  listingId    String
+  listing      Listing       @relation(fields: [listingId], references: [id])
+  status       BookingStatus @default(DRAFT)
+  dateStart    DateTime
+  qty          Int           @default(1)
+  unit         PriceUnit
+  priceCentsSnapshot Int     // цена за единицу на момент брони
+  subtotalCents Int
+  clientFeeCents Int
+  providerFeeCents Int
+  totalCents   Int
+  addressEncrypted String?
+  accessNoteEncrypted String?
+  seriesId     String?       // подписка на регулярные услуги
+  requestExpiresAt DateTime? // requested + 72h
+  disputeWindowEndsAt DateTime? // completed + 48h
+  createdAt    DateTime      @default(now())
+
+  events   BookingEvent[]
+  quote    Quote?
+  payment  Payment?
+  transfer Transfer?
+  dispute  Dispute?
+  reviews  Review[]
+  thread   Thread?
+
+  @@index([providerId, status])
+  @@index([clientId, status])
+}
+
+model BookingEvent {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  actorId   String?  // null = система
+  type      String   // status_change, geo_checkin, photo_added...
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+}
+
+model Quote {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  amountCents Int
+  scopeText  String
+  expiresAt  DateTime
+  status     String   @default("pending") // pending accepted declined expired
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+  stripePaymentIntentId String @unique
+  amountCents    Int
+  status         PaymentStatus @default(HOLD)
+  capturedAt     DateTime?
+}
+
+model Transfer {
+  id               String         @id @default(cuid())
+  bookingId        String         @unique
+  booking          Booking        @relation(fields: [bookingId], references: [id])
+  stripeTransferId String?        @unique
+  amountCents      Int
+  scheduledAt      DateTime       // completed + 24h
+  executedAt       DateTime?
+  status           TransferStatus @default(SCHEDULED)
+}
+
+model Refund {
+  id             String   @id @default(cuid())
+  paymentId      String
+  stripeRefundId String   @unique
+  amountCents    Int
+  reason         String
+  disputeId      String?
+  createdAt      DateTime @default(now())
+}
+
+model Dispute {
+  id               String        @id @default(cuid())
+  bookingId        String        @unique
+  booking          Booking       @relation(fields: [bookingId], references: [id])
+  openedById       String
+  reasonCode       String        // no_show, quality, damage, scope...
+  status           DisputeStatus @default(NEGOTIATION)
+  resolutionCode   String?       // full_refund, partial_refund, redo, rejected
+  resolutionCents  Int?
+  arbiterId        String?
+  deadlineAt       DateTime
+  createdAt        DateTime      @default(now())
+
+  messages DisputeMessage[]
+}
+
+model DisputeMessage {
+  id          String   @id @default(cuid())
+  disputeId   String
+  dispute     Dispute  @relation(fields: [disputeId], references: [id])
+  authorId    String
+  text        String
+  attachments String[]
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  authorId    String
+  author      User     @relation("author", fields: [authorId], references: [id])
+  targetId    String
+  target      User     @relation("target", fields: [targetId], references: [id])
+  stars       Int
+  text        String?
+  textLang    String   @default("en")
+  publishedAt DateTime? // слепые: публикуем парой или через 14 дней
+  disputeFlag Boolean  @default(false)
+
+  @@unique([bookingId, authorId])
+}
+
+model Thread {
+  id        String    @id @default(cuid())
+  bookingId String?   @unique
+  booking   Booking?  @relation(fields: [bookingId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  threadId     String
+  thread       Thread   @relation(fields: [threadId], references: [id])
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id])
+  textOriginal String
+  langOriginal String   // определяется автоматически
+  translations Json?    // { "en": "...", "ru": "..." } кеш переводов
+  attachments  String[]
+  contactFilterFlag Boolean @default(false) // телефон/ссылка до брони
+  createdAt    DateTime @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+model Strike {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  type       StrikeType
+  bookingId  String?
+  note       String?
+  expiresAt  DateTime   // created + 90 дней
+  createdAt  DateTime   @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Favorite {
+  userId     String
+  providerId String
+  user       User   @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@id([userId, providerId])
+}
+
+model Subscription {
+  id         String  @id @default(cuid())
+  clientId   String
+  listingId  String
+  rrule      String  // расписание регулярных визитов
+  discountPct Decimal @default(10) @db.Decimal(5, 2)
+  status     String  @default("active")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+}
+
+model AdminAction {
+  id         String   @id @default(cuid())
+  adminId    String
+  targetType String
+  targetId   String
+  action     String
+  note       String?
+  createdAt  DateTime @default(now())
+}
