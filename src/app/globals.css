@@ -202,6 +202,48 @@ html,body{min-height:100%}
 .dm .acc-val{font-size:15px;font-weight:600;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .dm .acc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
 
+/* форма бронирования (из prototypes/Marketplace.jsx) */
+.dm .bform{max-width:560px;margin:0 auto;padding-top:28px;padding-bottom:64px}
+.dm .bform h1{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:clamp(24px,5vw,34px);text-transform:uppercase;margin-bottom:6px}
+.dm .bform .sub{font-size:14px;margin-bottom:28px}
+.dm textarea.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14.5px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink);resize:vertical}
+.dm textarea.f:focus{outline:2px solid var(--green)}
+.dm .stepper{display:flex;align-items:center;gap:14px}
+.dm .stepper button{width:42px;height:42px;border-radius:50%;border:1px solid var(--ink);background:#fff;font-size:19px;font-weight:700;cursor:pointer;color:var(--ink)}
+.dm .stepper .val{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:20px;min-width:64px;text-align:center}
+.dm .stepper .unit{color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.dm .brk{background:var(--beige-bg);border-radius:16px;padding:20px 22px;margin:26px 0 18px}
+.dm .brk .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
+.dm .brk .row.total{border-top:1px solid #e2d7bf;margin-top:8px;padding-top:12px;font-weight:800;font-size:16px}
+.dm .hold{display:flex;gap:10px;font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:22px}
+.dm .hold svg{flex-shrink:0;color:var(--green);margin-top:2px}
+
+/* успех после отправки запроса (из prototypes/Marketplace.jsx) */
+.dm .done{max-width:520px;margin:0 auto;text-align:center;padding-top:48px;padding-bottom:36px}
+.dm .done .ok{width:84px;height:84px;border-radius:50%;background:var(--sage);color:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+.dm .done h1{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:30px;text-transform:uppercase;margin-bottom:12px}
+.dm .done p{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+
+/* карточки заказов и статусы (из prototypes/HostDashboard.jsx) */
+.dm .bk{border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.dm .bk.req{border-color:var(--orange)}
+.dm .bkrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.dm .bk h4{font-size:14.5px;font-weight:700}
+.dm .bk .meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 10px}
+.dm .bk .meta span{display:inline-flex;align-items:center;gap:4px}
+.dm .bk .amt{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:16px;white-space:nowrap}
+.dm .bkmsg{background:#f7f7f3;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;margin:8px 0 10px}
+.dm .bkmsg b{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.dm .pill{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:4px 10px;white-space:nowrap}
+.dm .pill.req{background:#FDEBE0;color:var(--orange)}
+.dm .pill.ok{background:var(--sage);color:var(--green-dark)}
+.dm .pill.done{background:#f0f0eb;color:var(--muted)}
+.dm .pill.dec{background:#fae6e2;color:#c23b22}
+.dm .bkbtns{display:flex;gap:8px}
+.dm .bkbtns form{flex:1;display:flex}
+.dm .bkbtns .btn{flex:1;justify-content:center}
+.dm .btn-red{background:#fff;color:#c23b22;border:1px solid #c23b22}
+
 /* mobile */
 @media(max-width:560px){
   .dm .wrap{padding-left:20px;padding-right:20px}

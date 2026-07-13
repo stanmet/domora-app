@@ -36,6 +36,9 @@ export default async function AccountPage() {
           </div>
         </div>
         <div className="acc-actions">
+          <Link href="/bookings" className="btn btn-line">
+            {t.myBookings}
+          </Link>
           {isPro ? (
             <Link href="/pro" className="btn btn-green">
               {t.openPro} <ArrowRight size={15} />

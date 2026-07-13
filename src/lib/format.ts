@@ -11,3 +11,13 @@ export function eur(cents: number, locale: Locale): string {
     })
   );
 }
+
+// Дата и время брони в коротком формате языка интерфейса: 18.07, 18:30.
+export function dateTime(d: Date, locale: Locale): string {
+  return d.toLocaleString(LOCALE_TAGS[locale], {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
