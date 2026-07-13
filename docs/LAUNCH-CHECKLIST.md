@@ -12,7 +12,7 @@ Stripe: создать аккаунт на stripe.com, пройти актива
 
 ## 2. Инфраструктура (30 минут, бесплатные тиры)
 
-База: создать проект в Supabase (Postgres + Auth + Realtime + Storage в одном). Хостинг: Vercel, подключить репозиторий. Скопировать .env.example в переменные окружения Vercel. Вебхук Stripe: Developers -> Webhooks -> добавить endpoint https://ваш-домен/api/stripe/webhook с событиями account.updated, payment_intent.payment_failed, charge.refunded, charge.dispute.created. DeepL API: бесплатный тир 500 тыс. символов в месяц.
+База: создать проект в Supabase (Postgres + Auth + Realtime + Storage в одном). Хостинг: Vercel, подключить репозиторий. Скопировать .env.example в переменные окружения Vercel. Вебхуки Stripe: два классических (snapshot) destination на https://ваш-домен/api/stripe/webhook, thin-формат не подходит; пошаговая инструкция в docs/stripe-webhook-setup.md. DeepL API: бесплатный тир 500 тыс. символов в месяц.
 
 ## 3. Разработка по спринтам (кодовая база из этого пакета - фундамент)
 

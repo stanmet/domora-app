@@ -1,21 +1,47 @@
 // POST /api/stripe/webhook
 // Вебхуки: единственный источник правды по деньгам.
 // Обязательно проверяем подпись и обрабатываем идемпотентно.
+// Endpoint рассчитан на классические snapshot-события (полный объект в data.object).
+// Thin-события (payload style "thin", Accounts v2) не поддерживаются: для платежных
+// объектов v1 (payment_intent, charge) их не существует. Настройка: docs/stripe-webhook-setup.md
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { markBookingRequested } from "@/lib/payments";
 import type Stripe from "stripe";
 
+// Событий ждем из двух destination в Stripe: "Your account" (платежные события
+// платформы) и "Connected accounts" (account.updated исполнителей). У каждого
+// destination свой подписывающий секрет, поэтому проверяем подпись по обоим.
+function verifyEvent(raw: string, sig: string): Stripe.Event | null {
+  const secrets = [process.env.STRIPE_WEBHOOK_SECRET, process.env.STRIPE_CONNECT_WEBHOOK_SECRET];
+  for (const secret of secrets) {
+    if (!secret) continue;
+    try {
+      return stripe.webhooks.constructEvent(raw, sig, secret);
+    } catch {
+      // подпись не от этого destination, пробуем следующий секрет
+    }
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
-  const sig = req.headers.get("stripe-signature")!;
+  const sig = req.headers.get("stripe-signature");
   const raw = await req.text();
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch {
+  const event = sig ? verifyEvent(raw, sig) : null;
+  if (!event) {
     return NextResponse.json({ error: "bad_signature" }, { status: 400 });
+  }
+
+  // Пришел thin-payload (v2): значит, в Stripe настроен destination не того типа.
+  // Отвечаем 400, чтобы ошибка была видна в списке доставок в Stripe Workbench.
+  if ((event as { object?: string }).object === "v2.core.event" || event.type?.startsWith("v2.")) {
+    return NextResponse.json(
+      { error: "snapshot_webhook_required", hint: "Create a snapshot event destination, see docs/stripe-webhook-setup.md" },
+      { status: 400 },
+    );
   }
 
   switch (event.type) {
