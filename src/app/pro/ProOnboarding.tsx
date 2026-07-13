@@ -4,8 +4,11 @@
 // Stripe, первая услуга, доступность. Шаг Stripe рабочий: кнопка запускает
 // онбординг Connect Express (POST /api/connect/onboard) и уводит на Stripe;
 // после возврата шаг закрывается по payoutsEnabled из БД (вебхук account.updated
-// плюс сверка на /pro?onboarded=1). Шаги услуг и календаря пока как в прототипе.
+// плюс сверка на /pro?onboarded=1). Шаг услуги закрывается только когда
+// у исполнителя реально есть плашка в БД, кнопка ведет в раздел "Мои услуги".
+// Шаг календаря пока как в прототипе.
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Calendar as CalIcon, Check, Home, Lightbulb, Rocket, Wallet } from "lucide-react";
 import type { Dict } from "@/i18n/dictionaries";
 
@@ -20,18 +23,15 @@ export default function ProOnboarding({
   stripeDone: boolean;
   listingDone: boolean;
 }) {
-  const [localSteps, setLocalSteps] = useState<Record<StepKey, boolean>>({
-    stripe: false,
-    listing: false,
-    avail: false,
-  });
+  const router = useRouter();
+  const [availDone, setAvailDone] = useState(false);
   const [stripePending, setStripePending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const steps: Record<StepKey, boolean> = {
     stripe: stripeDone,
-    listing: listingDone || localSteps.listing,
-    avail: localSteps.avail,
+    listing: listingDone,
+    avail: availDone,
   };
 
   const doneCount = Object.values(steps).filter(Boolean).length;
@@ -56,7 +56,8 @@ export default function ProOnboarding({
 
   function stepAction(key: StepKey) {
     if (key === "stripe") return startStripeOnboarding();
-    setLocalSteps({ ...localSteps, [key]: true });
+    if (key === "listing") return router.push("/pro/services");
+    setAvailDone(true);
   }
 
   const stepDefs: { key: StepKey; label: string; icon: typeof Wallet }[] = [

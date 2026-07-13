@@ -245,6 +245,16 @@ html,body{min-height:100%}
 .dm .bkbtns .btn{flex:1;justify-content:center}
 .dm .btn-red{background:#fff;color:#c23b22;border:1px solid #c23b22}
 
+/* мои услуги (из prototypes/HostDashboard.jsx) */
+.dm .li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)}
+.dm .li h4{font-size:14.5px;font-weight:700;margin-bottom:2px}
+.dm .li p{font-size:12.5px;color:var(--muted)}
+.dm .li .pr{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px;white-space:nowrap}
+.dm .li .pr span{font-family:var(--font-inter),'Inter',sans-serif;font-weight:500;font-size:11px;color:var(--muted)}
+.dm .tgl{cursor:pointer;color:var(--green);background:none;border:none;padding:0;display:inline-flex}
+.dm .tgl.off{color:#c9c9c2}
+.dm .sheet{border:1px solid var(--green);border-radius:18px;padding:18px;background:var(--sage);margin-bottom:16px}
+
 /* mobile */
 @media(max-width:560px){
   .dm .wrap{padding-left:20px;padding-right:20px}
