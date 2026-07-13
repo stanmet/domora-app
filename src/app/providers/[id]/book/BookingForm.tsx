@@ -42,6 +42,12 @@ export default function BookingForm({
   const listing = listings.find((l) => l.id === listingId) ?? listings[0];
   const cfg = qtyConfig(listing.unit);
   const [qty, setQty] = useState(cfg.def);
+  // Контролируемые поля: после ошибки серверной проверки (например, прошедшее
+  // время) React 19 сбрасывает обычную форму, а введенное должно сохраняться.
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("18:00");
+  const [address, setAddress] = useState("");
+  const [message, setMessage] = useState("");
   const [state, formAction, pending] = useActionState<BookingFormState, FormData>(createBookingRequest, {});
 
   const subtotal = listing.priceCents * qty;
@@ -75,9 +81,9 @@ export default function BookingForm({
       )}
 
       <label>{t.dateL}</label>
-      <input className="f" type="date" name="date" min={today} required />
+      <input className="f" type="date" name="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} required />
       <label>{t.timeL}</label>
-      <input className="f" type="time" name="time" defaultValue="18:00" required />
+      <input className="f" type="time" name="time" value={time} onChange={(e) => setTime(e.target.value)} required />
 
       <label>{qtyFieldLabel(t, listing.unit)}</label>
       <div className="stepper">
@@ -95,9 +101,9 @@ export default function BookingForm({
       </div>
 
       <label>{t.addrL}</label>
-      <input className="f" name="address" placeholder={t.addrPh} required />
+      <input className="f" name="address" placeholder={t.addrPh} value={address} onChange={(e) => setAddress(e.target.value)} required />
       <label>{t.msgL}</label>
-      <textarea className="f" name="message" rows={3} placeholder={t.msgPh} />
+      <textarea className="f" name="message" rows={3} placeholder={t.msgPh} value={message} onChange={(e) => setMessage(e.target.value)} />
 
       <div className="brk">
         <div className="row">

@@ -59,7 +59,6 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
           </div>
         )}
         <h1 className="page">{t.myBookings}</h1>
-        <p className="sub">{t.accountSub}</p>
         {bookings.length === 0 ? (
           <div className="empty">{t.mybEmpty}</div>
         ) : (
