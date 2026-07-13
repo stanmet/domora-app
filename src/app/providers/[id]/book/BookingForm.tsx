@@ -1,15 +1,22 @@
 "use client";
 
 // Форма запроса брони. Разметка и стили из prototypes/Marketplace.jsx (view "booking"):
-// дата, время, количество со степпером, адрес, сообщение и расчет стоимости.
-import { useActionState, useState } from "react";
-import { Clock, Flower2, MessageCircle, PartyPopper, Ruler, ShieldCheck, Users } from "lucide-react";
+// дата, время, количество со степпером, адрес, сообщение, расчет стоимости
+// и шаг оплаты Stripe Elements. Порядок отправки: elements.submit() ->
+// server action создает бронь и холд -> confirmPayment (3DS при необходимости) ->
+// finalizeBookingPayment переводит бронь в REQUESTED.
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import type { Appearance, StripeElementLocale } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { Clock, CreditCard, Flower2, MessageCircle, PartyPopper, Ruler, ShieldCheck, Users } from "lucide-react";
 import type { Dict } from "@/i18n/dictionaries";
 import { qtyFieldLabel, unitLabel } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { eur } from "@/lib/format";
 import { qtyConfig } from "@/lib/booking-units";
-import { createBookingRequest, type BookingFormState } from "./actions";
+import { createBookingRequest, finalizeBookingPayment } from "./actions";
 
 export type BookableListing = {
   id: string;
@@ -27,7 +34,65 @@ const UNIT_ICONS: Record<string, typeof Users> = {
   PER_EVENT: PartyPopper,
 };
 
-export default function BookingForm({
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
+
+// Палитра дизайн-системы из globals.css для полей Stripe Elements.
+const APPEARANCE: Appearance = {
+  variables: {
+    colorPrimary: "#4C7C3F",
+    colorText: "#141414",
+    colorDanger: "#c23b22",
+    colorBackground: "#ffffff",
+    fontFamily: "Inter, system-ui, sans-serif",
+    borderRadius: "12px",
+  },
+};
+
+// Украинского в Stripe Elements нет, для него берем язык браузера.
+const STRIPE_LOCALES: Partial<Record<Locale, StripeElementLocale>> = {
+  en: "en",
+  ru: "ru",
+  pl: "pl",
+  es: "es",
+  pt: "pt",
+};
+
+function totalFor(listing: BookableListing, qty: number): number {
+  const subtotal = listing.priceCents * qty;
+  return subtotal + Math.round((subtotal * listing.clientFeePct) / 100);
+}
+
+export default function BookingForm(props: {
+  listings: BookableListing[];
+  defaultListingId: string;
+  t: Dict;
+  locale: Locale;
+}) {
+  const listing = props.listings.find((l) => l.id === props.defaultListingId) ?? props.listings[0];
+  const initialAmount = totalFor(listing, qtyConfig(listing.unit).def);
+
+  if (!stripePromise) return <div className="err">{props.t.payUnavailable}</div>;
+
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{
+        mode: "payment",
+        amount: initialAmount,
+        currency: "eur",
+        captureMethod: "manual",
+        paymentMethodTypes: ["card"],
+        appearance: APPEARANCE,
+        locale: STRIPE_LOCALES[props.locale] ?? "auto",
+      }}
+    >
+      <InnerForm {...props} />
+    </Elements>
+  );
+}
+
+function InnerForm({
   listings,
   defaultListingId,
   t,
@@ -38,17 +103,22 @@ export default function BookingForm({
   t: Dict;
   locale: Locale;
 }) {
+  const router = useRouter();
+  const stripe = useStripe();
+  const elements = useElements();
+
   const [listingId, setListingId] = useState(defaultListingId);
   const listing = listings.find((l) => l.id === listingId) ?? listings[0];
   const cfg = qtyConfig(listing.unit);
   const [qty, setQty] = useState(cfg.def);
-  // Контролируемые поля: после ошибки серверной проверки (например, прошедшее
-  // время) React 19 сбрасывает обычную форму, а введенное должно сохраняться.
   const [date, setDate] = useState("");
   const [time, setTime] = useState("18:00");
   const [address, setAddress] = useState("");
   const [message, setMessage] = useState("");
-  const [state, formAction, pending] = useActionState<BookingFormState, FormData>(createBookingRequest, {});
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  // Бронь неудачной попытки оплаты: при повторной отправке переиспользуется.
+  const [draftBookingId, setDraftBookingId] = useState<string | undefined>(undefined);
 
   const subtotal = listing.priceCents * qty;
   const fee = Math.round((subtotal * listing.clientFeePct) / 100);
@@ -56,17 +126,61 @@ export default function BookingForm({
   const UnitIcon = UNIT_ICONS[listing.unit] ?? Users;
   const today = new Date().toISOString().slice(0, 10);
 
+  // Сумма холда в Stripe Elements следует за количеством и выбранной услугой.
+  useEffect(() => {
+    elements?.update({ amount: total });
+  }, [elements, total]);
+
   const pickListing = (id: string) => {
     setListingId(id);
     const next = listings.find((l) => l.id === id);
     if (next) setQty(qtyConfig(next.unit).def);
   };
 
-  return (
-    <form action={formAction} className="form">
-      <input type="hidden" name="listingId" value={listing.id} />
-      <input type="hidden" name="qty" value={qty} />
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!stripe || !elements || pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      // Валидация полей карты; свои ошибки PaymentElement показывает сам.
+      const submitted = await elements.submit();
+      if (submitted.error) return;
 
+      const res = await createBookingRequest({ listingId: listing.id, date, time, qty, address, message, draftBookingId });
+      if ("error" in res) {
+        setError(res.error);
+        return;
+      }
+      setDraftBookingId(res.bookingId);
+
+      const confirmed = await stripe.confirmPayment({
+        elements,
+        clientSecret: res.clientSecret,
+        confirmParams: { return_url: `${window.location.origin}/bookings?sent=1` },
+        redirect: "if_required",
+      });
+      if (confirmed.error) {
+        setError(confirmed.error.message ?? t.errPay);
+        return;
+      }
+
+      const fin = await finalizeBookingPayment(res.bookingId);
+      if (fin.error) {
+        setError(fin.error);
+        return;
+      }
+      router.push("/bookings?sent=1");
+    } catch (err) {
+      console.error("booking payment failed", err);
+      setError(t.errGeneric);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="form">
       {listings.length > 1 && (
         <>
           <label>{t.sumService}</label>
@@ -124,6 +238,14 @@ export default function BookingForm({
         </div>
       </div>
 
+      <label>{t.payL}</label>
+      <div className="paybox">
+        <PaymentElement options={{ layout: "tabs" }} />
+      </div>
+      <div className="hold">
+        <CreditCard size={16} /> {t.payHold}
+      </div>
+
       <div className="hold">
         <ShieldCheck size={16} /> {t.bNote}
       </div>
@@ -131,12 +253,12 @@ export default function BookingForm({
         <MessageCircle size={16} /> {t.sideNote}
       </div>
 
-      {state.error && <div className="err">{state.error}</div>}
+      {error && <div className="err" style={{ marginBottom: 14 }}>{error}</div>}
 
       <button
         type="submit"
         className="btn btn-green"
-        disabled={pending}
+        disabled={pending || !stripe || !elements}
         style={{ width: "100%", justifyContent: "center", marginTop: 16 }}
       >
         {pending ? t.bSending : `${t.bSend} · ${eur(total, locale)}`}

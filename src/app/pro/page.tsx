@@ -10,11 +10,12 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { expireOverdueRequests } from "@/lib/bookings";
+import { stripe } from "@/lib/stripe";
 import ProOnboarding from "./ProOnboarding";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProPage() {
+export default async function ProPage({ searchParams }: { searchParams: Promise<{ onboarded?: string }> }) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro");
 
@@ -27,6 +28,27 @@ export default async function ProPage() {
   const newRequests = await prisma.booking.count({
     where: { providerId: user.id, status: BookingStatus.REQUESTED },
   });
+
+  const { onboarded } = await searchParams;
+  let profile = await prisma.providerProfile.findUnique({
+    where: { userId: user.id },
+    select: { stripeAccountId: true, payoutsEnabled: true },
+  });
+
+  // Возврат из онбординга Stripe: сверяем статус аккаунта сразу, не дожидаясь
+  // вебхука account.updated (он остается источником правды и придет тоже).
+  if (onboarded === "1" && profile?.stripeAccountId && !profile.payoutsEnabled) {
+    const account = await stripe.accounts.retrieve(profile.stripeAccountId).catch(() => null);
+    if (account?.payouts_enabled) {
+      profile = await prisma.providerProfile.update({
+        where: { userId: user.id },
+        data: { payoutsEnabled: true },
+        select: { stripeAccountId: true, payoutsEnabled: true },
+      });
+    }
+  }
+
+  const listingsCount = await prisma.listing.count({ where: { providerId: user.id } });
 
   return (
     <main>
@@ -49,7 +71,7 @@ export default async function ProPage() {
             </Link>
           </div>
         </div>
-        <ProOnboarding t={t} />
+        <ProOnboarding t={t} stripeDone={!!profile?.payoutsEnabled} listingDone={listingsCount > 0} />
       </div>
     </main>
   );

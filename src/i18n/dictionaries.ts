@@ -155,6 +155,10 @@ const en = {
   errListing: "This service can't be booked right now.",
   errSelf: "You can't book your own service.",
   errGeneric: "Something went wrong. Please try again.",
+  payL: "Card details",
+  payHold: "We only place a hold on your card now. The money is charged after the pro accepts. If they decline or don't reply within 72 hours, the hold is released automatically.",
+  errPay: "The payment didn't go through. Check your card details and try again.",
+  payUnavailable: "Card payment is unavailable right now. Please try again later.",
 };
 
 export type Dict = typeof en;
@@ -312,6 +316,10 @@ const ru: Dict = {
   errListing: "Эту услугу сейчас нельзя забронировать.",
   errSelf: "Нельзя бронировать собственную услугу.",
   errGeneric: "Что-то пошло не так. Попробуйте ещё раз.",
+  payL: "Данные карты",
+  payHold: "Сейчас на карте только холд. Деньги спишутся после того, как исполнитель примет заказ. Если он откажет или не ответит за 72 часа, холд снимется автоматически.",
+  errPay: "Оплата не прошла. Проверьте данные карты и попробуйте ещё раз.",
+  payUnavailable: "Оплата картой сейчас недоступна. Попробуйте позже.",
 };
 
 const uk: Dict = {
@@ -467,6 +475,10 @@ const uk: Dict = {
   errListing: "Цю послугу зараз не можна забронювати.",
   errSelf: "Не можна бронювати власну послугу.",
   errGeneric: "Щось пішло не так. Спробуйте ще раз.",
+  payL: "Дані картки",
+  payHold: "Зараз на картці лише холд. Гроші спишуться після того, як виконавець прийме замовлення. Якщо він відмовить або не відповість за 72 години, холд знімається автоматично.",
+  errPay: "Оплата не пройшла. Перевірте дані картки та спробуйте ще раз.",
+  payUnavailable: "Оплата карткою зараз недоступна. Спробуйте пізніше.",
 };
 
 const pl: Dict = {
@@ -622,6 +634,10 @@ const pl: Dict = {
   errListing: "Tej usługi nie można teraz zarezerwować.",
   errSelf: "Nie możesz zarezerwować własnej usługi.",
   errGeneric: "Coś poszło nie tak. Spróbuj ponownie.",
+  payL: "Dane karty",
+  payHold: "Na karcie blokujemy teraz tylko środki. Pieniądze zostaną pobrane dopiero, gdy fachowiec przyjmie zlecenie. Jeśli odmówi lub nie odpowie w ciągu 72 godzin, blokada zostanie zdjęta automatycznie.",
+  errPay: "Płatność nie powiodła się. Sprawdź dane karty i spróbuj ponownie.",
+  payUnavailable: "Płatność kartą jest teraz niedostępna. Spróbuj później.",
 };
 
 const es: Dict = {
@@ -777,6 +793,10 @@ const es: Dict = {
   errListing: "Este servicio no se puede reservar ahora.",
   errSelf: "No puedes reservar tu propio servicio.",
   errGeneric: "Algo salió mal. Inténtalo de nuevo.",
+  payL: "Datos de la tarjeta",
+  payHold: "Ahora solo retenemos el importe en tu tarjeta. El dinero se cobra cuando el profesional acepta el trabajo. Si rechaza o no responde en 72 horas, la retención se libera automáticamente.",
+  errPay: "El pago no se ha realizado. Revisa los datos de la tarjeta e inténtalo de nuevo.",
+  payUnavailable: "El pago con tarjeta no está disponible ahora. Inténtalo más tarde.",
 };
 
 const pt: Dict = {
@@ -932,6 +952,10 @@ const pt: Dict = {
   errListing: "Este serviço não pode ser reservado agora.",
   errSelf: "Não pode reservar o seu próprio serviço.",
   errGeneric: "Algo correu mal. Tente novamente.",
+  payL: "Dados do cartão",
+  payHold: "Por agora apenas cativamos o valor no seu cartão. O dinheiro é cobrado quando o profissional aceita o trabalho. Se recusar ou não responder em 72 horas, a cativação é libertada automaticamente.",
+  errPay: "O pagamento não foi concluído. Verifique os dados do cartão e tente novamente.",
+  payUnavailable: "O pagamento com cartão está indisponível de momento. Tente mais tarde.",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

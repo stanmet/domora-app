@@ -1,7 +1,9 @@
 // Проверка входящего запроса через Supabase Auth (magic link / Google).
-// Токен приходит в заголовке Authorization: Bearer <access_token>.
+// Токен приходит в заголовке Authorization: Bearer <access_token>,
+// либо, для запросов из браузера, сессия берется из cookies (@supabase/ssr).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/supabase/server";
 
 // Клиент Supabase создается при первом запросе, а не при импорте файла.
 // Иначе next build падает на этапе сбора страниц, когда переменные
@@ -24,12 +26,19 @@ function getSupabaseAdmin(): SupabaseClient {
 
 export async function requireUser(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) throw new Response("unauthorized", { status: 401 });
+  let email: string | undefined;
 
-  const { data, error } = await getSupabaseAdmin().auth.getUser(token);
-  if (error || !data.user?.email) throw new Response("unauthorized", { status: 401 });
+  if (token) {
+    const { data, error } = await getSupabaseAdmin().auth.getUser(token);
+    if (error || !data.user?.email) throw new Response("unauthorized", { status: 401 });
+    email = data.user.email;
+  } else {
+    const authUser = await getAuthUser();
+    if (!authUser?.email) throw new Response("unauthorized", { status: 401 });
+    email = authUser.email;
+  }
 
-  const user = await prisma.user.findUnique({ where: { email: data.user.email } });
+  const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Response("unauthorized", { status: 401 });
 
   return user;

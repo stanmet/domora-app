@@ -1,8 +1,11 @@
 "use server";
 
-// Создание запроса брони без платежей: Booking в статусе REQUESTED,
-// запись в BookingEvent, срок ответа исполнителя 72 часа.
-// Stripe (холд на карте) подключается отдельным этапом и добавится сюда позже.
+// Запрос брони с оплатой (docs/domora-spec.md, раздел 3.2):
+// 1) createBookingRequest: проверка формы, бронь в статусе DRAFT, PaymentIntent
+//    с capture_method=manual (холд на полную сумму) и Payment со статусом HOLD;
+// 2) клиент подтверждает карту через Stripe Elements (confirmPayment, 3DS);
+// 3) finalizeBookingPayment: проверка холда в Stripe и переход DRAFT -> REQUESTED.
+//    Резервный путь тот же самый через вебхук payment_intent.amount_capturable_updated.
 import { redirect } from "next/navigation";
 import { BookingStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -11,39 +14,47 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { encrypt } from "@/lib/crypto";
-import { calcBooking } from "@/lib/stripe";
-import { qtyConfig, REQUEST_TTL_HOURS } from "@/lib/booking-units";
+import { calcBooking, stripe } from "@/lib/stripe";
+import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
+import { qtyConfig } from "@/lib/booking-units";
 
-export type BookingFormState = { error?: string };
+export type BookingRequestInput = {
+  listingId: string;
+  date: string;
+  time: string;
+  qty: number;
+  address: string;
+  message: string;
+  // Бронь предыдущей неудачной попытки оплаты: переиспользуем вместо новой.
+  draftBookingId?: string;
+};
 
-export async function createBookingRequest(
-  _prev: BookingFormState,
-  formData: FormData,
-): Promise<BookingFormState> {
+export type BookingRequestResult =
+  | { error: string }
+  | { bookingId: string; clientSecret: string };
+
+export async function createBookingRequest(input: BookingRequestInput): Promise<BookingRequestResult> {
   const locale = await getLocale();
   const t = getDict(locale);
-
-  const listingId = String(formData.get("listingId") ?? "");
-  const date = String(formData.get("date") ?? "");
-  const time = String(formData.get("time") ?? "");
-  const qty = Number(formData.get("qty") ?? 0);
-  const address = String(formData.get("address") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
 
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/bookings");
   const user = await ensureDbUser(authUser, locale);
 
-  if (!listingId || !date || !time || !address || !Number.isInteger(qty) || qty < 1) {
+  const address = input.address.trim();
+  const message = input.message.trim();
+  const qty = Number(input.qty);
+
+  if (!input.listingId || !input.date || !input.time || !address || !Number.isInteger(qty) || qty < 1) {
     return { error: t.errForm };
   }
 
-  const dateStart = new Date(`${date}T${time}`);
+  const dateStart = new Date(`${input.date}T${input.time}`);
   if (Number.isNaN(dateStart.getTime())) return { error: t.errForm };
   if (dateStart.getTime() <= Date.now()) return { error: t.errPast };
 
   const listing = await prisma.listing.findUnique({
-    where: { id: listingId },
+    where: { id: input.listingId },
     include: { category: true, provider: true },
   });
   if (
@@ -66,37 +77,91 @@ export async function createBookingRequest(
     Number(listing.category.providerFeePct),
   );
 
+  const bookingData = {
+    clientId: user.id,
+    providerId: listing.providerId,
+    listingId: listing.id,
+    dateStart,
+    qty,
+    unit: listing.unit,
+    priceCentsSnapshot: listing.priceCents,
+    subtotalCents: money.subtotal,
+    clientFeeCents: money.clientFee,
+    providerFeeCents: money.providerFee,
+    totalCents: money.total,
+    addressEncrypted: encrypt(address),
+  };
+
   try {
-    await prisma.booking.create({
-      data: {
-        clientId: user.id,
-        providerId: listing.providerId,
-        listingId: listing.id,
-        status: BookingStatus.REQUESTED,
-        dateStart,
-        qty,
-        unit: listing.unit,
-        priceCentsSnapshot: listing.priceCents,
-        subtotalCents: money.subtotal,
-        clientFeeCents: money.clientFee,
-        providerFeeCents: money.providerFee,
-        totalCents: money.total,
-        addressEncrypted: encrypt(address),
-        requestExpiresAt: new Date(Date.now() + REQUEST_TTL_HOURS * 3600 * 1000),
-        events: {
-          create: { actorId: user.id, type: "status_change", payload: { to: BookingStatus.REQUESTED } },
+    let bookingId: string;
+
+    const draft = input.draftBookingId
+      ? await prisma.booking.findUnique({ where: { id: input.draftBookingId } })
+      : null;
+
+    if (draft && draft.clientId === user.id && draft.status === BookingStatus.DRAFT) {
+      await prisma.booking.update({ where: { id: draft.id }, data: bookingData });
+      bookingId = draft.id;
+    } else {
+      const booking = await prisma.booking.create({
+        data: {
+          ...bookingData,
+          status: BookingStatus.DRAFT,
+          events: {
+            create: {
+              actorId: user.id,
+              type: "status_change",
+              payload: { to: BookingStatus.DRAFT, reason: "awaiting_payment" },
+            },
+          },
+          thread: {
+            create: message
+              ? { messages: { create: { authorId: user.id, textOriginal: message, langOriginal: locale } } }
+              : {},
+          },
         },
-        thread: {
-          create: message
-            ? { messages: { create: { authorId: user.id, textOriginal: message, langOriginal: locale } } }
-            : {},
-        },
-      },
+      });
+      bookingId = booking.id;
+    }
+
+    const { clientSecret } = await createOrUpdateBookingHold({
+      bookingId,
+      totalCents: money.total,
+      email: user.email,
     });
+    return { bookingId, clientSecret };
   } catch (e) {
     console.error("createBookingRequest failed", e);
     return { error: t.errGeneric };
   }
+}
 
-  redirect("/bookings?sent=1");
+export type FinalizeResult = { error?: string };
+
+// После confirmPayment на клиенте: проверяем холд в Stripe и переводим бронь
+// в REQUESTED. Если вебхук успел раньше, повторный переход не выполняется.
+export async function finalizeBookingPayment(bookingId: string): Promise<FinalizeResult> {
+  const locale = await getLocale();
+  const t = getDict(locale);
+
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/bookings");
+  const user = await ensureDbUser(authUser, locale);
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { payment: true },
+  });
+  if (!booking || booking.clientId !== user.id || !booking.payment) return { error: t.errGeneric };
+  if (booking.status !== BookingStatus.DRAFT) return {}; // уже REQUESTED (вебхук успел)
+
+  try {
+    const intent = await stripe.paymentIntents.retrieve(booking.payment.stripePaymentIntentId);
+    if (intent.status !== "requires_capture") return { error: t.errPay };
+    await markBookingRequested(booking.id, user.id);
+    return {};
+  } catch (e) {
+    console.error("finalizeBookingPayment failed", e);
+    return { error: t.errGeneric };
+  }
 }

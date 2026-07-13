@@ -1,18 +1,13 @@
 // Фоновые задачи (BullMQ / cron). Запускать каждые 5 минут.
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { expireOverdueRequests } from "@/lib/bookings";
 
-// 1. Запросы без ответа 72 часа: снять холд, статус EXPIRED
+// 1. Запросы без ответа 72 часа: снять холд, статус EXPIRED.
+// Та же логика, что и при ленивом истечении на страницах заказов.
 export async function expireStaleRequests() {
-  const stale = await prisma.booking.findMany({
-    where: { status: "REQUESTED", requestExpiresAt: { lt: new Date() } },
-    include: { payment: true },
-  });
-  for (const b of stale) {
-    if (b.payment) await stripe.paymentIntents.cancel(b.payment.stripePaymentIntentId).catch(() => {});
-    await prisma.booking.update({ where: { id: b.id }, data: { status: "EXPIRED" } });
-    // TODO: предложить клиенту похожих исполнителей
-  }
+  await expireOverdueRequests({});
+  // TODO: предложить клиенту похожих исполнителей
 }
 
 // 2. Завершенные без жалобы 48 часов: закрыть окно спора, создать transfer через 24 часа
