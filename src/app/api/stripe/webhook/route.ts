@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { markBookingRequested } from "@/lib/payments";
 import type Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -25,6 +26,16 @@ export async function POST(req: Request) {
         where: { stripeAccountId: acc.id },
         data: { payoutsEnabled: !!acc.payouts_enabled },
       });
+      break;
+    }
+
+    // Холд подтвержден (карта прошла, включая 3DS): страховка на случай,
+    // если клиент закрыл страницу до вызова finalizeBookingPayment.
+    case "payment_intent.amount_capturable_updated": {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      if (pi.status === "requires_capture" && pi.metadata.bookingId) {
+        await markBookingRequested(pi.metadata.bookingId, null);
+      }
       break;
     }
 
