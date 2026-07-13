@@ -18,6 +18,7 @@ export default async function AccountPage() {
   const t = getDict(locale);
   const user = await ensureDbUser(authUser, locale);
   const isPro = user.roles.includes(Role.PROVIDER);
+  const isAdmin = user.roles.includes(Role.ADMIN);
 
   return (
     <main>
@@ -46,6 +47,11 @@ export default async function AccountPage() {
           ) : (
             <Link href="/signup?role=pro" className="btn btn-ghost">
               {t.becomePro}
+            </Link>
+          )}
+          {isAdmin && (
+            <Link href="/admin" className="btn btn-ink">
+              {t.adminPanel} <ArrowRight size={15} />
             </Link>
           )}
         </div>
