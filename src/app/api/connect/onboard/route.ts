@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { stripe } from "@/lib/stripe";
+import { ensureStripeWebhooks } from "@/lib/stripe-webhook-setup";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
   }
 
   const origin = process.env.APP_URL || new URL(req.url).origin;
+  // Вебхук account.updated должен существовать до онбординга, иначе
+  // не узнаем, что исполнителю можно включить выплаты.
+  await ensureStripeWebhooks(origin);
+
   const link = await stripe.accountLinks.create({
     account: accountId,
     refresh_url: `${origin}/pro?stripe_refresh=1`,

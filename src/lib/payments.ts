@@ -5,6 +5,7 @@
 import { BookingStatus, PaymentStatus, type Payment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { ensureStripeWebhooks } from "@/lib/stripe-webhook-setup";
 import { REQUEST_TTL_HOURS } from "@/lib/booking-units";
 
 // Создает PaymentIntent холда для DRAFT-брони и запись Payment со статусом HOLD.
@@ -15,6 +16,10 @@ export async function createOrUpdateBookingHold(input: {
   totalCents: number;
   email: string;
 }): Promise<{ clientSecret: string }> {
+  // Перед первым холдом убеждаемся, что вебхуки в Stripe существуют:
+  // событие подтверждения холда должно прийти, даже если клиент закроет страницу.
+  await ensureStripeWebhooks();
+
   const existing = await prisma.payment.findUnique({ where: { bookingId: input.bookingId } });
 
   if (existing) {
