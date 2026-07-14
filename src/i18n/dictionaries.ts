@@ -286,7 +286,7 @@ const en = {
   pfRemove: "Remove",
   pfFull: "Photo limit reached.",
   pfHint: "You can add {n} more.",
-  pfStorageOff: "Photo storage isn't set up yet. Ask the admin to create the 'portfolio' bucket in Supabase Storage.",
+  pfStorageOff: "Photo upload is unavailable: storage access isn't configured (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 export type Dict = typeof en;
@@ -575,7 +575,7 @@ const ru: Dict = {
   pfRemove: "Удалить",
   pfFull: "Достигнут лимит фото.",
   pfHint: "Можно добавить ещё {n}.",
-  pfStorageOff: "Хранилище фото ещё не настроено. Попросите администратора создать бакет 'portfolio' в Supabase Storage.",
+  pfStorageOff: "Загрузка фото недоступна: не настроен доступ к хранилищу (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 const uk: Dict = {
@@ -862,7 +862,7 @@ const uk: Dict = {
   pfRemove: "Видалити",
   pfFull: "Досягнуто ліміту фото.",
   pfHint: "Можна додати ще {n}.",
-  pfStorageOff: "Сховище фото ще не налаштоване. Попросіть адміністратора створити бакет 'portfolio' у Supabase Storage.",
+  pfStorageOff: "Завантаження фото недоступне: не налаштовано доступ до сховища (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 const pl: Dict = {
@@ -1149,7 +1149,7 @@ const pl: Dict = {
   pfRemove: "Usuń",
   pfFull: "Osiągnięto limit zdjęć.",
   pfHint: "Możesz dodać jeszcze {n}.",
-  pfStorageOff: "Magazyn zdjęć nie jest jeszcze skonfigurowany. Poproś administratora o utworzenie kubełka 'portfolio' w Supabase Storage.",
+  pfStorageOff: "Przesyłanie zdjęć niedostępne: brak dostępu do magazynu (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 const es: Dict = {
@@ -1436,7 +1436,7 @@ const es: Dict = {
   pfRemove: "Quitar",
   pfFull: "Límite de fotos alcanzado.",
   pfHint: "Puedes añadir {n} más.",
-  pfStorageOff: "El almacenamiento de fotos aún no está configurado. Pide al administrador que cree el bucket 'portfolio' en Supabase Storage.",
+  pfStorageOff: "La subida de fotos no está disponible: falta el acceso al almacenamiento (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 const pt: Dict = {
@@ -1723,7 +1723,7 @@ const pt: Dict = {
   pfRemove: "Remover",
   pfFull: "Limite de fotos atingido.",
   pfHint: "Pode adicionar mais {n}.",
-  pfStorageOff: "O armazenamento de fotos ainda não está configurado. Peça ao administrador para criar o bucket 'portfolio' no Supabase Storage.",
+  pfStorageOff: "O envio de fotos está indisponível: falta o acesso ao armazenamento (SUPABASE_SERVICE_ROLE_KEY).",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

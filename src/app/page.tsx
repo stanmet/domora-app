@@ -24,7 +24,7 @@ export default async function Home() {
     prisma.task.findMany({
       where: { status: "OPEN", expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 30,
       include: {
         category: { select: { slug: true, nameEn: true, nameRu: true } },
         _count: { select: { offers: true } },
@@ -61,29 +61,8 @@ export default async function Home() {
 
   return (
     <main>
-      <div className="wrap hero">
-        <div className="eyebrow">{t.tagline}</div>
-        <h1 className="display">
-          {t.h1a}
-          <br />
-          <em>{t.h1b}</em>
-        </h1>
-        <p>{t.heroP}</p>
-        <div className="cta">
-          <Link href="/tasks/new" className="btn btn-green">
-            {t.postTask} <ArrowRight size={16} />
-          </Link>
-          <Link href="/catalog" className="btn btn-ink">
-            {t.findPro} <ArrowRight size={16} />
-          </Link>
-          <Link href="/signup?role=pro" className="btn btn-ghost">
-            {t.becomePro}
-          </Link>
-        </div>
-      </div>
-
       {/* Горизонтальные вкладки категорий (прокручиваются вбок) */}
-      <div className="wrap" style={{ paddingTop: 18 }}>
+      <div className="wrap" style={{ paddingTop: 22 }}>
         <div className="cattabs">
           {cats.map((c) => {
             const Icon = CATEGORY_ICONS[c.slug] ?? CATEGORY_ICONS.other;
