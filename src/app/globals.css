@@ -352,6 +352,8 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .drawer{position:fixed;top:0;right:0;height:100%;width:308px;max-width:86vw;background:#fff;border-left:1px solid var(--line);z-index:50;transform:translateX(102%);transition:transform .24s ease;display:flex;flex-direction:column;padding:16px 18px 22px;overflow-y:auto;box-shadow:-14px 0 40px rgba(0,0,0,.08)}
 .dm .drawer.open{transform:translateX(0)}
 .dm .drawer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dm .drawer-cta{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.dm .drawer-cta .btn{width:100%;justify-content:center}
 .dm .drawer-user{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:16px;color:var(--ink)}
 .dm .drawer-user:hover{border-color:var(--ink)}
 .dm .drawer-user .avatar{width:42px;height:42px;font-size:16px}

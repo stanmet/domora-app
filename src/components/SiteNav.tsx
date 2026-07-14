@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   ClipboardList,
   Heart,
   LayoutDashboard,
@@ -16,7 +17,6 @@ import {
   MessageCircle,
   Search,
   ShieldCheck,
-  Sparkles,
   UserRound,
   X,
 } from "lucide-react";
@@ -107,6 +107,21 @@ export default function SiteNav({
           </button>
         </div>
 
+        {/* Главные действия: под логотипом, над именем пользователя */}
+        <div className="drawer-cta">
+          <Link href="/tasks/new" className="btn btn-green" onClick={close}>
+            {t.postTask} <ArrowRight size={16} />
+          </Link>
+          <Link href="/catalog" className="btn btn-ink" onClick={close}>
+            {t.findPro} <ArrowRight size={16} />
+          </Link>
+          {!isProvider && (
+            <Link href="/signup?role=pro" className="btn btn-ghost" onClick={close}>
+              {t.becomePro}
+            </Link>
+          )}
+        </div>
+
         {isLoggedIn ? (
           <Link href="/account" className="drawer-user" onClick={close}>
             <span className="avatar">{(userName ?? "?")[0]?.toUpperCase()}</span>
@@ -139,25 +154,23 @@ export default function SiteNav({
             })}
         </nav>
 
-        <div className="drawer-sep" />
-
-        <nav className="drawer-nav">
-          {!isProvider && (
-            <Link href="/signup?role=pro" className="drawer-link accent" onClick={close}>
-              <Sparkles size={18} /> {t.becomePro}
-            </Link>
-          )}
-          {isProvider && (
-            <Link href="/pro" className="drawer-link accent" onClick={close}>
-              <LayoutDashboard size={18} /> {t.proDash}
-            </Link>
-          )}
-          {isAdmin && (
-            <Link href="/admin" className="drawer-link" onClick={close}>
-              <ShieldCheck size={18} /> {t.adminPanel}
-            </Link>
-          )}
-        </nav>
+        {(isProvider || isAdmin) && (
+          <>
+            <div className="drawer-sep" />
+            <nav className="drawer-nav">
+              {isProvider && (
+                <Link href="/pro" className="drawer-link accent" onClick={close}>
+                  <LayoutDashboard size={18} /> {t.proDash}
+                </Link>
+              )}
+              {isAdmin && (
+                <Link href="/admin" className="drawer-link" onClick={close}>
+                  <ShieldCheck size={18} /> {t.adminPanel}
+                </Link>
+              )}
+            </nav>
+          </>
+        )}
 
         <div className="drawer-foot">
           <LangSwitcher locale={locale} />
