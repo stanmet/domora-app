@@ -1,4 +1,4 @@
-// Страница регистрации: выбор роли (заказчик или исполнитель), имя, email, magic link.
+// Страница регистрации: выбор роли (заказчик или исполнитель), имя, email, пароль.
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import SignupForm from "./SignupForm";

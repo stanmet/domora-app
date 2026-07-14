@@ -40,6 +40,9 @@ export default async function AccountPage() {
           <Link href="/bookings" className="btn btn-line">
             {t.myBookings}
           </Link>
+          <Link href="/tasks/mine" className="btn btn-line">
+            {t.myTasks}
+          </Link>
           {isPro ? (
             <Link href="/pro" className="btn btn-green">
               {t.openPro} <ArrowRight size={15} />

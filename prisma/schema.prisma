@@ -84,6 +84,19 @@ enum DisputeStatus {
   RESOLVED
 }
 
+enum TaskStatus {
+  OPEN
+  OFFER_ACCEPTED
+  CLOSED
+  EXPIRED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum StrikeType {
   PROVIDER_CANCEL
   PROVIDER_NO_SHOW
@@ -109,6 +122,7 @@ model User {
 
   providerProfile ProviderProfile?
   bookingsAsClient Booking[] @relation("client")
+  tasks         Task[]     @relation("clientTasks")
   favorites     Favorite[]
   strikes       Strike[]
   reviewsWritten Review[]  @relation("author")
@@ -140,6 +154,7 @@ model ProviderProfile {
 
   listings  Listing[]
   bookings  Booking[] @relation("provider")
+  offers    Offer[]
 
   @@index([city, status])
 }
@@ -155,6 +170,7 @@ model Category {
   providerFeePct     Decimal @default(10) @db.Decimal(5, 2)
   minProvidersToOpen Int     @default(5)
   listings           Listing[]
+  tasks              Task[]
 }
 
 model Listing {
@@ -212,6 +228,7 @@ model Booking {
   dispute  Dispute?
   reviews  Review[]
   thread   Thread?
+  task     Task?
 
   @@index([providerId, status])
   @@index([clientId, status])
@@ -387,4 +404,46 @@ model AdminAction {
   action     String
   note       String?
   createdAt  DateTime @default(now())
+}
+
+// Доска задач: клиент публикует задачу, исполнители откликаются, клиент выбирает.
+model Task {
+  id              String     @id @default(cuid())
+  clientId        String
+  client          User       @relation("clientTasks", fields: [clientId], references: [id])
+  categoryId      String
+  category        Category   @relation(fields: [categoryId], references: [id])
+  title           String
+  description     String
+  dateWanted      DateTime?
+  city            String     // город для подбора исполнителей в ленте
+  addressEncrypted String    // адрес шифруется (AES-256-GCM), как в брони
+  budgetFromCents Int?
+  budgetToCents   Int?
+  status          TaskStatus @default(OPEN)
+  bookingId       String?    @unique // бронь, созданная при выборе отклика
+  booking         Booking?   @relation(fields: [bookingId], references: [id])
+  createdAt       DateTime   @default(now())
+  expiresAt       DateTime   // createdAt + 7 дней
+
+  offers Offer[]
+
+  @@index([categoryId, city, status])
+  @@index([clientId, status])
+}
+
+model Offer {
+  id                String      @id @default(cuid())
+  taskId            String
+  task              Task        @relation(fields: [taskId], references: [id])
+  providerId        String
+  provider          ProviderProfile @relation(fields: [providerId], references: [userId])
+  priceCents        Int
+  message           String
+  contactFilterFlag Boolean     @default(false) // в сообщении были контакты, их скрыли
+  status            OfferStatus @default(PENDING)
+  createdAt         DateTime    @default(now())
+
+  @@unique([taskId, providerId]) // один отклик на задачу от одного исполнителя
+  @@index([taskId, status])
 }

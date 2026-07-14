@@ -194,6 +194,9 @@ html,body{min-height:100%}
 .dm .err{background:#fae6e2;color:#c23b22;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;margin-top:14px;line-height:1.45}
 .dm .authnote{font-size:13.5px;color:var(--muted);margin-top:22px}
 .dm .authnote a{color:var(--green-dark);font-weight:700}
+.dm .authsep{display:flex;align-items:center;gap:12px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 0 12px}
+.dm .authsep::before,.dm .authsep::after{content:"";flex:1;height:1px;background:var(--line)}
+.dm .fieldhint{font-size:12px;color:var(--muted);margin-top:6px}
 .dm .sentcard{text-align:center;padding:34px 22px}
 .dm .sentcard .icircle{margin:0 auto 16px}
 .dm .sentcard h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;margin-bottom:8px}
@@ -278,6 +281,37 @@ html,body{min-height:100%}
 .dm .adm-nowrap{white-space:nowrap}
 .dm .adm-muted{color:var(--muted)}
 .dm .adm-table .adm-inline{min-width:220px}
+
+/* доска задач (/tasks, /tasks/mine, /tasks/new) */
+.dm .budgetrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dm .tasklist{display:flex;flex-direction:column;gap:14px}
+.dm .taskcard{border:1px solid var(--line);border-radius:16px;padding:18px}
+.dm .taskhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.dm .tasktag{display:inline-flex;align-items:center;gap:6px;background:var(--sage);color:var(--green-dark);font-size:12px;font-weight:700;border-radius:999px;padding:5px 12px}
+.dm .taskoffers{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
+.dm .taskcard h3{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px}
+.dm .taskdesc{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.dm .taskcard .meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 12px}
+.dm .taskcard .meta span{display:inline-flex;align-items:center;gap:5px}
+.dm .taskaction{border-top:1px solid var(--line);padding-top:14px}
+.dm .offer-form{border:1px solid var(--green);border-radius:14px;padding:14px;background:var(--sage)}
+.dm .offer-form label{margin-top:10px}
+.dm .offer-form label:first-of-type{margin-top:0}
+.dm .offer-sent{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--green-dark)}
+.dm .offers{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.dm .offers-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.dm .offer{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.dm .offer.on{border-color:var(--green);background:var(--sage)}
+.dm .offer.off{opacity:.55}
+.dm .offer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dm .offer-who{display:flex;gap:10px;align-items:center}
+.dm .offer-who .avatar{width:38px;height:38px;font-size:15px}
+.dm .offer-name{font-size:14px;font-weight:700}
+.dm .offer-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.dm .offer-price{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:17px;white-space:nowrap}
+.dm .offer-msg{font-size:13.5px;color:var(--ink);line-height:1.5;margin:10px 0 0}
+.dm .offer-warn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--orange);margin-top:8px;line-height:1.4}
+.dm .offer-warn svg{flex-shrink:0}
 
 /* mobile */
 @media(max-width:560px){

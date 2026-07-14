@@ -1,4 +1,4 @@
-// Страница входа: email и magic link, без пароля.
+// Страница входа: email и пароль (основной путь), ссылка на почту как запасной.
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import LoginForm from "./LoginForm";
