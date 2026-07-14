@@ -28,6 +28,32 @@ const EXT: Record<string, string> = {
   "image/avif": "avif",
 };
 
+// Бакет создаётся автоматически при первом обращении, если его ещё нет.
+// Никаких ручных шагов в Supabase не требуется. Проверка запоминается на
+// время жизни серверного процесса, чтобы не дёргать API на каждый файл.
+let bucketReady = false;
+type StorageClient = NonNullable<ReturnType<typeof admin>>["storage"];
+async function ensureBucket(storage: StorageClient): Promise<boolean> {
+  if (bucketReady) return true;
+  const { data } = await storage.getBucket(PORTFOLIO_BUCKET);
+  if (data) {
+    bucketReady = true;
+    return true;
+  }
+  const { error } = await storage.createBucket(PORTFOLIO_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_BYTES,
+    allowedMimeTypes: Array.from(ALLOWED),
+  });
+  // "already exists" - значит бакет создали параллельно, это нормально.
+  if (error && !/exist|conflict|409/i.test(error.message)) {
+    console.error("createBucket failed", error.message);
+    return false;
+  }
+  bucketReady = true;
+  return true;
+}
+
 // Загружает один файл, возвращает публичный URL или null (тип/размер/ошибка).
 export async function uploadImage(file: File, folder: string): Promise<string | null> {
   const client = admin();
@@ -35,6 +61,7 @@ export async function uploadImage(file: File, folder: string): Promise<string | 
   if (!(file instanceof File) || file.size === 0) return null;
   if (file.size > MAX_BYTES) return null;
   if (!ALLOWED.has(file.type)) return null;
+  if (!(await ensureBucket(client.storage))) return null;
 
   const ext = EXT[file.type] ?? "jpg";
   const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
