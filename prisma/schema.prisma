@@ -6,8 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Пул соединений (Supabase pgbouncer, порт 6543) для рантайма приложения.
+  url       = env("DATABASE_URL")
+  // Прямое соединение (порт 5432) для миграций: prisma migrate deploy на сборке.
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
