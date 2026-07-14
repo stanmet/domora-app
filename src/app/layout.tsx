@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Archivo, Inter } from "next/font/google";
-import { UserRound } from "lucide-react";
+import { Role } from "@prisma/client";
 import "./globals.css";
 
 // Шрифты дизайн-системы раздаются самим приложением (next/font), без запросов к Google из браузера.
@@ -11,8 +10,7 @@ import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import LangSwitcher from "@/components/LangSwitcher";
-import SignOutButton from "@/components/SignOutButton";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Domora",
@@ -23,14 +21,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = await getLocale();
   const t = getDict(locale);
 
-  // Имя в шапке: из таблицы User, при недоступной базе из метаданных Supabase.
+  // Имя и роль в шапке: из таблицы User, при недоступной базе из метаданных Supabase.
   const authUser = await getAuthUser();
   let userName: string | null = null;
+  let isProvider = false;
+  let isAdmin = false;
   if (authUser?.email) {
     userName = (authUser.user_metadata?.name as string | undefined) || authUser.email.split("@")[0];
     try {
-      const dbUser = await prisma.user.findUnique({ where: { email: authUser.email }, select: { name: true } });
-      if (dbUser) userName = dbUser.name;
+      const dbUser = await prisma.user.findUnique({ where: { email: authUser.email }, select: { name: true, roles: true } });
+      if (dbUser) {
+        userName = dbUser.name;
+        isProvider = dbUser.roles.includes(Role.PROVIDER);
+        isAdmin = dbUser.roles.includes(Role.ADMIN);
+      }
     } catch {
       // База недоступна: оставляем имя из метаданных.
     }
@@ -39,31 +43,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale}>
       <body className={`dm ${archivo.variable} ${inter.variable}`}>
-        <header>
-          <div className="wrap hd">
-            <Link href="/" className="logo">
-              DOMO<span>RA</span>
-            </Link>
-            <div className="hd-right">
-              <LangSwitcher locale={locale} />
-              {userName ? (
-                <>
-                  <Link href="/account" className="lang userpill">
-                    <UserRound size={14} /> {userName}
-                  </Link>
-                  <SignOutButton label={t.logout} />
-                </>
-              ) : (
-                <Link href="/login" className="lang">
-                  <UserRound size={14} /> {t.login}
-                </Link>
-              )}
-              <Link href="/catalog" className="btn btn-ink btn-sm hd-cta">
-                {t.findPro}
-              </Link>
-            </div>
-          </div>
-        </header>
+        <SiteNav
+          locale={locale}
+          t={t}
+          isLoggedIn={Boolean(authUser?.email)}
+          userName={userName}
+          isProvider={isProvider}
+          isAdmin={isAdmin}
+        />
         {children}
         <footer>
           <div

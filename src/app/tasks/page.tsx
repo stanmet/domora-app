@@ -132,7 +132,9 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
                     <Users size={13} /> {t.offerCountL}: {offerCount}
                   </span>
                 </div>
-                <h3>{task.title}</h3>
+                <Link href={`/tasks/${task.id}`}>
+                  <h3>{task.title}</h3>
+                </Link>
                 {task.description && task.description !== task.title && <p className="taskdesc">{task.description}</p>}
                 <div className="meta">
                   {task.dateWanted && (

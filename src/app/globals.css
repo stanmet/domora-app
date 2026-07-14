@@ -335,3 +335,120 @@ html,body{min-height:100%}
   .dm .rolecards{grid-template-columns:1fr}
   .dm .userpill{max-width:110px}
 }
+
+/* ============================================================
+   Навигация: единая шапка (логотип, поиск, бургер) и боковое меню.
+   ============================================================ */
+.dm .topsearch{flex:1;max-width:520px;display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:#fff;margin:0 14px}
+.dm .topsearch:focus-within{border-color:var(--ink)}
+.dm .topsearch svg{color:var(--muted);flex-shrink:0}
+.dm .topsearch input{border:none;outline:none;flex:1;min-width:0;font-size:14px;background:transparent;color:var(--ink);font-family:var(--font-inter),'Inter',sans-serif}
+.dm .burger{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;color:var(--ink);flex-shrink:0}
+.dm .burger:hover{border-color:var(--ink)}
+
+.dm .drawer-backdrop{position:fixed;inset:0;background:rgba(20,20,20,.42);z-index:40}
+.dm .drawer{position:fixed;top:0;right:0;height:100%;width:308px;max-width:86vw;background:#fff;border-left:1px solid var(--line);z-index:50;transform:translateX(102%);transition:transform .24s ease;display:flex;flex-direction:column;padding:16px 18px 22px;overflow-y:auto;box-shadow:-14px 0 40px rgba(0,0,0,.08)}
+.dm .drawer.open{transform:translateX(0)}
+.dm .drawer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dm .drawer-user{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:16px;color:var(--ink)}
+.dm .drawer-user:hover{border-color:var(--ink)}
+.dm .drawer-user .avatar{width:42px;height:42px;font-size:16px}
+.dm .drawer-user b{display:block;font-size:14px}
+.dm .drawer-role{display:block;font-size:12px;color:var(--green-dark);font-weight:700;margin-top:2px}
+.dm .drawer-auth{display:flex;gap:10px;margin-bottom:16px}
+.dm .drawer-auth .btn{flex:1;justify-content:center}
+.dm .drawer-nav{display:flex;flex-direction:column;gap:2px}
+.dm .drawer-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font-size:14.5px;font-weight:600;color:var(--ink)}
+.dm .drawer-link:hover{background:var(--sage)}
+.dm .drawer-link svg{color:var(--muted);flex-shrink:0}
+.dm .drawer-link.accent{color:var(--green-dark)}
+.dm .drawer-link.accent svg{color:var(--green)}
+.dm .drawer-sep{height:1px;background:var(--line);margin:14px 0}
+.dm .drawer-foot{margin-top:auto;padding-top:18px;display:flex;align-items:center;gap:10px}
+
+/* ============================================================
+   Главная: горизонтальные вкладки категорий и лента открытых задач.
+   ============================================================ */
+.dm .cattabs{display:flex;gap:10px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.dm .cattabs::-webkit-scrollbar{display:none}
+.dm .cattab{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;width:86px;padding:14px 6px;border:1px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;color:var(--ink);transition:border-color .15s,transform .15s}
+.dm .cattab:hover{border-color:var(--green);transform:translateY(-2px)}
+.dm .cattab .ic{width:46px;height:46px;border-radius:50%;background:var(--sage);color:var(--green);display:flex;align-items:center;justify-content:center}
+.dm .cattab span{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2}
+
+.dm .homesec{padding:38px 0;border-top:1px solid var(--line)}
+.dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.dm .homesec-head h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(22px,4vw,30px)}
+.dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
+.dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
+.dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
+.dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}
+
+/* блок открытых задач с акцентной плашкой "Разместить задачу" */
+.dm .postcta{background:var(--beige-bg);border-radius:18px;padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.dm .postcta h3{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:19px;text-transform:uppercase;margin-bottom:4px}
+.dm .postcta p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:520px}
+
+/* ============================================================
+   Прозрачность задачи: счётчики просмотров и откликов.
+   ============================================================ */
+.dm .taskstats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 6px}
+.dm .taskstat{border:1px solid var(--line);border-radius:14px;padding:12px 18px;min-width:120px}
+.dm .taskstat b{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:24px;display:block;line-height:1}
+.dm .taskstat span{font-size:12px;color:var(--muted);display:block;margin-top:4px}
+
+/* ============================================================
+   Портфолио: галереи фото работ и загрузчик.
+   ============================================================ */
+.dm .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:12px 0}
+.dm .gallery.lg{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.dm .gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:block}
+.dm .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dm .uploader{margin-top:10px}
+.dm .uploader .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-bottom:12px}
+.dm .thumb{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.dm .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.dm .thumb .rm{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(20,20,20,.7);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dm .filepick{display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--beige);border-radius:12px;padding:12px 16px;font-size:13.5px;font-weight:600;color:var(--green-dark);background:#fff;cursor:pointer}
+.dm .filepick:hover{background:var(--sage)}
+.dm .filepick input{display:none}
+.dm .uploader .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* ============================================================
+   Пометка автоперевода "Переведено с X · показать оригинал".
+   ============================================================ */
+.dm .tr-note{display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:3px 0 0;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;line-height:1.3}
+.dm .tr-note:hover{color:var(--green-dark)}
+.dm .tr-note svg{color:var(--beige);flex-shrink:0}
+.dm .spin{animation:dm-spin 1s linear infinite}
+@keyframes dm-spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   Сообщения (чат) и избранное.
+   ============================================================ */
+.dm .convo{display:flex;align-items:center;gap:12px;padding:14px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;color:var(--ink)}
+.dm .convo:hover{border-color:var(--ink)}
+.dm .convo .avatar{width:44px;height:44px;font-size:16px;flex-shrink:0}
+.dm .convo .cmain{flex:1;min-width:0}
+.dm .convo .cname{font-size:14.5px;font-weight:700}
+.dm .convo .cprev{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.dm .chat{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+.dm .msg{max-width:78%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.5}
+.dm .msg.them{align-self:flex-start;background:var(--sage);border-bottom-left-radius:5px}
+.dm .msg.me{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:5px}
+.dm .msg .tr-note{color:rgba(255,255,255,.7)}
+.dm .msg.them .tr-note{color:var(--muted)}
+.dm .msg .tr-note svg{color:inherit}
+.dm .chatform{display:flex;gap:10px;align-items:flex-end;position:sticky;bottom:0;background:var(--paper);padding:12px 0}
+
+@media(max-width:640px){
+  .dm .topsearch{margin:0 10px;padding:9px 12px}
+  .dm .topsearch input{font-size:13px}
+  .dm .hd{height:56px}
+  .dm .opentasks{grid-template-columns:1fr}
+}
+@media(max-width:400px){
+  .dm .logo{font-size:16px}
+  .dm .topsearch{margin:0 8px}
+}

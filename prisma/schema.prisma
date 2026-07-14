@@ -151,6 +151,7 @@ model ProviderProfile {
   acceptanceRate    Decimal @default(1) @db.Decimal(4, 3)
   responseMinutes   Int     @default(0)
   status            ProviderStatus @default(DRAFT)
+  portfolioPhotos   String[] @default([]) // до 20 фото работ в профиле (Supabase Storage)
 
   listings  Listing[]
   bookings  Booking[] @relation("provider")
@@ -446,4 +447,28 @@ model Offer {
 
   @@unique([taskId, providerId]) // один отклик на задачу от одного исполнителя
   @@index([taskId, status])
+}
+
+// Кто из исполнителей открывал задачу: для счётчика "N исполнителей увидели".
+// Одна запись на пару (задача, исполнитель), обновляется при открытии страницы задачи.
+model TaskView {
+  taskId     String
+  providerId String
+  createdAt  DateTime @default(now())
+
+  @@id([taskId, providerId])
+  @@index([taskId])
+}
+
+// Кеш автопереводов пользовательских текстов (профиль, услуги, задачи, отклики, чат).
+// Адресуется по хешу исходного текста, поэтому одинаковый текст переводится один раз
+// на язык и переиспользуется везде. Источник перевода - DeepL (DEEPL_API_KEY).
+model Translation {
+  sourceHash String   // sha256 исходного текста
+  targetLang String   // язык интерфейса читателя: en ru uk pl es pt
+  sourceLang String   // определённый язык оригинала
+  text       String   // переведённый текст
+  createdAt  DateTime @default(now())
+
+  @@id([sourceHash, targetLang])
 }
