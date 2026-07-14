@@ -75,7 +75,9 @@ export default async function MyTasksPage() {
               <div className="bk" key={task.id}>
                 <div className="bkrow">
                   <div>
-                    <h4>{task.title}</h4>
+                    <Link href={`/tasks/${task.id}`}>
+                      <h4>{task.title}</h4>
+                    </Link>
                     <div style={{ fontSize: 13, color: "var(--muted)" }}>
                       {categoryLabel(t, task.category.slug, locale === "ru" ? task.category.nameRu : task.category.nameEn)}
                     </div>

@@ -4,9 +4,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, ShieldCheck, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/supabase/server";
+import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
+import { langName } from "@/i18n/config";
 import { eur } from "@/lib/format";
+import { translateBatch } from "@/lib/translate";
+import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
+import FavoriteButton from "@/components/FavoriteButton";
+import { toggleFavorite } from "@/app/favorites/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +46,28 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE" && !l.quoteFirst);
   const cheapest = priced.length ? priced.reduce((a, b) => (b.priceCents < a.priceCents ? b : a)) : null;
 
+  // Автоперевод пользовательских текстов профиля на язык интерфейса.
+  const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
+  const sources = [
+    ...(provider.bio ? [provider.bio] : []),
+    ...provider.listings.map((l) => l.title),
+    ...provider.listings.flatMap((l) => (l.description ? [l.description] : [])),
+  ];
+  const tr = await translateBatch(sources, locale);
+  const trOf = (s: string | null | undefined) =>
+    s ? tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false } : null;
+
+  // Избранное: показываем состояние кнопки для вошедшего пользователя.
+  const authUser = await getAuthUser();
+  let isFav = false;
+  if (authUser?.email) {
+    const viewer = await ensureDbUser(authUser, locale);
+    const f = await prisma.favorite.findUnique({
+      where: { userId_providerId: { userId: viewer.id, providerId: provider.userId } },
+    });
+    isFav = Boolean(f);
+  }
+
   return (
     <main className="wrap">
       <Link href="/catalog" className="back">
@@ -70,11 +99,30 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
       </div>
+      {provider.portfolioPhotos.length > 0 && (
+        <div className="gallery lg" style={{ marginTop: 20 }}>
+          {provider.portfolioPhotos.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt={provider.displayName} />
+          ))}
+        </div>
+      )}
       <div className="cols">
         <div>
-          {provider.bio && (
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--muted)", paddingBottom: 8 }}>{provider.bio}</p>
-          )}
+          {provider.bio &&
+            (() => {
+              const b = trOf(provider.bio)!;
+              return (
+                <TranslatableText
+                  display={b.text}
+                  original={provider.bio}
+                  translated={b.translated}
+                  sourceLangName={langName(b.sourceLang)}
+                  labels={trLabels}
+                  style={{ fontSize: 15, lineHeight: 1.6, color: "var(--muted)", paddingBottom: 8 }}
+                />
+              );
+            })()}
           <h3
             style={{
               fontFamily: "Archivo",
@@ -86,11 +134,30 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           >
             {t.services}
           </h3>
-          {provider.listings.map((l) => (
-            <div className="svc" key={l.id}>
+          {provider.listings.map((l) => {
+            const lt = trOf(l.title)!;
+            const ld = trOf(l.description);
+            return (
+            <div className="svc" key={l.id} style={{ flexDirection: "column", alignItems: "stretch" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "baseline" }}>
               <div>
-                <h4>{l.title}</h4>
-                {l.description && <p>{l.description}</p>}
+                <TranslatableText
+                  as="h4"
+                  display={lt.text}
+                  original={l.title}
+                  translated={lt.translated}
+                  sourceLangName={langName(lt.sourceLang)}
+                  labels={trLabels}
+                />
+                {l.description && ld && (
+                  <TranslatableText
+                    display={ld.text}
+                    original={l.description}
+                    translated={ld.translated}
+                    sourceLangName={langName(ld.sourceLang)}
+                    labels={trLabels}
+                  />
+                )}
               </div>
               <div className="pr">
                 {l.priceCents > 0 && l.unit !== "FIXED_QUOTE" ? (
@@ -101,8 +168,18 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                   <span>{t.byQuote}</span>
                 )}
               </div>
+              </div>
+              {l.photos.length > 0 && (
+                <div className="gallery">
+                  {l.photos.map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={url} src={url} alt={l.title} />
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
           <h3
             style={{
               fontFamily: "Archivo",
@@ -158,6 +235,12 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               {t.request}
             </button>
           )}
+          <FavoriteButton
+            action={toggleFavorite.bind(null, provider.userId)}
+            active={isFav}
+            addLabel={t.favAdd}
+            removeLabel={t.favRemove}
+          />
           <div className="note">
             <ShieldCheck size={15} /> {t.sideNote}
           </div>

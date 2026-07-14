@@ -8,6 +8,7 @@ import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { eur } from "@/lib/format";
+import { translateBatch } from "@/lib/translate";
 import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn),
   }));
 
+  // Автоперевод названий услуг на язык интерфейса.
+  const titleTr = await translateBatch(listings.map((l) => l.title), locale);
+
   return (
     <main className="wrap sec">
       <CatalogFilters
@@ -86,14 +90,21 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
             return (
               <Link href={`/providers/${l.provider.userId}`} className="pcard2" key={l.id}>
                 <div className="photo" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
-                  <Icon size={56} strokeWidth={1.1} />
-                  <div className="dots">
-                    <i />
-                    <i />
-                    <i />
-                  </div>
+                  {l.photos[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={l.photos[0]} alt={l.title} />
+                  ) : (
+                    <>
+                      <Icon size={56} strokeWidth={1.1} />
+                      <div className="dots">
+                        <i />
+                        <i />
+                        <i />
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="t">{l.title}</div>
+                <div className="t">{titleTr.get(l.title.trim())?.text ?? l.title}</div>
                 <div className="m">
                   <span>{l.provider.displayName}</span>
                   <span>·</span>
