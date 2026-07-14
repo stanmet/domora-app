@@ -1,5 +1,7 @@
-// Сид: категории услуг и 3 тестовых исполнителя. Безопасно запускать повторно (upsert).
+// Сид: категории услуг, 3 тестовых исполнителя, тестовый клиент и задача на
+// доске. Безопасно запускать повторно (upsert / проверка существования).
 import { PrismaClient, PriceUnit } from "@prisma/client";
+import { encrypt } from "../src/lib/crypto";
 
 const prisma = new PrismaClient();
 
@@ -105,6 +107,34 @@ async function main() {
         },
       });
     }
+  }
+
+  // Тестовый клиент и одна открытая задача на доске: в категории chef, город
+  // Dublin, чтобы исполнитель chef@test.domora.ie видел её в ленте /tasks.
+  const client = await prisma.user.upsert({
+    where: { email: "client@test.domora.ie" },
+    update: {},
+    create: { email: "client@test.domora.ie", name: "Liam O'Brien", roles: ["CLIENT"], city: "Dublin" },
+  });
+
+  const chefCategory = await prisma.category.findUniqueOrThrow({ where: { slug: "chef" } });
+  const existingTask = await prisma.task.findFirst({ where: { clientId: client.id } });
+  if (!existingTask) {
+    await prisma.task.create({
+      data: {
+        clientId: client.id,
+        categoryId: chefCategory.id,
+        title: "Ужин на 6 человек в субботу",
+        description: "Нужен повар на семейный ужин, 6 гостей, две перемены блюд. Кухня своя.",
+        dateWanted: new Date(Date.now() + 5 * 24 * 3600 * 1000),
+        city: "Dublin",
+        addressEncrypted: encrypt("12 Grafton Street, Dublin, D02 XY45"),
+        budgetFromCents: 20000,
+        budgetToCents: 35000,
+        status: "OPEN",
+        expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+      },
+    });
   }
 }
 

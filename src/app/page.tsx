@@ -41,6 +41,9 @@ export default async function Home() {
           <Link href="/catalog" className="btn btn-ink">
             {t.findPro} <ArrowRight size={16} />
           </Link>
+          <Link href="/tasks/new" className="btn btn-green">
+            {t.postTask} <ArrowRight size={16} />
+          </Link>
           <Link href="/signup?role=pro" className="btn btn-ghost">
             {t.becomePro}
           </Link>

@@ -1,8 +1,10 @@
 "use client";
 
-// Регистрация: имя, email и роль (заказчик или исполнитель).
-// Имя и роль уезжают в user_metadata и применяются в /auth/callback
-// при создании записи в таблице User.
+// Регистрация: имя, email, пароль и роль (заказчик или исполнитель).
+// Основной путь: signUp с паролем. Имя и роль уезжают в user_metadata и
+// применяются при создании записи в таблице User (ensureDbUser).
+// Если проект требует подтверждения email, сессии сразу нет, показываем экран
+// "проверьте почту". Запасной путь: регистрация по ссылке на почту (signInWithOtp).
 import { useState } from "react";
 import Link from "next/link";
 import { Briefcase, MailCheck, UserRound } from "lucide-react";
@@ -14,19 +16,59 @@ type RoleChoice = "client" | "provider";
 export default function SignupForm({ t, next, initialRole }: { t: Dict; next: string | null; initialRole: RoleChoice }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<RoleChoice>(initialRole);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
+  const target = () => next ?? (role === "provider" ? "/pro" : "/account");
+
+  // Основной путь: регистрация с паролем.
+  const submitPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy || !name.trim() || !email.trim()) return;
+    if (password.length < 6) {
+      setError(t.errPwShort);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const callback = new URL("/auth/callback", window.location.origin);
-      callback.searchParams.set("next", next ?? (role === "provider" ? "/pro" : "/account"));
+      callback.searchParams.set("next", target());
+      const { data, error } = await getSupabaseBrowser().auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: callback.toString(), data: { name: name.trim(), role } },
+      });
+      if (error) {
+        setError(/already|registered|exists/i.test(error.message) ? t.errEmailTaken : t.errAuth);
+      } else if (data.session) {
+        // Подтверждение email выключено: сессия готова, идем в кабинет.
+        window.location.assign(target());
+      } else {
+        // Подтверждение email включено: письмо отправлено, ждем подтверждения.
+        setSent(true);
+      }
+    } catch {
+      setError(t.errAuth);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Запасной путь: регистрация по ссылке на почту.
+  const sendLink = async () => {
+    if (busy || !name.trim() || !email.trim()) {
+      setError(t.errAuth);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const callback = new URL("/auth/callback", window.location.origin);
+      callback.searchParams.set("next", target());
       const { error } = await getSupabaseBrowser().auth.signInWithOtp({
         email: email.trim(),
         options: {
@@ -64,7 +106,7 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
   ];
 
   return (
-    <form className="form" onSubmit={submit}>
+    <form className="form" onSubmit={submitPassword}>
       <label>{t.roleL}</label>
       <div className="rolecards">
         {roles.map((r) => (
@@ -98,9 +140,25 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
       />
+      <label htmlFor="password">{t.passwordL}</label>
+      <input
+        id="password"
+        className="f"
+        type="password"
+        required
+        minLength={6}
+        autoComplete="new-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <div className="fieldhint">{t.pwHint}</div>
       {error && <div className="err">{error}</div>}
       <button className="btn btn-green" style={{ width: "100%", justifyContent: "center", marginTop: 20 }} disabled={busy}>
-        {busy ? t.sending : t.sendLink}
+        {busy ? t.creating : t.signup}
+      </button>
+      <div className="authsep">{t.orSep}</div>
+      <button type="button" className="btn btn-line" style={{ width: "100%", justifyContent: "center" }} onClick={sendLink} disabled={busy}>
+        {t.linkSignup}
       </button>
       <p className="authnote">
         {t.haveAccount} <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>{t.login}</Link>
