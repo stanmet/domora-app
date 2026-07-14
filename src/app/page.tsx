@@ -24,7 +24,7 @@ export default async function Home() {
     prisma.task.findMany({
       where: { status: "OPEN", expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 30,
       include: {
         category: { select: { slug: true, nameEn: true, nameRu: true } },
         _count: { select: { offers: true } },
