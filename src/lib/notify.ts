@@ -15,6 +15,8 @@ export type NotificationType =
   | "offer_accepted"
   | "message"
   | "dispute"
+  | "client_cancelled"
+  | "provider_cancelled"
   | "listing_approved"
   | "listing_rejected";
 

@@ -17,8 +17,9 @@ import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
 import { after } from "next/server";
-import { acceptBooking, completeBooking, declineBooking, startBooking } from "./actions";
+import { acceptBooking, cancelByProvider, completeBooking, declineBooking, startBooking } from "./actions";
 import { processPayouts } from "@/lib/jobs";
+import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,13 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
               <Check size={14} /> {t.bComplete}
             </button>
           </form>
+          <ConfirmAction
+            action={cancelByProvider.bind(null, b.id)}
+            label={t.provCancel}
+            warning={t.provCancelWarn}
+            confirmLabel={t.provCancelConfirm}
+            backLabel={t.back}
+          />
         </div>
       )}
       {isRequest && clientMessage && (

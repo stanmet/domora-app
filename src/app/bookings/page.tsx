@@ -13,8 +13,10 @@ import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
-import { confirmBooking, disputeBooking } from "./actions";
+import { refundCentsForCancel } from "@/lib/cancellation";
+import { confirmBooking, disputeBooking, cancelBooking, reportNoShow } from "./actions";
 import DisputeForm from "./DisputeForm";
+import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +45,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
     where: { clientId: user.id },
     orderBy: { createdAt: "desc" },
     include: {
-      listing: { select: { title: true } },
+      listing: { select: { title: true, category: { select: { cancellationTier: true } } } },
       provider: { select: { displayName: true } },
     },
   });
@@ -66,6 +68,19 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
         ) : (
           bookings.map((b) => {
             const address = safeDecrypt(b.addressEncrypted);
+            const cancelable = ["REQUESTED", "ACCEPTED", "IN_PROGRESS"].includes(b.status);
+            const refundCents =
+              b.status === "REQUESTED"
+                ? b.totalCents
+                : refundCentsForCancel({
+                    tier: b.listing.category.cancellationTier,
+                    totalCents: b.totalCents,
+                    clientFeeCents: b.clientFeeCents,
+                    dateStart: b.dateStart,
+                  }).refundCents;
+            const canNoShow =
+              ["ACCEPTED", "IN_PROGRESS"].includes(b.status) &&
+              Date.now() > b.dateStart.getTime() + 30 * 60 * 1000;
             return (
               <div className="bk" key={b.id}>
                 <div className="bkrow">
@@ -118,6 +133,35 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                       />
                     </div>
                   </>
+                )}
+
+                {/* Отмена заказа клиентом и отметка о неявке исполнителя */}
+                {(cancelable || canNoShow) && (
+                  <div className="bkbtns" style={{ marginTop: 10 }}>
+                    {cancelable && (
+                      <ConfirmAction
+                        action={cancelBooking.bind(null, b.id)}
+                        label={t.cancelBooking}
+                        warning={`${t.cancelWarn} ${t.cancelRefundL}: ${eur(refundCents, locale)}`}
+                        confirmLabel={t.cancelConfirm}
+                        backLabel={t.back}
+                      />
+                    )}
+                    {canNoShow && (
+                      <ConfirmAction
+                        action={reportNoShow.bind(null, b.id)}
+                        label={t.noShow}
+                        warning={t.noShowWarn}
+                        confirmLabel={t.noShowConfirm}
+                        backLabel={t.back}
+                      />
+                    )}
+                  </div>
+                )}
+                {cancelable && (
+                  <Link href="/terms" className="cancel-policy">
+                    {t.cancelPolicyLink}
+                  </Link>
                 )}
               </div>
             );

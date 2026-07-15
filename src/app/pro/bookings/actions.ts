@@ -13,6 +13,8 @@ import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
 import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
 import { notify } from "@/lib/notify";
+import { applyStrike, refundToClient } from "@/lib/cancellation";
+import { StrikeType } from "@prisma/client";
 
 async function respondToRequest(bookingId: string, next: BookingStatus): Promise<void> {
   const authUser = await getAuthUser();
@@ -154,4 +156,46 @@ export async function completeBooking(bookingId: string): Promise<void> {
 
   revalidatePath("/pro/bookings");
   revalidatePath("/bookings");
+}
+
+// Отмена исполнителем после подтверждения (spec 4.2): заказчику полный возврат,
+// исполнителю страйк (при пороге - заморозка профиля). Заказчик не должен
+// страдать из-за того, что исполнитель передумал.
+export async function cancelByProvider(bookingId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { providerId: true, clientId: true, status: true, totalCents: true },
+  });
+  const okStatus: BookingStatus[] = [BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS];
+  if (!booking || booking.providerId !== user.id || !okStatus.includes(booking.status)) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+
+  try {
+    // Полный возврат заказчику.
+    await refundToClient(bookingId, booking.totalCents, "provider_cancel");
+    await prisma.$transaction([
+      prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.CANCELLED_BY_PROVIDER } }),
+      prisma.bookingEvent.create({
+        data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.CANCELLED_BY_PROVIDER } },
+      }),
+    ]);
+  } catch (e) {
+    console.error("cancelByProvider failed", bookingId, e);
+    revalidatePath("/pro/bookings");
+    return;
+  }
+
+  // Страйк исполнителю (может привести к заморозке профиля).
+  await applyStrike(user.id, StrikeType.PROVIDER_CANCEL, bookingId);
+  await notify(booking.clientId, "provider_cancelled", { bookingId });
+
+  revalidatePath("/pro/bookings");
+  revalidatePath("/bookings");
+  revalidatePath("/catalog");
 }

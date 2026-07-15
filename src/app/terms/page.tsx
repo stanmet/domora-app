@@ -28,6 +28,21 @@ export default async function TermsPage() {
         ))}
       </ul>
 
+      <h2 className="display" style={{ fontSize: 19, margin: "26px 0 12px" }}>{t.cancelPolicyTitle}</h2>
+      <ul className="inclist" style={{ margin: "0 0 20px", gap: 16 }}>
+        {[t.cpStandard, t.cpEvent, t.cpProvider, t.cpNoShow].map((p, i) => (
+          <li key={i} style={{ alignItems: "flex-start" }}>
+            <span className="inc-ic" style={{ background: "var(--sage)", color: "var(--green)", marginTop: 2 }}>
+              <Check size={14} strokeWidth={3} />
+            </span>
+            <span style={{ lineHeight: 1.5 }}>{p}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="err" style={{ background: "#f7f4ea", color: "var(--muted)", marginBottom: 14 }}>
+        {t.cpIntermediary}
+      </div>
       <div className="err" style={{ background: "#f7f4ea", color: "var(--muted)" }}>
         {t.termsDisclaimer}
       </div>

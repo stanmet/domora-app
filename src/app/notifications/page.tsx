@@ -35,6 +35,10 @@ function notifMeta(type: string): { textKey: keyof Dict; href: string } {
       return { textKey: "ntfMessage", href: "/messages" };
     case "dispute":
       return { textKey: "ntfDispute", href: "/pro/bookings" };
+    case "client_cancelled":
+      return { textKey: "ntfClientCancelled", href: "/pro/bookings" };
+    case "provider_cancelled":
+      return { textKey: "ntfProviderCancelled", href: "/bookings" };
     case "listing_approved":
       return { textKey: "ntfApproved", href: "/pro/services" };
     case "listing_rejected":
