@@ -16,7 +16,7 @@
 html,body{min-height:100%;overflow-x:clip}
 .dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:clip}
 .dm a{color:inherit;text-decoration:none}
-.dm .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.dm .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
 
 /* type */
 .dm .display{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.98}
@@ -317,7 +317,7 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* mobile */
 @media(max-width:560px){
-  .dm .wrap{padding-left:20px;padding-right:20px}
+  .dm .wrap{padding-left:22px;padding-right:22px}
   .dm .hero{padding-top:28px;padding-bottom:30px}
   .dm .hero p{font-size:15px;margin-bottom:22px}
   .dm .eyebrow{letter-spacing:.15em;font-size:10.5px}
@@ -384,12 +384,13 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .dm .homesec-head h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(22px,4vw,30px)}
 .dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
-/* Лента открытых задач копится и прокручивается внутри своего окна,
-   не растягивая всю страницу. */
-.dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;max-height:min(62vh,560px);overflow-y:auto;overflow-x:hidden;padding:3px 6px 3px 3px;overscroll-behavior:contain}
-.dm .opentasks::-webkit-scrollbar{width:8px}
-.dm .opentasks::-webkit-scrollbar-thumb{background:#d9d9d2;border-radius:99px}
-.dm .opentasks::-webkit-scrollbar-track{background:transparent}
+/* Лента открытых задач - отдельное окно с рамкой: задачи копятся и
+   прокручиваются внутри него, не растягивая всю страницу. */
+.dm .opentasks-box{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;max-height:min(58vh,520px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
+.dm .opentasks-box::-webkit-scrollbar{width:8px}
+.dm .opentasks-box::-webkit-scrollbar-thumb{background:#d3d3cc;border-radius:99px}
+.dm .opentasks-box::-webkit-scrollbar-track{background:transparent}
+.dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
 .dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
 .dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}

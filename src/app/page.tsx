@@ -94,7 +94,8 @@ export default async function Home() {
         {openTasks.length === 0 ? (
           <div className="empty">{t.openTasksEmpty}</div>
         ) : (
-          <div className="opentasks">
+          <div className="opentasks-box">
+            <div className="opentasks">
             {openTasks.map((task) => {
               const Icon = CATEGORY_ICONS[task.category.slug] ?? CATEGORY_ICONS.other;
               const budget = budgetText(task.budgetFromCents, task.budgetToCents, locale, { from: t.fromCap, to: t.budgetToL });
@@ -135,6 +136,7 @@ export default async function Home() {
                 </Link>
               );
             })}
+            </div>
           </div>
         )}
       </div>
