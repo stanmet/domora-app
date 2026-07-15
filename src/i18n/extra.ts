@@ -69,6 +69,7 @@ const en = {
   catAny: "Any",
   saving: "Saving...",
   slotTaken: "This time is no longer available. Please choose another slot.",
+  tooMany: "Too many attempts. Please wait a moment and try again.",
   genericError: "Something went wrong. Please try again.",
 };
 
@@ -134,6 +135,7 @@ const ru: ExtraDict = {
   catAny: "Любой",
   saving: "Сохранение...",
   slotTaken: "Это время уже занято. Пожалуйста, выберите другое.",
+  tooMany: "Слишком много попыток. Подождите немного и повторите.",
   genericError: "Что-то пошло не так. Попробуйте ещё раз.",
 };
 
@@ -197,6 +199,7 @@ const uk: ExtraDict = {
   catAny: "Будь-який",
   saving: "Збереження...",
   slotTaken: "Цей час уже зайнятий. Будь ласка, оберіть інший.",
+  tooMany: "Забагато спроб. Зачекайте трохи і повторіть.",
   genericError: "Щось пішло не так. Спробуйте ще раз.",
 };
 
@@ -260,6 +263,7 @@ const pl: ExtraDict = {
   catAny: "Dowolna",
   saving: "Zapisywanie...",
   slotTaken: "Ten termin jest już zajęty. Wybierz inny.",
+  tooMany: "Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.",
   genericError: "Coś poszło nie tak. Spróbuj ponownie.",
 };
 
@@ -323,6 +327,7 @@ const es: ExtraDict = {
   catAny: "Cualquiera",
   saving: "Guardando...",
   slotTaken: "Esta hora ya no está disponible. Elige otra franja.",
+  tooMany: "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
   genericError: "Algo salió mal. Inténtalo de nuevo.",
 };
 
@@ -386,6 +391,7 @@ const pt: ExtraDict = {
   catAny: "Qualquer",
   saving: "A guardar...",
   slotTaken: "Este horário já não está disponível. Escolha outro.",
+  tooMany: "Demasiadas tentativas. Aguarde um momento e tente novamente.",
   genericError: "Algo correu mal. Tente novamente.",
 };
 

@@ -17,6 +17,7 @@ import { getExtra } from "@/i18n/extra";
 import { encrypt } from "@/lib/crypto";
 import { calcBooking, stripe } from "@/lib/stripe";
 import { slotTaken } from "@/lib/bookings";
+import { rateLimit } from "@/lib/rate-limit";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
 import { qtyConfig } from "@/lib/booking-units";
 import { couponDiscount, findActiveCouponByCode, getCouponById, redeemCoupon } from "@/lib/coupons";
@@ -45,6 +46,11 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/bookings");
   const user = await ensureDbUser(authUser, locale);
+
+  // Ограничение частоты: не более 12 попыток брони за 10 минут с аккаунта.
+  if (!rateLimit(`book:${user.id}`, 12, 10 * 60 * 1000)) {
+    return { error: getExtra(locale).tooMany };
+  }
 
   const address = input.address.trim();
   const message = input.message.trim();

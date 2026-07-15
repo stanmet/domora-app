@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { filterContacts } from "@/lib/contact-filter";
+import { rateLimit } from "@/lib/rate-limit";
 import { notify } from "@/lib/notify";
 
 const CONTACTS_ALLOWED = new Set(["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"]);
@@ -23,6 +24,9 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
 
   const text = String(formData.get("text") ?? "").trim();
   if (!text) return;
+
+  // Антиспам: не более 20 сообщений в минуту с аккаунта.
+  if (!rateLimit(`msg:${user.id}`, 20, 60 * 1000)) return;
 
   const thread = await prisma.thread.findUnique({
     where: { id: threadId },
