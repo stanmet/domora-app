@@ -79,6 +79,32 @@ export async function uploadImage(file: File, folder: string): Promise<string | 
   return data.publicUrl;
 }
 
+const DOC_ALLOWED = new Set([...ALLOWED, "application/pdf"]);
+const DOC_EXT: Record<string, string> = { ...EXT, "application/pdf": "pdf" };
+
+// Загрузка документа исполнителя (изображение или PDF) для верификации.
+export async function uploadDocument(file: File, folder: string): Promise<string | null> {
+  const client = admin();
+  if (!client) return null;
+  if (!(file instanceof File) || file.size === 0) return null;
+  if (file.size > MAX_BYTES) return null;
+  if (!DOC_ALLOWED.has(file.type)) return null;
+  if (!(await ensureBucket(client.storage))) return null;
+
+  const ext = DOC_EXT[file.type] ?? "bin";
+  const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await client.storage.from(PORTFOLIO_BUCKET).upload(name, buffer, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) {
+    console.error("document upload failed", error.message);
+    return null;
+  }
+  return client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(name).data.publicUrl;
+}
+
 // Загрузка нескольких файлов подряд. Пустые/битые пропускаются.
 export async function uploadImages(files: File[], folder: string): Promise<string[]> {
   const urls: string[] = [];

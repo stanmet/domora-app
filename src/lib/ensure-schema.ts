@@ -33,6 +33,20 @@ export async function ensureSchema(): Promise<void> {
          CONSTRAINT "Translation_pkey" PRIMARY KEY ("sourceHash","targetLang")
        )`,
     );
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "ProviderDocument" (
+         "id" TEXT NOT NULL,
+         "providerId" TEXT NOT NULL,
+         "url" TEXT NOT NULL,
+         "kind" TEXT NOT NULL DEFAULT 'other',
+         "label" TEXT,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "ProviderDocument_pkey" PRIMARY KEY ("id")
+       )`,
+    );
+    await prisma.$executeRawUnsafe(
+      `CREATE INDEX IF NOT EXISTS "ProviderDocument_providerId_idx" ON "ProviderDocument"("providerId")`,
+    );
   } catch (e) {
     ensured = false; // не получилось - попробуем при следующем запросе
     console.error("ensureSchema failed", e);

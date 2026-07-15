@@ -2,7 +2,7 @@
 // Дизайн из prototypes/HostDashboard.jsx (обзор с онбординг-чеклистом).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ClipboardCheck, ClipboardList, Images, LayoutGrid } from "lucide-react";
+import { ArrowRight, ClipboardCheck, ClipboardList, FileCheck2, Images, Landmark, LayoutGrid } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -55,6 +55,16 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
       <div className="wrap" style={{ maxWidth: 680, paddingBottom: 64 }}>
         <h1 className="page">{t.proDash}</h1>
         <p className="sub">{t.proWelcome}</p>
+
+        {/* Налоговая напоминалка (Ирландия): порог €5000/год */}
+        <Link href="/taxes" className="tip" style={{ margin: "0 0 14px", textDecoration: "none" }}>
+          <div className="ti" style={{ background: "var(--green)" }}>
+            <Landmark size={20} />
+          </div>
+          <p>
+            {t.taxReminder} <b style={{ color: "var(--green-dark)" }}>{t.learnMore} →</b>
+          </p>
+        </Link>
         <div className="card">
           <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
             <div className="icircle">
@@ -111,6 +121,20 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
               <p>{t.portfolioSub}</p>
             </div>
             <Link href="/pro/portfolio" className="btn btn-ink btn-sm">
+              {t.obGo} <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
+        <div className="card">
+          <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
+            <div className="icircle">
+              <FileCheck2 size={22} strokeWidth={1.7} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3>{t.docsTitle}</h3>
+              <p>{t.docsSub}</p>
+            </div>
+            <Link href="/pro/documents" className="btn btn-ink btn-sm">
               {t.obGo} <ArrowRight size={13} />
             </Link>
           </div>

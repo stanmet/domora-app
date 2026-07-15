@@ -30,6 +30,7 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <h4>{t.footerClients}</h4>
           <Link href="/catalog">{t.findPro}</Link>
           <Link href="/tasks/new">{t.postTask}</Link>
+          <Link href="/top-performers">{t.topTitle}</Link>
           <Link href="/how-it-works">{t.navHowItWorks}</Link>
           <Link href="/safety">{t.navSafety}</Link>
         </div>
@@ -38,7 +39,9 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <h4>{t.footerPros}</h4>
           <Link href="/signup?role=pro">{t.becomePro}</Link>
           <Link href="/tasks">{t.taskBoard}</Link>
-          <Link href="/pro">{t.proDash}</Link>
+          <Link href="/pro/documents">{t.navDocs}</Link>
+          <Link href="/taxes">{t.taxesTitle}</Link>
+          <Link href="/terms">{t.navTerms}</Link>
         </div>
 
         {categories.length > 0 && (

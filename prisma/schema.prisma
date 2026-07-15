@@ -156,8 +156,23 @@ model ProviderProfile {
   listings  Listing[]
   bookings  Booking[] @relation("provider")
   offers    Offer[]
+  documents ProviderDocument[]
 
   @@index([city, status])
+}
+
+// Документы исполнителя для верификации: сертификаты, дипломы, разрешения,
+// лицензии (RECI для электрики, RGII для газа), страховки. Файлы в Supabase Storage.
+model ProviderDocument {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [userId])
+  url        String
+  kind       String          @default("other") // certificate diploma permit licence insurance other
+  label      String?
+  createdAt  DateTime        @default(now())
+
+  @@index([providerId])
 }
 
 model Category {
