@@ -415,12 +415,15 @@ model Favorite {
 }
 
 model Subscription {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   clientId   String
   listingId  String
-  rrule      String  // расписание регулярных визитов
-  discountPct Decimal @default(10) @db.Decimal(5, 2)
-  status     String  @default("active")
+  rrule      String   // расписание регулярных визитов
+  discountPct Decimal  @default(10) @db.Decimal(5, 2)
+  status     String   @default("active")
+  createdAt  DateTime @default(now())
+
+  @@index([clientId])
 }
 
 model Notification {

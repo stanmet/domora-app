@@ -18,6 +18,8 @@ import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import FavoriteButton from "@/components/FavoriteButton";
 import { toggleFavorite } from "@/app/favorites/actions";
+import SubscribeBox from "@/components/SubscribeBox";
+import { createSubscription } from "@/app/subscriptions/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -400,6 +402,22 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           <div className="note">
             <ShieldCheck size={15} /> {t.sideNote}
           </div>
+          {cheapest && (
+            <SubscribeBox
+              action={createSubscription.bind(null, cheapest.id, provider.userId)}
+              labels={{
+                title: t.subTitle,
+                desc: t.subDesc,
+                weekly: t.subFreqWeekly,
+                biweekly: t.subFreqBiweekly,
+                monthly: t.subFreqMonthly,
+                subscribe: t.subscribe,
+                off: t.subOff,
+              }}
+              priceLine={`${eur(Math.round(cheapest.priceCents * 0.9), locale)} / ${unitLabel(t, cheapest.unit)}`}
+              discountPct={10}
+            />
+          )}
         </aside>
       </div>
 

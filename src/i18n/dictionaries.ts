@@ -377,6 +377,17 @@ const en = {
   licenceRequired: "Licence required",
   licenceHint: "Regulated service. Upload your licence in Documents before publishing.",
   licenceVerified: "Licence verified",
+  subTitle: "Regular visits",
+  subDesc: "Book this pro on a repeating schedule and save.",
+  subFreqWeekly: "Every week",
+  subFreqBiweekly: "Every 2 weeks",
+  subFreqMonthly: "Every month",
+  subscribe: "Subscribe",
+  subDone: "Subscription created",
+  mySubs: "My subscriptions",
+  subEmpty: "No subscriptions yet.",
+  subCancel: "Cancel",
+  subOff: "discount",
 };
 
 export type Dict = typeof en;
@@ -756,6 +767,17 @@ const ru: Dict = {
   licenceRequired: "Нужна лицензия",
   licenceHint: "Регулируемая услуга. Загрузите лицензию в разделе Документы перед публикацией.",
   licenceVerified: "Лицензия проверена",
+  subTitle: "Регулярные визиты",
+  subDesc: "Заказывайте этого исполнителя по расписанию и экономьте.",
+  subFreqWeekly: "Каждую неделю",
+  subFreqBiweekly: "Каждые 2 недели",
+  subFreqMonthly: "Каждый месяц",
+  subscribe: "Оформить подписку",
+  subDone: "Подписка оформлена",
+  mySubs: "Мои подписки",
+  subEmpty: "Подписок пока нет.",
+  subCancel: "Отменить",
+  subOff: "скидка",
 };
 
 const uk: Dict = {
@@ -1133,6 +1155,17 @@ const uk: Dict = {
   licenceRequired: "Потрібна ліцензія",
   licenceHint: "Регульована послуга. Завантажте ліцензію в розділі Документи перед публікацією.",
   licenceVerified: "Ліцензію перевірено",
+  subTitle: "Регулярні візити",
+  subDesc: "Замовляйте цього виконавця за розкладом і економте.",
+  subFreqWeekly: "Щотижня",
+  subFreqBiweekly: "Кожні 2 тижні",
+  subFreqMonthly: "Щомісяця",
+  subscribe: "Оформити підписку",
+  subDone: "Підписку оформлено",
+  mySubs: "Мої підписки",
+  subEmpty: "Підписок поки немає.",
+  subCancel: "Скасувати",
+  subOff: "знижка",
 };
 
 const pl: Dict = {
@@ -1510,6 +1543,17 @@ const pl: Dict = {
   licenceRequired: "Wymagana licencja",
   licenceHint: "Usługa regulowana. Prześlij licencję w sekcji Dokumenty przed publikacją.",
   licenceVerified: "Licencja zweryfikowana",
+  subTitle: "Regularne wizyty",
+  subDesc: "Zamawiaj tego wykonawcę cyklicznie i oszczędzaj.",
+  subFreqWeekly: "Co tydzień",
+  subFreqBiweekly: "Co 2 tygodnie",
+  subFreqMonthly: "Co miesiąc",
+  subscribe: "Subskrybuj",
+  subDone: "Subskrypcja utworzona",
+  mySubs: "Moje subskrypcje",
+  subEmpty: "Brak subskrypcji.",
+  subCancel: "Anuluj",
+  subOff: "rabatu",
 };
 
 const es: Dict = {
@@ -1887,6 +1931,17 @@ const es: Dict = {
   licenceRequired: "Licencia obligatoria",
   licenceHint: "Servicio regulado. Sube tu licencia en Documentos antes de publicar.",
   licenceVerified: "Licencia verificada",
+  subTitle: "Visitas regulares",
+  subDesc: "Reserva a este profesional de forma periódica y ahorra.",
+  subFreqWeekly: "Cada semana",
+  subFreqBiweekly: "Cada 2 semanas",
+  subFreqMonthly: "Cada mes",
+  subscribe: "Suscribirse",
+  subDone: "Suscripción creada",
+  mySubs: "Mis suscripciones",
+  subEmpty: "Aún no hay suscripciones.",
+  subCancel: "Cancelar",
+  subOff: "de descuento",
 };
 
 const pt: Dict = {
@@ -2264,6 +2319,17 @@ const pt: Dict = {
   licenceRequired: "Licença obrigatória",
   licenceHint: "Serviço regulado. Carregue a sua licença em Documentos antes de publicar.",
   licenceVerified: "Licença verificada",
+  subTitle: "Visitas regulares",
+  subDesc: "Reserve este profissional de forma periódica e poupe.",
+  subFreqWeekly: "Todas as semanas",
+  subFreqBiweekly: "A cada 2 semanas",
+  subFreqMonthly: "Todos os meses",
+  subscribe: "Subscrever",
+  subDone: "Subscrição criada",
+  mySubs: "As minhas subscrições",
+  subEmpty: "Ainda sem subscrições.",
+  subCancel: "Cancelar",
+  subOff: "de desconto",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

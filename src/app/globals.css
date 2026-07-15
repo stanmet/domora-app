@@ -155,6 +155,25 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .side .note{display:flex;gap:8px;font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
 .dm .side .note svg{flex-shrink:0;color:var(--green);margin-top:1px}
 
+/* Подписка на регулярные визиты */
+.dm .subbox{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.dm .subbox-head{display:flex;align-items:center;gap:8px;font-size:14px}
+.dm .subbox-head svg{color:var(--green)}
+.dm .subbox-desc{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.dm .subbox-price{font-size:14px;font-weight:700}
+.dm .subbox-off{color:var(--green);font-weight:800}
+.dm .subbox-select{width:100%;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+
+/* Мои подписки (кабинет) */
+.dm .subs-sec{margin-top:32px}
+.dm .subs-title{display:flex;align-items:center;gap:8px;font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:19px;margin-bottom:14px}
+.dm .subs-title svg{color:var(--green)}
+.dm .subs-list{display:flex;flex-direction:column;gap:10px}
+.dm .subs-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.dm .subs-name{font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.dm .subs-name:hover{text-decoration:underline}
+.dm .subs-meta{font-size:12px;color:var(--muted);margin-top:3px}
+
 /* footer */
 .dm footer{border-top:1px solid var(--line);padding:28px 0;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 

@@ -1,12 +1,15 @@
 // Личный кабинет: данные пользователя из таблицы User, роль и выход.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarClock, X } from "lucide-react";
 import { Role } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
-import { getDict } from "@/i18n/dictionaries";
+import { getDict, unitLabel } from "@/i18n/dictionaries";
+import { eur } from "@/lib/format";
+import { cancelSubscription } from "@/app/subscriptions/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +22,28 @@ export default async function AccountPage() {
   const user = await ensureDbUser(authUser, locale);
   const isPro = user.roles.includes(Role.PROVIDER);
   const isAdmin = user.roles.includes(Role.ADMIN);
+
+  // Подписки клиента на регулярные визиты (частота из rrule).
+  const freqLabel = (rrule: string) =>
+    rrule.includes("MONTHLY") ? t.subFreqMonthly : rrule.includes("INTERVAL=2") ? t.subFreqBiweekly : t.subFreqWeekly;
+  let subs: { id: string; rrule: string; listing: { title: string; providerId: string; priceCents: number; unit: string } | null }[] = [];
+  try {
+    const rows = await prisma.subscription.findMany({
+      where: { clientId: user.id, status: "active" },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, rrule: true, listingId: true },
+    });
+    if (rows.length) {
+      const listings = await prisma.listing.findMany({
+        where: { id: { in: rows.map((r) => r.listingId) } },
+        select: { id: true, title: true, providerId: true, priceCents: true, unit: true },
+      });
+      const byId = new Map(listings.map((l) => [l.id, l]));
+      subs = rows.map((r) => ({ id: r.id, rrule: r.rrule, listing: byId.get(r.listingId) ?? null }));
+    }
+  } catch {
+    // Таблица подписок недоступна.
+  }
 
   return (
     <main>
@@ -58,6 +83,41 @@ export default async function AccountPage() {
             </Link>
           )}
         </div>
+
+        <section className="subs-sec">
+          <h2 className="subs-title">
+            <CalendarClock size={18} /> {t.mySubs}
+          </h2>
+          {subs.length === 0 ? (
+            <div className="empty">{t.subEmpty}</div>
+          ) : (
+            <div className="subs-list">
+              {subs.map((s) => (
+                <div className="subs-row" key={s.id}>
+                  <div className="subs-info">
+                    <Link href={s.listing ? `/providers/${s.listing.providerId}` : "#"} className="subs-name">
+                      {s.listing?.title ?? "—"}
+                    </Link>
+                    <div className="subs-meta">
+                      {freqLabel(s.rrule)}
+                      {s.listing && (
+                        <>
+                          {" · "}
+                          {eur(Math.round(s.listing.priceCents * 0.9), locale)} / {unitLabel(t, s.listing.unit)}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <form action={cancelSubscription.bind(null, s.id)}>
+                    <button className="btn btn-line btn-sm">
+                      <X size={14} /> {t.subCancel}
+                    </button>
+                  </form>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
