@@ -44,12 +44,15 @@ export default function ProOnboarding({
     setError(null);
     try {
       const res = await fetch("/api/connect/onboard", { method: "POST" });
-      const data = (await res.json().catch(() => null)) as { url?: string } | null;
-      if (!res.ok || !data?.url) throw new Error(`onboard failed: ${res.status}`);
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (!res.ok || !data?.url) {
+        // Показываем настоящую причину от Stripe, если сервер ее прислал.
+        throw new Error(data?.error || `onboard failed: ${res.status}`);
+      }
       window.location.assign(data.url);
     } catch (e) {
       console.error(e);
-      setError(t.errGeneric);
+      setError(e instanceof Error && e.message ? e.message : t.errGeneric);
       setStripePending(false);
     }
   }

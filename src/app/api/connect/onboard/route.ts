@@ -31,34 +31,44 @@ export async function POST(req: Request) {
     });
   }
 
-  let accountId = profile.stripeAccountId;
-  if (!accountId) {
-    const account = await stripe.accounts.create({
-      type: "express",
-      country: "IE",
-      email: user.email,
-      capabilities: { transfers: { requested: true } },
-      business_type: "individual",
-      metadata: { userId: user.id },
+  // Все обращения к Stripe в одном try/catch: при сбое возвращаем читаемую
+  // причину (например "Connect не активирован"), а не пустой 500. Так
+  // исполнитель и мы видим, что именно поправить, вместо "что-то пошло не так".
+  try {
+    let accountId = profile.stripeAccountId;
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: "express",
+        country: "IE",
+        email: user.email,
+        capabilities: { transfers: { requested: true } },
+        business_type: "individual",
+        metadata: { userId: user.id },
+      });
+      accountId = account.id;
+      await prisma.providerProfile.update({
+        where: { userId: user.id },
+        data: { stripeAccountId: accountId },
+      });
+    }
+
+    const origin = process.env.APP_URL || new URL(req.url).origin;
+    // Вебхук account.updated должен существовать до онбординга, иначе
+    // не узнаем, что исполнителю можно включить выплаты. Сбой самонастройки
+    // вебхука не должен ронять онбординг - он и так не бросает наружу.
+    await ensureStripeWebhooks(origin);
+
+    const link = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${origin}/pro?stripe_refresh=1`,
+      return_url: `${origin}/pro?onboarded=1`,
+      type: "account_onboarding",
     });
-    accountId = account.id;
-    await prisma.providerProfile.update({
-      where: { userId: user.id },
-      data: { stripeAccountId: accountId },
-    });
+
+    return NextResponse.json({ url: link.url });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Stripe onboarding failed";
+    console.error("connect onboarding failed", user.id, message);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
-
-  const origin = process.env.APP_URL || new URL(req.url).origin;
-  // Вебхук account.updated должен существовать до онбординга, иначе
-  // не узнаем, что исполнителю можно включить выплаты.
-  await ensureStripeWebhooks(origin);
-
-  const link = await stripe.accountLinks.create({
-    account: accountId,
-    refresh_url: `${origin}/pro?stripe_refresh=1`,
-    return_url: `${origin}/pro?onboarded=1`,
-    type: "account_onboarding",
-  });
-
-  return NextResponse.json({ url: link.url });
 }
