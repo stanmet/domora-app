@@ -11,7 +11,17 @@ import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { Dict } from "@/i18n/dictionaries";
 import OAuthButtons from "@/components/OAuthButtons";
 
-export default function LoginForm({ t, next, initialError }: { t: Dict; next: string | null; initialError: string | null }) {
+export default function LoginForm({
+  t,
+  next,
+  initialError,
+  forgotLabel,
+}: {
+  t: Dict;
+  next: string | null;
+  initialError: string | null;
+  forgotLabel: string;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -111,6 +121,11 @@ export default function LoginForm({ t, next, initialError }: { t: Dict; next: st
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <div style={{ textAlign: "right", marginTop: 4 }}>
+        <Link href="/forgot-password" style={{ fontSize: 13 }}>
+          {forgotLabel}
+        </Link>
+      </div>
       {error && <div className="err">{error}</div>}
       <button className="btn btn-ink" style={{ width: "100%", justifyContent: "center", marginTop: 20 }} disabled={busy}>
         {busy ? t.signingIn : t.login}
