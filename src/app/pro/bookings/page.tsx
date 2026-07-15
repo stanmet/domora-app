@@ -4,7 +4,7 @@
 // Точный адрес клиента расшифровывается только после принятия заказа.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Calendar, Check, Clock, CreditCard, Lock, MapPin, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Clock, CreditCard, FileText, Lock, MapPin, ShieldCheck, Users } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -93,6 +93,11 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
           )
         )}
       </div>
+      {ADDRESS_VISIBLE.includes(b.status) && (
+        <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm" style={{ marginTop: 2 }}>
+          <FileText size={14} /> {t.invoiceGet}
+        </Link>
+      )}
       {isRequest && clientMessage && (
         <div className="bkmsg">
           <b>{t.clientMsgL}</b>

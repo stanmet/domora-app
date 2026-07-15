@@ -362,6 +362,15 @@ const en = {
   topSub: "The highest-rated pros on Domora right now.",
   footerLegal: "Legal",
   liSubcat: "Subcategory (optional)",
+  // Инвойс / накладная
+  invoiceTitle: "Invoice",
+  invoiceNo: "Invoice no.",
+  invoiceFrom: "Provider",
+  invoiceTo: "Client",
+  invoicePrint: "Print / Save PDF",
+  invoiceNote: "Domora is an intermediary marketplace and not a party to this service. The provider is responsible for their own taxes and any VAT.",
+  invoiceGet: "Invoice",
+  invoiceNA: "The invoice becomes available once the booking is confirmed.",
 };
 
 export type Dict = typeof en;
@@ -726,6 +735,15 @@ const ru: Dict = {
   topSub: "Исполнители с самым высоким рейтингом на Domora прямо сейчас.",
   footerLegal: "Правовое",
   liSubcat: "Подкатегория (необязательно)",
+  // Инвойс / накладная
+  invoiceTitle: "Инвойс",
+  invoiceNo: "Инвойс №",
+  invoiceFrom: "Исполнитель",
+  invoiceTo: "Заказчик",
+  invoicePrint: "Печать / Сохранить PDF",
+  invoiceNote: "Domora - маркетплейс-посредник и не является стороной услуги. Исполнитель сам отвечает за свои налоги и НДС при наличии.",
+  invoiceGet: "Инвойс",
+  invoiceNA: "Инвойс станет доступен после подтверждения заказа.",
 };
 
 const uk: Dict = {
@@ -1088,6 +1106,15 @@ const uk: Dict = {
   topSub: "Виконавці з найвищим рейтингом на Domora прямо зараз.",
   footerLegal: "Правове",
   liSubcat: "Підкатегорія (необов'язково)",
+  // Інвойс / накладна
+  invoiceTitle: "Інвойс",
+  invoiceNo: "Інвойс №",
+  invoiceFrom: "Виконавець",
+  invoiceTo: "Замовник",
+  invoicePrint: "Друк / Зберегти PDF",
+  invoiceNote: "Domora - маркетплейс-посередник і не є стороною послуги. Виконавець сам відповідає за свої податки та ПДВ за наявності.",
+  invoiceGet: "Інвойс",
+  invoiceNA: "Інвойс стане доступним після підтвердження замовлення.",
 };
 
 const pl: Dict = {
@@ -1450,6 +1477,15 @@ const pl: Dict = {
   topSub: "Najwyżej oceniani wykonawcy na Domora w tej chwili.",
   footerLegal: "Prawne",
   liSubcat: "Podkategoria (opcjonalnie)",
+  // Faktura
+  invoiceTitle: "Faktura",
+  invoiceNo: "Faktura nr",
+  invoiceFrom: "Wykonawca",
+  invoiceTo: "Klient",
+  invoicePrint: "Drukuj / Zapisz PDF",
+  invoiceNote: "Domora to marketplace-pośrednik i nie jest stroną usługi. Wykonawca sam odpowiada za swoje podatki i ewentualny VAT.",
+  invoiceGet: "Faktura",
+  invoiceNA: "Faktura będzie dostępna po potwierdzeniu rezerwacji.",
 };
 
 const es: Dict = {
@@ -1812,6 +1848,15 @@ const es: Dict = {
   topSub: "Los profesionales mejor valorados de Domora ahora mismo.",
   footerLegal: "Legal",
   liSubcat: "Subcategoría (opcional)",
+  // Factura
+  invoiceTitle: "Factura",
+  invoiceNo: "Factura n.º",
+  invoiceFrom: "Profesional",
+  invoiceTo: "Cliente",
+  invoicePrint: "Imprimir / Guardar PDF",
+  invoiceNote: "Domora es un marketplace intermediario y no es parte del servicio. El profesional responde de sus propios impuestos y del IVA si corresponde.",
+  invoiceGet: "Factura",
+  invoiceNA: "La factura estará disponible cuando se confirme la reserva.",
 };
 
 const pt: Dict = {
@@ -2174,6 +2219,15 @@ const pt: Dict = {
   topSub: "Os profissionais mais bem avaliados na Domora neste momento.",
   footerLegal: "Legal",
   liSubcat: "Subcategoria (opcional)",
+  // Fatura
+  invoiceTitle: "Fatura",
+  invoiceNo: "Fatura n.º",
+  invoiceFrom: "Profissional",
+  invoiceTo: "Cliente",
+  invoicePrint: "Imprimir / Guardar PDF",
+  invoiceNote: "A Domora é um marketplace intermediário e não é parte do serviço. O profissional responde pelos seus impostos e IVA quando aplicável.",
+  invoiceGet: "Fatura",
+  invoiceNA: "A fatura fica disponível quando a reserva for confirmada.",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

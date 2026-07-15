@@ -3,7 +3,7 @@
 // экран успеха после отправки запроса из view "done".
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Check, CreditCard, MapPin, Users } from "lucide-react";
+import { Calendar, Check, CreditCard, FileText, MapPin, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -92,6 +92,11 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                     </span>
                   )}
                 </div>
+                {["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"].includes(b.status) && (
+                  <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm">
+                    <FileText size={14} /> {t.invoiceGet}
+                  </Link>
+                )}
               </div>
             );
           })
