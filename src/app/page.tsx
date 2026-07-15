@@ -94,7 +94,7 @@ export default async function Home() {
         {openTasks.length === 0 ? (
           <div className="empty">{t.openTasksEmpty}</div>
         ) : (
-          <div className="opentasks-box">
+          <div className="scrollpanel">
             <div className="opentasks">
             {openTasks.map((task) => {
               const Icon = CATEGORY_ICONS[task.category.slug] ?? CATEGORY_ICONS.other;
@@ -152,7 +152,8 @@ export default async function Home() {
         {listings.length === 0 ? (
           <div className="empty">{t.noResults}</div>
         ) : (
-          <div className="grid">
+          <div className="scrollpanel">
+            <div className="grid">
             {listings.map((l) => {
               const Icon = CATEGORY_ICONS[l.category.slug] ?? CATEGORY_ICONS.other;
               const rating = Number(l.provider.ratingCached);
@@ -201,6 +202,7 @@ export default async function Home() {
                 </Link>
               );
             })}
+            </div>
           </div>
         )}
       </div>

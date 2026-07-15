@@ -16,6 +16,7 @@
 html,body{min-height:100%;overflow-x:clip}
 .dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:clip}
 .dm a{color:inherit;text-decoration:none}
+.dm img{max-width:100%}
 .dm .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
 
 /* type */
@@ -98,7 +99,7 @@ html,body{min-height:100%;overflow-x:clip}
 /* search + category tabs */
 .dm .search{display:flex;gap:10px;margin:16px 0 4px}
 .dm .sbox{flex:1;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:12px 18px;background:#fff}
-.dm .sbox input{border:none;outline:none;flex:1;font-size:15px;font-family:var(--font-inter),'Inter',sans-serif;background:transparent;color:var(--ink);padding:0}
+.dm .sbox input{border:none;outline:none;flex:1;font-size:16px;font-family:var(--font-inter),'Inter',sans-serif;background:transparent;color:var(--ink);padding:0}
 .dm .fbtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:0 16px;background:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;color:var(--ink)}
 .dm .fbtn.on{border-color:var(--ink)}
 .dm .citychips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 2px}
@@ -185,7 +186,7 @@ html,body{min-height:100%;overflow-x:clip}
 /* формы входа и аккаунта (поля из prototypes/HostDashboard.jsx) */
 .dm .auth{max-width:480px;margin:0 auto;padding:10px 0 64px}
 .dm .form label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
-.dm input.f,.dm select.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14.5px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink)}
+.dm input.f,.dm select.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink)}
 .dm input.f:focus,.dm select.f:focus{outline:2px solid var(--green)}
 .dm .rolecards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .dm .rolecard{display:flex;flex-direction:column;gap:10px;padding:16px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;text-align:left;color:var(--ink)}
@@ -211,7 +212,7 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .bform{max-width:560px;margin:0 auto;padding-top:28px;padding-bottom:64px}
 .dm .bform h1{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:clamp(24px,5vw,34px);text-transform:uppercase;margin-bottom:6px}
 .dm .bform .sub{font-size:14px;margin-bottom:28px}
-.dm textarea.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14.5px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink);resize:vertical}
+.dm textarea.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px;font-family:var(--font-inter),'Inter',sans-serif;background:#fff;color:var(--ink);resize:vertical}
 .dm textarea.f:focus{outline:2px solid var(--green)}
 .dm .stepper{display:flex;align-items:center;gap:14px}
 .dm .stepper button{width:42px;height:42px;border-radius:50%;border:1px solid var(--ink);background:#fff;font-size:19px;font-weight:700;cursor:pointer;color:var(--ink)}
@@ -344,7 +345,7 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .topsearch{flex:1;max-width:520px;display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:#fff;margin:0 14px}
 .dm .topsearch:focus-within{border-color:var(--ink)}
 .dm .topsearch svg{color:var(--muted);flex-shrink:0}
-.dm .topsearch input{border:none;outline:none;flex:1;min-width:0;font-size:14px;background:transparent;color:var(--ink);font-family:var(--font-inter),'Inter',sans-serif}
+.dm .topsearch input{border:none;outline:none;flex:1;min-width:0;font-size:16px;background:transparent;color:var(--ink);font-family:var(--font-inter),'Inter',sans-serif}
 .dm .burger{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;color:var(--ink);flex-shrink:0}
 .dm .burger:hover{border-color:var(--ink)}
 
@@ -386,11 +387,12 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
 /* Лента открытых задач - отдельное окно с рамкой: задачи копятся и
    прокручиваются внутри него, не растягивая всю страницу. */
-.dm .opentasks-box{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
-.dm .opentasks-box::-webkit-scrollbar{width:8px}
-.dm .opentasks-box::-webkit-scrollbar-thumb{background:#c9c9c1;border-radius:99px}
-.dm .opentasks-box::-webkit-scrollbar-track{background:transparent}
+.dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
+.dm .scrollpanel::-webkit-scrollbar{width:8px}
+.dm .scrollpanel::-webkit-scrollbar-thumb{background:#c9c9c1;border-radius:99px}
+.dm .scrollpanel::-webkit-scrollbar-track{background:transparent}
 .dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.dm .scrollpanel .grid{margin:0}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
 .dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
 .dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}
@@ -454,7 +456,7 @@ html,body{min-height:100%;overflow-x:clip}
 
 @media(max-width:640px){
   .dm .topsearch{margin:0 10px;padding:9px 12px}
-  .dm .topsearch input{font-size:13px}
+  .dm .topsearch input{font-size:16px}
   .dm .hd{height:56px}
   .dm .opentasks{grid-template-columns:1fr}
 }
