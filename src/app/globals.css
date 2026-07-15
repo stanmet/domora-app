@@ -317,7 +317,7 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* mobile */
 @media(max-width:560px){
-  .dm .wrap{padding-left:22px;padding-right:22px}
+  .dm .wrap{padding-left:26px;padding-right:26px}
   .dm .hero{padding-top:28px;padding-bottom:30px}
   .dm .hero p{font-size:15px;margin-bottom:22px}
   .dm .eyebrow{letter-spacing:.15em;font-size:10.5px}
@@ -386,9 +386,9 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
 /* Лента открытых задач - отдельное окно с рамкой: задачи копятся и
    прокручиваются внутри него, не растягивая всю страницу. */
-.dm .opentasks-box{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;max-height:min(58vh,520px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
+.dm .opentasks-box{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
 .dm .opentasks-box::-webkit-scrollbar{width:8px}
-.dm .opentasks-box::-webkit-scrollbar-thumb{background:#d3d3cc;border-radius:99px}
+.dm .opentasks-box::-webkit-scrollbar-thumb{background:#c9c9c1;border-radius:99px}
 .dm .opentasks-box::-webkit-scrollbar-track{background:transparent}
 .dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
