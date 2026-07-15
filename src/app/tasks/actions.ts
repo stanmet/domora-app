@@ -17,6 +17,7 @@ import { getDict } from "@/i18n/dictionaries";
 import { calcBooking } from "@/lib/stripe";
 import { filterContacts } from "@/lib/contact-filter";
 import { MAX_OFFERS_PER_TASK } from "@/lib/tasks";
+import { notify } from "@/lib/notify";
 
 export type OfferState = { ok: true } | { error: string } | null;
 
@@ -66,6 +67,8 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
         status: OfferStatus.PENDING,
       },
     });
+    // Уведомляем автора задачи о новом отклике.
+    await notify(task.clientId, "new_offer", { taskId });
   } catch (e) {
     // Уникальный индекс (taskId, providerId): повторный отклик запрещён.
     if (e && typeof e === "object" && "code" in e && (e as { code?: string }).code === "P2002") {
@@ -162,6 +165,9 @@ export async function acceptOffer(offerId: string): Promise<void> {
 
     return created;
   });
+
+  // Уведомляем исполнителя, что его выбрали (после оплаты станет запросом брони).
+  await notify(offer.providerId, "offer_accepted", { taskId: task.id, bookingId: booking.id });
 
   redirect(`/bookings/${booking.id}/pay`);
 }

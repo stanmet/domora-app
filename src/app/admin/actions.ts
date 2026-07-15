@@ -16,6 +16,7 @@ import { removeImage } from "@/lib/storage";
 import { requireAdmin, adminActionLog } from "@/lib/admin";
 import { getLocale } from "@/i18n/server";
 import { getAdminDict } from "./i18n";
+import { notify } from "@/lib/notify";
 
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
@@ -44,6 +45,8 @@ export async function approveListing(listingId: string): Promise<void> {
     adminActionLog(admin.id, "listing", listingId, "approve"),
   ]);
 
+  await notify(listing.providerId, "listing_approved", { listingId });
+
   revalidatePath("/admin");
   revalidatePath("/catalog");
 }
@@ -63,6 +66,8 @@ export async function rejectListing(listingId: string, reason: string): Promise<
     }),
     adminActionLog(admin.id, "listing", listingId, "reject", note ?? undefined),
   ]);
+
+  await notify(listing.providerId, "listing_rejected", { listingId });
 
   revalidatePath("/admin");
 }

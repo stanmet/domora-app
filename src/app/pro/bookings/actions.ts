@@ -12,6 +12,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
 import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
+import { notify } from "@/lib/notify";
 
 async function respondToRequest(bookingId: string, next: BookingStatus): Promise<void> {
   const authUser = await getAuthUser();
@@ -82,6 +83,9 @@ async function respondToRequest(bookingId: string, next: BookingStatus): Promise
     }),
   ]);
 
+  // Уведомляем клиента об ответе исполнителя.
+  await notify(booking.clientId, next === BookingStatus.ACCEPTED ? "accepted" : "declined", { bookingId: booking.id });
+
   revalidatePath("/pro/bookings");
   revalidatePath("/bookings");
 }
@@ -124,7 +128,7 @@ export async function completeBooking(bookingId: string): Promise<void> {
   if (!authUser?.email) redirect("/login?next=/pro/bookings");
   const user = await ensureDbUser(authUser, await getLocale());
 
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { providerId: true, status: true } });
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { providerId: true, clientId: true, status: true } });
   if (
     !booking ||
     booking.providerId !== user.id ||
@@ -144,6 +148,10 @@ export async function completeBooking(bookingId: string): Promise<void> {
       data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.COMPLETED } },
     }),
   ]);
+
+  // Уведомляем клиента: работа выполнена, нужно подтвердить или открыть спор.
+  await notify(booking.clientId, "completed", { bookingId });
+
   revalidatePath("/pro/bookings");
   revalidatePath("/bookings");
 }

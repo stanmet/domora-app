@@ -83,6 +83,20 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Subscription_clientId_idx" ON "Subscription"("clientId")`);
 
+    // Уведомления пользователю (колокольчик).
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "Notification" (
+         "id" TEXT NOT NULL,
+         "userId" TEXT NOT NULL,
+         "type" TEXT NOT NULL,
+         "payload" JSONB NOT NULL DEFAULT '{}',
+         "readAt" TIMESTAMP(3),
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+       )`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Notification_userId_readAt_idx" ON "Notification"("userId","readAt")`);
+
     // Наполняем дерево подкатегорий данными (идемпотентно).
     await seedSubcategories();
   } catch (e) {

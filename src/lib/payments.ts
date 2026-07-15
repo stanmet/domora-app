@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { ensureStripeWebhooks } from "@/lib/stripe-webhook-setup";
 import { REQUEST_TTL_HOURS } from "@/lib/booking-units";
+import { notify } from "@/lib/notify";
 
 // Создает PaymentIntent холда для DRAFT-брони и запись Payment со статусом HOLD.
 // При повторной отправке формы (например, банк отклонил первую карту) бронь и
@@ -87,6 +88,10 @@ export async function markBookingRequested(bookingId: string, actorId: string | 
       data: { bookingId, actorId, type: "status_change", payload: { to: BookingStatus.REQUESTED } },
     }),
   ]);
+
+  // Новый запрос: уведомляем исполнителя (один раз, только победитель гонки сюда дошёл).
+  const b = await prisma.booking.findUnique({ where: { id: bookingId }, select: { providerId: true } });
+  if (b) await notify(b.providerId, "new_request", { bookingId });
   return true;
 }
 

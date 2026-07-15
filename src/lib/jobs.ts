@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { expireOverdueRequests } from "@/lib/bookings";
+import { notify } from "@/lib/notify";
 
 // 1. Запросы без ответа 72 часа: снять холд, статус EXPIRED.
 export async function expireStaleRequests(): Promise<void> {
@@ -61,6 +62,9 @@ export async function processPayouts(): Promise<void> {
           data: { bookingId: b.id, actorId: null, type: "status_change", payload: { to: "CLOSED", reason: "payout_executed" } },
         }),
       ]);
+
+      // Уведомляем исполнителя о выплате.
+      await notify(b.providerId, "payout", { bookingId: b.id, amountCents: transfer.amountCents });
     } catch (e) {
       console.error("payout failed", b.id, e);
     }

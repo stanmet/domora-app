@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { filterContacts } from "@/lib/contact-filter";
+import { notify } from "@/lib/notify";
 
 const CONTACTS_ALLOWED = new Set(["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"]);
 
@@ -42,6 +43,11 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
       contactFilterFlag: filtered.flagged,
     },
   });
+
+  // Уведомляем собеседника о новом сообщении.
+  const recipient = user.id === clientId ? providerId : clientId;
+  await notify(recipient, "message", { threadId });
+
   revalidatePath(`/messages/${threadId}`);
   revalidatePath("/messages");
 }

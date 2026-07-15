@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  Bell,
   ClipboardList,
   Heart,
   HelpCircle,
@@ -33,6 +34,7 @@ export default function SiteNav({
   userName,
   isProvider,
   isAdmin,
+  unreadCount,
   categories,
   cities,
   city,
@@ -43,6 +45,7 @@ export default function SiteNav({
   userName: string | null;
   isProvider: boolean;
   isAdmin: boolean;
+  unreadCount: number;
   categories: { slug: string; label: string }[];
   cities: string[];
   city: string;
@@ -73,6 +76,7 @@ export default function SiteNav({
     { href: "/tasks/mine", label: t.myTasks, icon: ListTodo, auth: true },
     { href: "/favorites", label: t.favorites, icon: Heart, auth: true },
     { href: "/messages", label: t.messages, icon: MessageCircle, auth: true },
+    { href: "/notifications", label: t.notifTitle, icon: Bell, auth: true },
     { href: "/account", label: t.profile, icon: UserRound, auth: true },
     { href: "/how-it-works", label: t.navHowItWorks, icon: HelpCircle },
     { href: "/safety", label: t.navSafety, icon: ShieldCheck },
@@ -92,6 +96,13 @@ export default function SiteNav({
               {city ? `${t.searchTop} · ${city}` : t.searchTop}
             </span>
           </button>
+
+          {isLoggedIn && (
+            <Link href="/notifications" className="bellbtn" aria-label={t.notifTitle}>
+              <Bell size={20} />
+              {unreadCount > 0 && <span className="bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            </Link>
+          )}
 
           <button className="burger" onClick={() => setOpen(true)} aria-label={t.menu} aria-expanded={open}>
             <Menu size={20} />

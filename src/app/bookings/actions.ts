@@ -13,6 +13,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { processPayouts } from "@/lib/jobs";
+import { notify } from "@/lib/notify";
 
 export async function confirmBooking(bookingId: string): Promise<void> {
   const authUser = await getAuthUser();
@@ -51,7 +52,7 @@ export async function disputeBooking(bookingId: string, formData: FormData): Pro
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { clientId: true, status: true, dispute: { select: { id: true } } },
+    select: { clientId: true, providerId: true, status: true, dispute: { select: { id: true } } },
   });
   const disputable: BookingStatus[] = [BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED];
   if (!booking || booking.clientId !== user.id || !disputable.includes(booking.status) || booking.dispute) {
@@ -77,6 +78,9 @@ export async function disputeBooking(bookingId: string, formData: FormData): Pro
     revalidatePath("/bookings");
     return;
   }
+
+  // Уведомляем исполнителя об открытии спора.
+  await notify(booking.providerId, "dispute", { bookingId });
 
   revalidatePath("/bookings");
   revalidatePath("/pro/bookings");
