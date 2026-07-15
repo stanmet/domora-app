@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
 import { dateOnly, eur } from "@/lib/format";
+import { bookingRef } from "@/lib/booking-ref";
 import PrintButton from "./PrintButton";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const number = booking.id.slice(-8).toUpperCase();
+  const number = bookingRef(booking);
 
   return (
     <main className="wrap sec" style={{ maxWidth: 720 }}>

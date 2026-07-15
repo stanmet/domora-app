@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { eur } from "@/lib/format";
+import { bookingRef } from "@/lib/booking-ref";
 import ChatForm from "../../messages/ChatForm";
 import { acceptResolution, escalateDispute, postDisputeMessage, proposeResolution } from "../actions";
 
@@ -27,7 +28,7 @@ export default async function DisputePage({ params }: { params: Promise<{ id: st
     where: { id },
     include: {
       booking: {
-        select: { id: true, clientId: true, providerId: true, totalCents: true, listing: { select: { title: true } } },
+        select: { id: true, ref: true, clientId: true, providerId: true, totalCents: true, listing: { select: { title: true } } },
       },
       messages: { orderBy: { createdAt: "asc" }, select: { id: true, authorId: true, text: true } },
     },
@@ -62,7 +63,7 @@ export default async function DisputePage({ params }: { params: Promise<{ id: st
         </div>
         <h1 className="page" style={{ fontSize: "clamp(20px,5vw,26px)" }}>{dispute.booking.listing.title}</h1>
         <p className="sub">
-          {t.sumTotal}: {eur(dispute.booking.totalCents, locale)}
+          #{bookingRef(dispute.booking)} · {t.sumTotal}: {eur(dispute.booking.totalCents, locale)}
         </p>
 
         {dispute.status === DisputeStatus.NEGOTIATION && (

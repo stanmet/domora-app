@@ -17,6 +17,7 @@ import { getExtra } from "@/i18n/extra";
 import { encrypt } from "@/lib/crypto";
 import { calcBooking, stripe } from "@/lib/stripe";
 import { slotTaken } from "@/lib/bookings";
+import { genBookingRef } from "@/lib/booking-ref";
 import { rateLimit } from "@/lib/rate-limit";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
 import { qtyConfig } from "@/lib/booking-units";
@@ -131,6 +132,7 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
       const booking = await prisma.booking.create({
         data: {
           ...bookingData,
+          ref: genBookingRef(),
           status: BookingStatus.DRAFT,
           events: {
             create: {

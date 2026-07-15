@@ -15,6 +15,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { calcBooking } from "@/lib/stripe";
+import { genBookingRef } from "@/lib/booking-ref";
 import { filterContacts } from "@/lib/contact-filter";
 import { MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import { notify } from "@/lib/notify";
@@ -129,6 +130,7 @@ export async function acceptOffer(offerId: string): Promise<void> {
         clientId: user.id,
         providerId: offer.providerId,
         listingId: listing.id,
+        ref: genBookingRef(),
         status: BookingStatus.DRAFT,
         dateStart,
         qty: 1,

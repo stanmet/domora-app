@@ -6,6 +6,7 @@ import { stripe, calcBooking } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
+import { genBookingRef } from "@/lib/booking-ref";
 
 export async function POST(req: Request) {
   const user = await requireUser(req);
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       clientId: user.id,
       providerId: listing.providerId,
       listingId: listing.id,
+      ref: genBookingRef(),
       status: "REQUESTED",
       dateStart: new Date(body.dateStart),
       qty: body.qty,

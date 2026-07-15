@@ -9,6 +9,7 @@ import { getLocale } from "@/i18n/server";
 import { getDict, categoryLabel } from "@/i18n/dictionaries";
 import { eur } from "@/lib/format";
 import { statusPillClass } from "@/lib/booking-units";
+import { bookingRef } from "@/lib/booking-ref";
 import { requireAdmin } from "@/lib/admin";
 import { getAdminDict, adminStatus } from "./i18n";
 import { approveListing, deleteDocument, setProviderFrozen, setUserFrozen, verifyDocument } from "./actions";
@@ -280,7 +281,10 @@ async function BookingsList({
               <tr key={b.id}>
                 <td>{b.client.name}</td>
                 <td>{b.provider.displayName}</td>
-                <td>{b.listing.title}</td>
+                <td>
+                  {b.listing.title}
+                  <div className="adm-mono" style={{ fontSize: 11, color: "var(--muted)" }}>#{bookingRef(b)}</div>
+                </td>
                 <td className="adm-nowrap">{eur(b.totalCents, locale)}</td>
                 <td>
                   <span className={"pill " + statusPillClass(b.status)}>{adminStatus(at, b.status)}</span>
@@ -317,6 +321,8 @@ async function Disputes({
     include: {
       booking: {
         select: {
+          id: true,
+          ref: true,
           totalCents: true,
           client: { select: { name: true } },
           provider: { select: { displayName: true } },
@@ -335,6 +341,7 @@ async function Disputes({
           <div className="adm-main">
             <h4>{d.booking.listing.title}</h4>
             <div className="adm-meta">
+              <span className="adm-mono">#{bookingRef(d.booking)}</span>
               <span>
                 {at.colClient}: {d.booking.client.name}
               </span>

@@ -17,6 +17,7 @@ import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
+import { bookingRef } from "@/lib/booking-ref";
 import { after } from "next/server";
 import { acceptBooking, cancelByProvider, completeBooking, declineBooking, startBooking } from "./actions";
 import { processPayouts } from "@/lib/jobs";
@@ -70,6 +71,7 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
         <div>
           <h4>{b.client.name}</h4>
           <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.listing.title}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>#{bookingRef(b)}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div className="amt">{eur(b.totalCents, locale)}</div>

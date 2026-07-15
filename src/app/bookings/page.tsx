@@ -14,6 +14,7 @@ import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
+import { bookingRef } from "@/lib/booking-ref";
 import { refundCentsForCancel } from "@/lib/cancellation";
 import { confirmBooking, disputeBooking, cancelBooking, reportNoShow } from "./actions";
 import { submitReview, editReview, deleteReview } from "./reviews-actions";
@@ -105,6 +106,9 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   <div>
                     <h4>{b.provider.displayName}</h4>
                     <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.listing.title}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>
+                      #{bookingRef(b)}
+                    </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div className="amt">{eur(b.totalCents, locale)}</div>
