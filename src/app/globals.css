@@ -9,6 +9,7 @@
   --sage:#EFF4EA; --green:#4C7C3F; --green-dark:#3d6533;
   --beige-bg:#F5EEDF; --beige:#A98F5F;
   --orange:#EA5B13; --line:#e7e7e2;
+  --botnav-h:58px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 /* overflow-x:clip не даёт офф-канвас меню и широким блокам вылезать за рамку
@@ -542,4 +543,24 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .pside{display:none}
   .dm .bookbar{display:flex}
   .dm .ppage{padding-bottom:76px}
+}
+
+/* ============================================================
+   Нижняя панель навигации (таб-бар) в стиле приложения.
+   Видна только на телефоне/планшете (<=760px).
+   ============================================================ */
+.dm .botnav{position:fixed;left:0;right:0;bottom:0;z-index:35;display:none;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.dm .botnav-row{display:flex;max-width:640px;margin:0 auto}
+.dm .botnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;font-size:10.5px;font-weight:600;color:var(--muted);min-width:0}
+.dm .botnav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dm .botnav-item.on{color:var(--orange)}
+.dm .botnav-item:active{background:var(--sage)}
+
+@media(max-width:760px){
+  .dm .botnav{display:block}
+  /* место под панель на всех страницах, чтобы она не перекрывала контент/подвал */
+  .dm{padding-bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
+  /* на странице исполнителя панель заказа встаёт над таб-баром */
+  .dm .bookbar{bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
+  .dm .ppage{padding-bottom:96px}
 }

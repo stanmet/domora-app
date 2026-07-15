@@ -12,6 +12,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
+import BottomNav from "@/components/BottomNav";
 
 export const metadata: Metadata = {
   title: "Domora",
@@ -66,6 +67,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <span>{t.footerRight}</span>
           </div>
         </footer>
+        <BottomNav
+          labels={{
+            home: t.navHome,
+            bookings: t.myBookings,
+            favorites: t.favorites,
+            messages: t.messages,
+            profile: t.profile,
+          }}
+        />
       </body>
     </html>
   );
