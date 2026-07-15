@@ -50,6 +50,7 @@ function loadBookings(providerId: string) {
     include: {
       listing: { select: { title: true } },
       client: { select: { name: true } },
+      dispute: { select: { id: true } },
       thread: {
         select: { messages: { orderBy: { createdAt: "asc" }, take: 1, select: { textOriginal: true } } },
       },
@@ -99,6 +100,11 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
       {ADDRESS_VISIBLE.includes(b.status) && (
         <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm" style={{ marginTop: 2 }}>
           <FileText size={14} /> {t.invoiceGet}
+        </Link>
+      )}
+      {b.status === BookingStatus.DISPUTED && b.dispute && (
+        <Link href={`/disputes/${b.dispute.id}`} className="btn btn-red btn-sm" style={{ marginTop: 2, marginLeft: 8 }}>
+          <ShieldCheck size={14} /> {t.dsOpen}
         </Link>
       )}
       {(b.status === BookingStatus.ACCEPTED || b.status === BookingStatus.IN_PROGRESS) && (

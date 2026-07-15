@@ -47,6 +47,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
     include: {
       listing: { select: { title: true, category: { select: { cancellationTier: true } } } },
       provider: { select: { displayName: true } },
+      dispute: { select: { id: true } },
     },
   });
 
@@ -112,6 +113,11 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                 {["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"].includes(b.status) && (
                   <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm">
                     <FileText size={14} /> {t.invoiceGet}
+                  </Link>
+                )}
+                {b.status === "DISPUTED" && b.dispute && (
+                  <Link href={`/disputes/${b.dispute.id}`} className="btn btn-red btn-sm" style={{ marginLeft: 8 }}>
+                    <ShieldCheck size={14} /> {t.dsOpen}
                   </Link>
                 )}
 
