@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics";
 import type { Dict } from "@/i18n/dictionaries";
 import OAuthButtons from "@/components/OAuthButtons";
 
@@ -44,6 +45,7 @@ export default function LoginForm({
       } else {
         // Полная перезагрузка: серверные компоненты подхватят cookies сессии,
         // а запись в таблице User создастся на целевой странице (ensureDbUser).
+        track("login");
         window.location.assign(next ?? "/account");
       }
     } catch {

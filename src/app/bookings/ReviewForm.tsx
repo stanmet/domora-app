@@ -5,6 +5,7 @@
 // по кнопке, чтобы не загромождать карточку заказа.
 import { useState } from "react";
 import { Star, Pencil, Trash2 } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 export type ReviewFormLabels = {
   leave: string;
@@ -80,7 +81,10 @@ export default function ReviewForm({
         }
         fd.set("stars", String(stars));
         if (existing) await editAction(fd);
-        else await submitAction(fd);
+        else {
+          await submitAction(fd);
+          track("review_left", { stars });
+        }
         setOpen(false);
       }}
     >

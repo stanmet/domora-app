@@ -9,6 +9,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Briefcase, MailCheck, UserRound } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics";
 import type { Dict } from "@/i18n/dictionaries";
 import OAuthButtons from "@/components/OAuthButtons";
 
@@ -47,9 +48,11 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
         setError(/already|registered|exists/i.test(error.message) ? t.errEmailTaken : t.errAuth);
       } else if (data.session) {
         // Подтверждение email выключено: сессия готова, идем в кабинет.
+        track("signup", { role });
         window.location.assign(target());
       } else {
         // Подтверждение email включено: письмо отправлено, ждем подтверждения.
+        track("signup", { role });
         setSent(true);
       }
     } catch {

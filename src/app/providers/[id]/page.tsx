@@ -25,6 +25,27 @@ import { createSubscription } from "@/app/subscriptions/actions";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const provider = await prisma.providerProfile
+    .findUnique({
+      where: { userId: id },
+      select: { displayName: true, customProfession: true, bio: true, city: true, status: true },
+    })
+    .catch(() => null);
+  if (!provider || provider.status !== "ACTIVE") return { title: "Domora" };
+
+  const who = [provider.customProfession, provider.city].filter(Boolean).join(" · ");
+  const description = (provider.bio ?? "").slice(0, 180) || `${provider.displayName} on Domora. ${who}`;
+  const title = who ? `${provider.displayName} · ${who}` : provider.displayName;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/providers/${id}` },
+    openGraph: { title: `${title} · Domora`, description, type: "profile" },
+  };
+}
+
 export default async function ProviderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const locale = await getLocale();
@@ -141,8 +162,22 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const profession = provider.customProfession?.trim();
   const bookHref = cheapest ? `/providers/${provider.userId}/book` : null;
 
+  // Schema.org для поисковиков: тип услуги, город, агрегированный рейтинг.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: provider.displayName,
+    ...(profession ? { description: profession } : {}),
+    areaServed: provider.city,
+    ...(cheapest ? { priceRange: `from €${(cheapest.priceCents / 100).toFixed(0)}` } : {}),
+    ...(provider.jobsCount > 0 && rating > 0
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.toFixed(1), reviewCount: reviews.length || provider.jobsCount } }
+      : {}),
+  };
+
   return (
     <main className="ppage">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Обложка */}
       <div className="phero" style={cover ? undefined : { background: PHOTO_BG[firstCat] ?? PHOTO_BG.other }}>
         {cover ? (

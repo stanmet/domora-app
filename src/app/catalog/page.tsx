@@ -14,6 +14,16 @@ import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata() {
+  const t = getDict(await getLocale());
+  return {
+    title: t.catalogTitle,
+    description: t.heroP,
+    alternates: { canonical: "/catalog" },
+    openGraph: { title: `${t.catalogTitle} · Domora`, description: t.heroP },
+  };
+}
+
 type SearchParams = { q?: string; cat?: string; city?: string; sub?: string; sort?: string; maxPrice?: string; minRating?: string };
 
 // Варианты сортировки каталога.
