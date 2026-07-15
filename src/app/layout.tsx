@@ -91,12 +91,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
         <SiteFooter t={t} locale={locale} />
         <BottomNav
+          isLoggedIn={Boolean(authUser?.email)}
           labels={{
             home: t.navHome,
             bookings: t.myBookings,
             favorites: t.favorites,
             messages: t.messages,
             profile: t.profile,
+            search: t.findPro,
+            howItWorks: t.navHowItWorks,
+            login: t.login,
           }}
         />
       </body>

@@ -2,7 +2,7 @@
 // контакты и копирайт. Категории берутся из базы (при недоступной базе колонка
 // категорий просто не показывается).
 import Link from "next/link";
-import { Clock, Mail, MapPin } from "lucide-react";
+import { Clock, Mail, MapPin, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -24,6 +24,9 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
             DOMO<span>RA</span>
           </span>
           <p>{t.footerRights}</p>
+          <Link href="/safety" className="foot-trust">
+            <ShieldCheck size={14} /> {t.footerTrust}
+          </Link>
         </div>
 
         <div className="foot-col">
@@ -70,7 +73,12 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
       </div>
       <div className="wrap foot-bottom">
         <span>{t.footerRights}</span>
-        <span>{t.footerPixels}</span>
+        {/* Юр-данные компании показываются, когда заданы (EU e-Commerce: юрлицо, CRO, адрес). */}
+        {process.env.NEXT_PUBLIC_COMPANY_LEGAL ? (
+          <span>{process.env.NEXT_PUBLIC_COMPANY_LEGAL}</span>
+        ) : (
+          <span>{t.footerPixels}</span>
+        )}
       </div>
     </footer>
   );

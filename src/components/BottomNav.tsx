@@ -5,7 +5,7 @@
 // активная вкладка подсвечивается по текущему адресу.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Heart, Home, MessageCircle, UserRound, type LucideIcon } from "lucide-react";
+import { ClipboardList, Heart, Home, HelpCircle, LogIn, MessageCircle, Search, UserRound, type LucideIcon } from "lucide-react";
 
 export type BottomNavLabels = {
   home: string;
@@ -13,18 +13,30 @@ export type BottomNavLabels = {
   favorites: string;
   messages: string;
   profile: string;
+  search: string;
+  howItWorks: string;
+  login: string;
 };
 
-export default function BottomNav({ labels }: { labels: BottomNavLabels }) {
+export default function BottomNav({ labels, isLoggedIn }: { labels: BottomNavLabels; isLoggedIn: boolean }) {
   const path = usePathname() || "/";
 
-  const items: { href: string; label: string; icon: LucideIcon; active: boolean }[] = [
-    { href: "/", label: labels.home, icon: Home, active: path === "/" },
-    { href: "/bookings", label: labels.bookings, icon: ClipboardList, active: path.startsWith("/bookings") },
-    { href: "/favorites", label: labels.favorites, icon: Heart, active: path.startsWith("/favorites") },
-    { href: "/messages", label: labels.messages, icon: MessageCircle, active: path.startsWith("/messages") },
-    { href: "/account", label: labels.profile, icon: UserRound, active: path.startsWith("/account") },
-  ];
+  // Гостю не показываем «закрытые» вкладки (заказы/сообщения ведут на вход):
+  // вместо тупиков даём полезные пункты и явный вход.
+  const items: { href: string; label: string; icon: LucideIcon; active: boolean }[] = isLoggedIn
+    ? [
+        { href: "/", label: labels.home, icon: Home, active: path === "/" },
+        { href: "/bookings", label: labels.bookings, icon: ClipboardList, active: path.startsWith("/bookings") },
+        { href: "/favorites", label: labels.favorites, icon: Heart, active: path.startsWith("/favorites") },
+        { href: "/messages", label: labels.messages, icon: MessageCircle, active: path.startsWith("/messages") },
+        { href: "/account", label: labels.profile, icon: UserRound, active: path.startsWith("/account") },
+      ]
+    : [
+        { href: "/", label: labels.home, icon: Home, active: path === "/" },
+        { href: "/catalog", label: labels.search, icon: Search, active: path.startsWith("/catalog") },
+        { href: "/how-it-works", label: labels.howItWorks, icon: HelpCircle, active: path.startsWith("/how-it-works") },
+        { href: "/login", label: labels.login, icon: LogIn, active: path.startsWith("/login") },
+      ];
 
   return (
     <nav className="botnav" aria-label={labels.home}>

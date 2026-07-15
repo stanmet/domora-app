@@ -9,6 +9,7 @@ import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { Dict } from "@/i18n/dictionaries";
+import OAuthButtons from "@/components/OAuthButtons";
 
 export default function LoginForm({ t, next, initialError }: { t: Dict; next: string | null; initialError: string | null }) {
   const [email, setEmail] = useState("");
@@ -85,6 +86,10 @@ export default function LoginForm({ t, next, initialError }: { t: Dict; next: st
 
   return (
     <form className="form" onSubmit={submitPassword}>
+      <OAuthButtons
+        next={next}
+        labels={{ google: t.continueGoogle, apple: t.continueApple, error: t.errOAuth, sep: t.orSep }}
+      />
       <label htmlFor="email">{t.emailL}</label>
       <input
         id="email"

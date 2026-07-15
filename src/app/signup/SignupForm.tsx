@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Briefcase, MailCheck, UserRound } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { Dict } from "@/i18n/dictionaries";
+import OAuthButtons from "@/components/OAuthButtons";
 
 type RoleChoice = "client" | "provider";
 
@@ -107,6 +108,10 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
 
   return (
     <form className="form" onSubmit={submitPassword}>
+      <OAuthButtons
+        next={next}
+        labels={{ google: t.continueGoogle, apple: t.continueApple, error: t.errOAuth, sep: t.orSep }}
+      />
       <label>{t.roleL}</label>
       <div className="rolecards">
         {roles.map((r) => (
