@@ -322,6 +322,16 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .taskdesc{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:8px}
 .dm .taskcard .meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 12px}
 .dm .taskcard .meta span{display:inline-flex;align-items:center;gap:5px}
+/* Мета-строка задачи: отдельные плашки, цвет и жирность по смыслу */
+.dm .taskmeta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.dm .taskmeta span{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:12px;font-size:14px;font-weight:600;line-height:1}
+.dm .taskmeta svg{flex-shrink:0}
+.dm .taskmeta .chip-date{background:var(--beige-bg);color:#7a6636}
+.dm .taskmeta .chip-date svg{color:var(--beige)}
+.dm .taskmeta .chip-city{background:#f2f3ef;color:var(--ink)}
+.dm .taskmeta .chip-city svg{color:var(--muted)}
+.dm .taskmeta .chip-money{background:var(--sage);color:var(--green-dark);font-weight:800}
+.dm .taskmeta .chip-money svg{color:var(--green)}
 .dm .taskaction{border-top:1px solid var(--line);padding-top:14px}
 .dm .offer-form{border:1px solid var(--green);border-radius:14px;padding:14px;background:var(--sage)}
 .dm .offer-form label{margin-top:10px}

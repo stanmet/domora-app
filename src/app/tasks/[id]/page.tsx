@@ -111,18 +111,18 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           labels={trLabels}
         />
 
-        <div className="meta" style={{ margin: "10px 0 4px" }}>
+        <div className="taskmeta">
           {task.dateWanted && (
-            <span>
-              <Calendar size={13} /> {dateOnly(task.dateWanted, locale)}
+            <span className="chip-date">
+              <Calendar size={15} /> {dateOnly(task.dateWanted, locale)}
             </span>
           )}
-          <span>
-            <MapPin size={13} /> {task.city}
+          <span className="chip-city">
+            <MapPin size={15} /> {task.city}
           </span>
           {budget && (
-            <span>
-              <Wallet size={13} /> {budget}
+            <span className="chip-money">
+              <Wallet size={15} /> {budget}
             </span>
           )}
         </div>
