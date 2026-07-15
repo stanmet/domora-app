@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { sortByCategoryOrder } from "@/components/categories";
+import { subcatName } from "@/lib/subcategories";
 import ServicesManager from "./ServicesManager";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,18 @@ export default async function ProServicesPage() {
     label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn),
   }));
 
+  // Подкатегории для выпадающего списка (зависит от выбранной категории).
+  let subcategoryOptions: { slug: string; label: string; categorySlug: string }[] = [];
+  try {
+    const subs = await prisma.subcategory.findMany({
+      orderBy: { order: "asc" },
+      include: { category: { select: { slug: true } } },
+    });
+    subcategoryOptions = subs.map((s) => ({ slug: s.slug, label: subcatName(s, locale), categorySlug: s.category.slug }));
+  } catch {
+    // Таблица подкатегорий ещё не готова: список остаётся пустым.
+  }
+
   return (
     <main>
       <div className="wrap" style={{ maxWidth: 680, paddingBottom: 64 }}>
@@ -53,7 +66,13 @@ export default async function ProServicesPage() {
             <b>{t.proTipB}</b> {t.svcModNote}
           </p>
         </div>
-        <ServicesManager listings={listings} categories={categoryOptions} t={t} locale={locale} />
+        <ServicesManager
+          listings={listings}
+          categories={categoryOptions}
+          subcategories={subcategoryOptions}
+          t={t}
+          locale={locale}
+        />
       </div>
     </main>
   );

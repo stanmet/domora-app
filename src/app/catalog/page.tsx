@@ -13,17 +13,29 @@ import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = { q?: string; cat?: string; city?: string };
+type SearchParams = { q?: string; cat?: string; city?: string; sub?: string };
 
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { q = "", cat = "", city = "" } = await searchParams;
+  const { q = "", cat = "", city = "", sub = "" } = await searchParams;
   const locale = await getLocale();
   const t = getDict(locale);
+
+  // Название активной подкатегории (для чипа-фильтра). Таблица может отсутствовать.
+  let subName: string | null = null;
+  if (sub) {
+    try {
+      const row = await prisma.subcategory.findUnique({ where: { slug: sub }, select: { nameEn: true, nameRu: true } });
+      if (row) subName = locale === "ru" || locale === "uk" ? row.nameRu : row.nameEn;
+    } catch {
+      // нет таблицы - фильтр по подкатегории просто не применяем
+    }
+  }
 
   const where: Prisma.ListingWhereInput = {
     status: "ACTIVE",
     provider: { status: "ACTIVE", ...(city ? { city } : {}) },
     ...(cat ? { category: { slug: cat } } : {}),
+    ...(sub && subName ? { subcategory: { is: { slug: sub } } } : {}),
     ...(q
       ? {
           OR: [
@@ -75,6 +87,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       <h2 className="display" style={{ fontSize: "clamp(22px,4.5vw,32px)", margin: "0 0 6px" }}>
         {t.catalogTitle}
       </h2>
+      {subName && (
+        <div className="chips" style={{ marginBottom: 10 }}>
+          <Link href={cat ? `/catalog?cat=${cat}` : "/catalog"} className="chip on">
+            {subName} ✕
+          </Link>
+        </div>
+      )}
       <div className="count">
         {listings.length} {t.results}
       </div>

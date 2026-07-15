@@ -56,6 +56,18 @@ export async function createListing(
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { error: t.errSvcForm };
 
+  // Необязательная подкатегория (должна принадлежать выбранной категории).
+  const subSlug = String(formData.get("subcategory") ?? "");
+  let subcategoryId: string | null = null;
+  if (subSlug) {
+    try {
+      const sub = await prisma.subcategory.findUnique({ where: { slug: subSlug }, select: { id: true, categoryId: true } });
+      if (sub && sub.categoryId === category.id) subcategoryId = sub.id;
+    } catch {
+      // Таблица подкатегорий недоступна: сохраняем услугу без подкатегории.
+    }
+  }
+
   // Профиль исполнителя может еще не существовать (шаг Stripe не пройден).
   let profile = await prisma.providerProfile.findUnique({ where: { userId: user.id } });
   if (!profile) {
@@ -69,6 +81,7 @@ export async function createListing(
       data: {
         providerId: user.id,
         categoryId: category.id,
+        subcategoryId,
         professionLabel: who || null,
         title,
         titleLang: locale,

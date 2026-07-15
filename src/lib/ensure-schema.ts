@@ -4,6 +4,7 @@
 // таблицы и колонки создаются здесь при первом обращении - безопасно
 // (IF NOT EXISTS) и без ручных шагов. Выполняется один раз на процесс.
 import { prisma } from "./prisma";
+import { seedSubcategories } from "./subcategories";
 
 let ensured = false;
 
@@ -47,6 +48,26 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(
       `CREATE INDEX IF NOT EXISTS "ProviderDocument_providerId_idx" ON "ProviderDocument"("providerId")`,
     );
+    // Дерево подкатегорий услуг.
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "Subcategory" (
+         "id" TEXT NOT NULL,
+         "categoryId" TEXT NOT NULL,
+         "slug" TEXT NOT NULL,
+         "nameEn" TEXT NOT NULL,
+         "nameRu" TEXT NOT NULL,
+         "order" INTEGER NOT NULL DEFAULT 0,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "Subcategory_pkey" PRIMARY KEY ("id")
+       )`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Subcategory_slug_key" ON "Subcategory"("slug")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Subcategory_categoryId_order_idx" ON "Subcategory"("categoryId","order")`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "subcategoryId" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "subcategoryId" TEXT`);
+
+    // Наполняем дерево подкатегорий данными (идемпотентно).
+    await seedSubcategories();
   } catch (e) {
     ensured = false; // не получилось - попробуем при следующем запросе
     console.error("ensureSchema failed", e);

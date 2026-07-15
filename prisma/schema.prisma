@@ -187,6 +187,26 @@ model Category {
   minProvidersToOpen Int     @default(5)
   listings           Listing[]
   tasks              Task[]
+  subcategories      Subcategory[]
+}
+
+// Подкатегории услуг (дерево): вторая ступень под Category. Данные засеиваются
+// идемпотентно из src/lib/subcategories.ts. Услуга/задача могут ссылаться на
+// подкатегорию (необязательно).
+model Subcategory {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  slug       String   @unique
+  nameEn     String
+  nameRu     String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  listings Listing[]
+  tasks    Task[]
+
+  @@index([categoryId, order])
 }
 
 model Listing {
@@ -195,6 +215,8 @@ model Listing {
   provider     ProviderProfile @relation(fields: [providerId], references: [userId])
   categoryId   String
   category     Category      @relation(fields: [categoryId], references: [id])
+  subcategoryId String?
+  subcategory  Subcategory?  @relation(fields: [subcategoryId], references: [id])
   professionLabel String?    // из плашки: "Диджей"
   title        String
   titleLang    String        @default("en")
@@ -429,6 +451,8 @@ model Task {
   client          User       @relation("clientTasks", fields: [clientId], references: [id])
   categoryId      String
   category        Category   @relation(fields: [categoryId], references: [id])
+  subcategoryId   String?
+  subcategory     Subcategory? @relation(fields: [subcategoryId], references: [id])
   title           String
   description     String
   dateWanted      DateTime?

@@ -361,6 +361,7 @@ const en = {
   topTitle: "Top pros",
   topSub: "The highest-rated pros on Domora right now.",
   footerLegal: "Legal",
+  liSubcat: "Subcategory (optional)",
 };
 
 export type Dict = typeof en;
@@ -724,6 +725,7 @@ const ru: Dict = {
   topTitle: "ТОП исполнителей",
   topSub: "Исполнители с самым высоким рейтингом на Domora прямо сейчас.",
   footerLegal: "Правовое",
+  liSubcat: "Подкатегория (необязательно)",
 };
 
 const uk: Dict = {
@@ -1085,6 +1087,7 @@ const uk: Dict = {
   topTitle: "ТОП виконавців",
   topSub: "Виконавці з найвищим рейтингом на Domora прямо зараз.",
   footerLegal: "Правове",
+  liSubcat: "Підкатегорія (необов'язково)",
 };
 
 const pl: Dict = {
@@ -1446,6 +1449,7 @@ const pl: Dict = {
   topTitle: "Najlepsi wykonawcy",
   topSub: "Najwyżej oceniani wykonawcy na Domora w tej chwili.",
   footerLegal: "Prawne",
+  liSubcat: "Podkategoria (opcjonalnie)",
 };
 
 const es: Dict = {
@@ -1807,6 +1811,7 @@ const es: Dict = {
   topTitle: "Top profesionales",
   topSub: "Los profesionales mejor valorados de Domora ahora mismo.",
   footerLegal: "Legal",
+  liSubcat: "Subcategoría (opcional)",
 };
 
 const pt: Dict = {
@@ -2168,6 +2173,7 @@ const pt: Dict = {
   topTitle: "Top profissionais",
   topSub: "Os profissionais mais bem avaliados na Domora neste momento.",
   footerLegal: "Legal",
+  liSubcat: "Subcategoria (opcional)",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

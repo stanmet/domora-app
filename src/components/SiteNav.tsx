@@ -69,7 +69,7 @@ export default function SiteNav({
 
   const mainLinks: { href: string; label: string; icon: typeof Heart; auth?: boolean }[] = [
     { href: "/", label: t.navHome, icon: LayoutGrid },
-    { href: "/catalog", label: t.navServices, icon: Search },
+    { href: "/services", label: t.navServices, icon: Search },
     { href: "/bookings", label: t.myBookings, icon: ClipboardList, auth: true },
     { href: "/tasks/mine", label: t.myTasks, icon: ListTodo, auth: true },
     { href: "/favorites", label: t.favorites, icon: Heart, auth: true },

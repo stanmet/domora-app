@@ -598,3 +598,15 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* Значок ранга в ТОП исполнителей */
 .dm .toprank{position:absolute;top:10px;left:10px;background:var(--orange);color:#fff;font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:12px;border-radius:999px;padding:4px 10px;z-index:2}
+
+/* ============================================================
+   Дерево услуг (/services): категории и подкатегории.
+   ============================================================ */
+.dm .tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.dm .tree-cat{border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:#fff}
+.dm .tree-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dm .tree-title{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;flex:1;min-width:0;color:var(--ink);overflow-wrap:anywhere}
+.dm .tree-all{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
+.dm .tree-subs{display:flex;flex-wrap:wrap;gap:8px}
+.dm .tree-sub{border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--ink);background:#fff}
+.dm .tree-sub:hover{border-color:var(--green);color:var(--green-dark)}

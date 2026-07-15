@@ -26,16 +26,20 @@ const FORM_UNITS: PriceUnit[] = ["PER_HOUR", "PER_EVENT", "PER_SESSION", "PER_GU
 export default function ServicesManager({
   listings,
   categories,
+  subcategories = [],
   t,
   locale,
 }: {
   listings: ListingRow[];
   categories: { slug: string; label: string }[];
+  subcategories?: { slug: string; label: string; categorySlug: string }[];
   t: Dict;
   locale: Locale;
 }) {
   const [adding, setAdding] = useState(false);
+  const [cat, setCat] = useState(categories[0]?.slug ?? "");
   const [state, formAction, pending] = useActionState<CreateListingState, FormData>(createListing, null);
+  const subOptions = subcategories.filter((s) => s.categorySlug === cat);
 
   // Успешное создание закрывает форму; поля сбрасываются размонтированием.
   useEffect(() => {
@@ -50,13 +54,26 @@ export default function ServicesManager({
             <label htmlFor="svc-who">{t.liWho}</label>
             <input id="svc-who" name="who" className="f" placeholder={t.liWhoPh} maxLength={80} />
             <label htmlFor="svc-cat">{t.liCat}</label>
-            <select id="svc-cat" name="category" className="f" defaultValue={categories[0]?.slug}>
+            <select id="svc-cat" name="category" className="f" value={cat} onChange={(e) => setCat(e.target.value)}>
               {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.label}
                 </option>
               ))}
             </select>
+            {subOptions.length > 0 && (
+              <>
+                <label htmlFor="svc-subcat">{t.liSubcat}</label>
+                <select id="svc-subcat" name="subcategory" className="f" defaultValue="">
+                  <option value="">—</option>
+                  {subOptions.map((s) => (
+                    <option key={s.slug} value={s.slug}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
             <label htmlFor="svc-title">{t.liTitle}</label>
             <input id="svc-title" name="title" className="f" placeholder={t.liTitlePh} maxLength={120} required />
             <label htmlFor="svc-desc">{t.liDesc}</label>
