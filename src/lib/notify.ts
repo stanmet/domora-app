@@ -7,6 +7,16 @@ import type { Prisma } from "@prisma/client";
 import { getDict, type Dict } from "@/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/i18n/config";
 import { emailEnabled, emailLayout, sendEmail } from "@/lib/email";
+import { bookingRef } from "@/lib/booking-ref";
+
+// Достаём bookingId из payload уведомления, если он там есть.
+function bookingIdOf(payload: Prisma.InputJsonValue): string | undefined {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const v = (payload as Record<string, unknown>).bookingId;
+    if (typeof v === "string") return v;
+  }
+  return undefined;
+}
 
 export type NotificationType =
   | "new_request"
@@ -67,10 +77,18 @@ export async function notify(
     const text = t[meta.textKey] as string;
     const base = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
     const url = base ? `${base}${meta.path}` : undefined;
+
+    // Номер заказа в теме и теле письма, если уведомление относится к брони.
+    const bId = bookingIdOf(payload);
+    let refLine = "";
+    if (bId) {
+      const bk = await prisma.booking.findUnique({ where: { id: bId }, select: { id: true, ref: true } });
+      if (bk) refLine = `#${bookingRef(bk)}`;
+    }
     await sendEmail({
       to: user.email,
-      subject: `Domora: ${text}`,
-      html: emailLayout(text, "", url, url ? t.notifTitle : undefined),
+      subject: refLine ? `Domora: ${text} · ${refLine}` : `Domora: ${text}`,
+      html: emailLayout(text, refLine, url, url ? t.notifTitle : undefined),
     });
   } catch (e) {
     console.error("notify email failed", userId, type, e);

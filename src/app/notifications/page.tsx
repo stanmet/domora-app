@@ -11,6 +11,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, type Dict } from "@/i18n/dictionaries";
 import { dateTime } from "@/lib/format";
+import { bookingRef } from "@/lib/booking-ref";
 
 export const dynamic = "force-dynamic";
 
@@ -57,16 +58,35 @@ export default async function NotificationsPage() {
   const t = getDict(locale);
   const user = await ensureDbUser(authUser, locale);
 
-  let items: { id: string; type: string; createdAt: Date; readAt: Date | null }[] = [];
+  let items: { id: string; type: string; createdAt: Date; readAt: Date | null; payload: unknown }[] = [];
   try {
     items = await prisma.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 50,
-      select: { id: true, type: true, createdAt: true, readAt: true },
+      select: { id: true, type: true, createdAt: true, readAt: true, payload: true },
     });
   } catch {
     // Таблица ещё не готова: показываем пустой список.
+  }
+
+  // Номера заказов для уведомлений, привязанных к брони (одним запросом).
+  const bookingIdOf = (payload: unknown): string | null => {
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      const v = (payload as Record<string, unknown>).bookingId;
+      if (typeof v === "string") return v;
+    }
+    return null;
+  };
+  const bookingIds = Array.from(new Set(items.map((n) => bookingIdOf(n.payload)).filter((v): v is string => Boolean(v))));
+  const refById = new Map<string, string>();
+  if (bookingIds.length) {
+    try {
+      const rows = await prisma.booking.findMany({ where: { id: { in: bookingIds } }, select: { id: true, ref: true } });
+      for (const r of rows) refById.set(r.id, bookingRef(r));
+    } catch {
+      // Не критично: покажем текст без номера.
+    }
   }
 
   // Помечаем непрочитанные прочитанными после ответа (не тормозим страницу).
@@ -92,13 +112,18 @@ export default async function NotificationsPage() {
         <div className="notif-list">
           {items.map((n) => {
             const meta = notifMeta(n.type);
+            const bId = bookingIdOf(n.payload);
+            const ref = bId ? refById.get(bId) : null;
             return (
               <Link href={meta.href} className={"notif" + (n.readAt ? "" : " unread")} key={n.id}>
                 <span className="notif-ic">
                   <Bell size={16} />
                 </span>
                 <span className="notif-main">
-                  <span className="notif-text">{t[meta.textKey] as string}</span>
+                  <span className="notif-text">
+                    {t[meta.textKey] as string}
+                    {ref && <span style={{ color: "var(--muted)" }}> · #{ref}</span>}
+                  </span>
                   <span className="notif-time">{dateTime(n.createdAt, locale)}</span>
                 </span>
               </Link>
