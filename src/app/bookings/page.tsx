@@ -9,13 +9,16 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, statusLabel, unitLabel } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
 import { refundCentsForCancel } from "@/lib/cancellation";
 import { confirmBooking, disputeBooking, cancelBooking, reportNoShow } from "./actions";
+import { submitReview, editReview, deleteReview } from "./reviews-actions";
 import DisputeForm from "./DisputeForm";
+import ReviewForm from "./ReviewForm";
 import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +39,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
 
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
   const { sent } = await searchParams;
 
@@ -48,8 +52,21 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
       listing: { select: { title: true, category: { select: { cancellationTier: true } } } },
       provider: { select: { displayName: true } },
       dispute: { select: { id: true } },
+      reviews: { where: { authorId: user.id }, select: { stars: true, text: true } },
     },
   });
+
+  const reviewLabels = {
+    leave: tx.reviewLeave,
+    editTitle: tx.reviewYours,
+    edit: tx.reviewEdit,
+    del: tx.reviewDelete,
+    submit: tx.reviewSubmit,
+    save: tx.reviewSave,
+    placeholder: tx.reviewPlaceholder,
+    rateL: tx.reviewRateL,
+    needStars: tx.reviewNeedStars,
+  };
 
   return (
     <main>
@@ -119,6 +136,17 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   <Link href={`/disputes/${b.dispute.id}`} className="btn btn-red btn-sm" style={{ marginLeft: 8 }}>
                     <ShieldCheck size={14} /> {t.dsOpen}
                   </Link>
+                )}
+
+                {/* Отзыв: доступен по завершённому заказу (выполнен или закрыт) */}
+                {["COMPLETED", "CLOSED"].includes(b.status) && (
+                  <ReviewForm
+                    submitAction={submitReview.bind(null, b.id)}
+                    editAction={editReview.bind(null, b.id)}
+                    deleteAction={deleteReview.bind(null, b.id)}
+                    existing={b.reviews[0] ?? null}
+                    labels={reviewLabels}
+                  />
                 )}
 
                 {/* Работа отмечена выполненной: клиент подтверждает или открывает спор */}

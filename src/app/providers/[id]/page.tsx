@@ -10,6 +10,8 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
+import { flagReview } from "@/app/bookings/reviews-actions";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { licenceFor } from "@/lib/subcategories";
@@ -27,6 +29,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
 
   const provider = await prisma.providerProfile.findUnique({
     where: { userId: id },
@@ -45,7 +48,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             where: { publishedAt: { not: null } },
             orderBy: { publishedAt: "desc" },
             take: 20,
-            select: { id: true, stars: true, text: true, author: { select: { name: true } } },
+            select: { id: true, stars: true, text: true, disputeFlag: true, author: { select: { name: true } } },
           },
         },
       },
@@ -121,11 +124,14 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const trOf = (s: string | null | undefined) =>
     s ? tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false } : null;
 
-  // Избранное для вошедшего пользователя.
+  // Избранное для вошедшего пользователя; заодно определяем, смотрит ли профиль
+  // сам исполнитель (тогда ему доступна жалоба на свой отзыв).
   const authUser = await getAuthUser();
   let isFav = false;
+  let viewerIsTarget = false;
   if (authUser?.email) {
     const viewer = await ensureDbUser(authUser, locale);
+    viewerIsTarget = viewer.id === provider.userId;
     const f = await prisma.favorite.findUnique({
       where: { userId_providerId: { userId: viewer.id, providerId: provider.userId } },
     });
@@ -366,6 +372,14 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     </span>
                   </div>
                   {r.text && <p>{r.text}</p>}
+                  {viewerIsTarget &&
+                    (r.disputeFlag ? (
+                      <span className="tag" style={{ marginTop: 4 }}>{tx.reviewReported}</span>
+                    ) : (
+                      <form action={flagReview.bind(null, r.id)} style={{ marginTop: 4 }}>
+                        <button className="btn btn-line btn-sm">{tx.reviewReport}</button>
+                      </form>
+                    ))}
                 </div>
               ))
             )}
