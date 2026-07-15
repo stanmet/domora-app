@@ -287,6 +287,17 @@ const en = {
   pfFull: "Photo limit reached.",
   pfHint: "You can add {n} more.",
   pfStorageOff: "Photo upload is unavailable: storage access isn't configured (SUPABASE_SERVICE_ROLE_KEY).",
+  // Профиль исполнителя (референс caterkin)
+  aboutTitle: "About",
+  includedTitle: "What's included",
+  incMaterials: "Materials and supplies included",
+  incSecure: "Secure card payment, hold until accepted",
+  incChat: "In-app chat before you pay",
+  travelTitle: "Comes to you",
+  travelBasedIn: "Based in",
+  travelUpTo: "travels up to",
+  kmUnit: "km",
+  viewAllPhotos: "All photos",
 };
 
 export type Dict = typeof en;
@@ -576,6 +587,17 @@ const ru: Dict = {
   pfFull: "Достигнут лимит фото.",
   pfHint: "Можно добавить ещё {n}.",
   pfStorageOff: "Загрузка фото недоступна: не настроен доступ к хранилищу (SUPABASE_SERVICE_ROLE_KEY).",
+  // Профиль исполнителя (референс caterkin)
+  aboutTitle: "О себе",
+  includedTitle: "Что входит",
+  incMaterials: "Материалы и расходники включены",
+  incSecure: "Безопасная оплата картой, холд до подтверждения",
+  incChat: "Чат в приложении до оплаты",
+  travelTitle: "Выезд к вам",
+  travelBasedIn: "Работает в",
+  travelUpTo: "выезд до",
+  kmUnit: "км",
+  viewAllPhotos: "Все фото",
 };
 
 const uk: Dict = {
@@ -863,6 +885,17 @@ const uk: Dict = {
   pfFull: "Досягнуто ліміту фото.",
   pfHint: "Можна додати ще {n}.",
   pfStorageOff: "Завантаження фото недоступне: не налаштовано доступ до сховища (SUPABASE_SERVICE_ROLE_KEY).",
+  // Профіль виконавця (референс caterkin)
+  aboutTitle: "Про себе",
+  includedTitle: "Що входить",
+  incMaterials: "Матеріали та витратні включені",
+  incSecure: "Безпечна оплата карткою, холд до підтвердження",
+  incChat: "Чат у застосунку до оплати",
+  travelTitle: "Виїзд до вас",
+  travelBasedIn: "Працює в",
+  travelUpTo: "виїзд до",
+  kmUnit: "км",
+  viewAllPhotos: "Усі фото",
 };
 
 const pl: Dict = {
@@ -1150,6 +1183,17 @@ const pl: Dict = {
   pfFull: "Osiągnięto limit zdjęć.",
   pfHint: "Możesz dodać jeszcze {n}.",
   pfStorageOff: "Przesyłanie zdjęć niedostępne: brak dostępu do magazynu (SUPABASE_SERVICE_ROLE_KEY).",
+  // Profil wykonawcy (referencja caterkin)
+  aboutTitle: "O mnie",
+  includedTitle: "Co obejmuje",
+  incMaterials: "Materiały i akcesoria w cenie",
+  incSecure: "Bezpieczna płatność kartą, blokada do potwierdzenia",
+  incChat: "Czat w aplikacji przed zapłatą",
+  travelTitle: "Dojazd do Ciebie",
+  travelBasedIn: "Baza w",
+  travelUpTo: "dojazd do",
+  kmUnit: "km",
+  viewAllPhotos: "Wszystkie zdjęcia",
 };
 
 const es: Dict = {
@@ -1437,6 +1481,17 @@ const es: Dict = {
   pfFull: "Límite de fotos alcanzado.",
   pfHint: "Puedes añadir {n} más.",
   pfStorageOff: "La subida de fotos no está disponible: falta el acceso al almacenamiento (SUPABASE_SERVICE_ROLE_KEY).",
+  // Perfil del profesional (referencia caterkin)
+  aboutTitle: "Sobre mí",
+  includedTitle: "Qué incluye",
+  incMaterials: "Materiales e insumos incluidos",
+  incSecure: "Pago seguro con tarjeta, retención hasta la aceptación",
+  incChat: "Chat en la app antes de pagar",
+  travelTitle: "Voy a tu casa",
+  travelBasedIn: "Con base en",
+  travelUpTo: "se desplaza hasta",
+  kmUnit: "km",
+  viewAllPhotos: "Todas las fotos",
 };
 
 const pt: Dict = {
@@ -1724,6 +1779,17 @@ const pt: Dict = {
   pfFull: "Limite de fotos atingido.",
   pfHint: "Pode adicionar mais {n}.",
   pfStorageOff: "O envio de fotos está indisponível: falta o acesso ao armazenamento (SUPABASE_SERVICE_ROLE_KEY).",
+  // Perfil do profissional (referência caterkin)
+  aboutTitle: "Sobre mim",
+  includedTitle: "O que inclui",
+  incMaterials: "Materiais e consumíveis incluídos",
+  incSecure: "Pagamento seguro com cartão, cativo até aceitar",
+  incChat: "Chat na app antes de pagar",
+  travelTitle: "Vou até si",
+  travelBasedIn: "Baseado em",
+  travelUpTo: "desloca-se até",
+  kmUnit: "km",
+  viewAllPhotos: "Todas as fotos",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };
