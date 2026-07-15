@@ -13,9 +13,12 @@ import NewTaskForm from "./NewTaskForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTaskPage() {
+type SP = { cat?: string; city?: string; date?: string; bf?: string; bt?: string; q?: string };
+
+export default async function NewTaskPage({ searchParams }: { searchParams: Promise<SP> }) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/tasks/new");
+  const { cat = "", city = "", date = "", bf = "", bt = "", q = "" } = await searchParams;
 
   const locale = await getLocale();
   const t = getDict(locale);
@@ -34,7 +37,12 @@ export default async function NewTaskPage() {
       </Link>
       <h1>{t.taskNewTitle}</h1>
       <p className="sub">{t.taskNewSub}</p>
-      <NewTaskForm t={t} categories={categoryOptions} defaultCity={user.city ?? ""} />
+      <NewTaskForm
+        t={t}
+        categories={categoryOptions}
+        defaultCity={city || user.city || ""}
+        prefill={{ cat, date, bf, bt, title: q }}
+      />
     </main>
   );
 }

@@ -7,9 +7,11 @@ import "./globals.css";
 const archivo = Archivo({ subsets: ["latin"], weight: ["600", "800", "900"], variable: "--font-archivo" });
 const inter = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700"], variable: "--font-inter" });
 import { getLocale } from "@/i18n/server";
-import { getDict } from "@/i18n/dictionaries";
+import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getCity } from "@/lib/city";
+import { sortByCategoryOrder } from "@/components/categories";
 import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
@@ -47,6 +49,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
 
+  // Категории и города для разворачивающегося поиска и глобального гео.
+  const city = await getCity();
+  let categoryOptions: { slug: string; label: string }[] = [];
+  let cities: string[] = [];
+  try {
+    const cats = sortByCategoryOrder(await prisma.category.findMany());
+    categoryOptions = cats.map((c) => ({ slug: c.slug, label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn) }));
+    const [provCities, taskCities] = await Promise.all([
+      prisma.providerProfile.findMany({ where: { status: "ACTIVE" }, select: { city: true }, distinct: ["city"] }),
+      prisma.task.findMany({ select: { city: true }, distinct: ["city"], take: 100 }),
+    ]);
+    cities = Array.from(
+      new Set([...provCities.map((p) => p.city), ...taskCities.map((x) => x.city)].filter(Boolean)),
+    ).sort();
+  } catch {
+    // База недоступна: поиск покажется без списков категорий/городов.
+  }
+
   return (
     <html lang={locale}>
       <body className={`dm ${archivo.variable} ${inter.variable}`}>
@@ -57,6 +77,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           userName={userName}
           isProvider={isProvider}
           isAdmin={isAdmin}
+          categories={categoryOptions}
+          cities={cities}
+          city={city}
         />
         {children}
         <SiteFooter t={t} locale={locale} />

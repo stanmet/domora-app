@@ -9,6 +9,7 @@ import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
+import { getCity } from "@/lib/city";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 
@@ -19,10 +20,11 @@ export default async function Home() {
   const t = getDict(locale);
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
+  const city = await getCity();
   const [categories, openTasks, listings, prosCount, tasksCount, reviewsCount] = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
-      where: { status: "OPEN", expiresAt: { gt: new Date() } },
+      where: { status: "OPEN", expiresAt: { gt: new Date() }, ...(city ? { city } : {}) },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
@@ -31,7 +33,7 @@ export default async function Home() {
       },
     }),
     prisma.listing.findMany({
-      where: { status: "ACTIVE", provider: { status: "ACTIVE" } },
+      where: { status: "ACTIVE", provider: { status: "ACTIVE", ...(city ? { city } : {}) } },
       orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
       take: 8,
       include: {

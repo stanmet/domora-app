@@ -5,7 +5,6 @@
 // переключателем языка и ссылками "Стать исполнителем" / "Кабинет исполнителя".
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ClipboardList,
@@ -25,6 +24,7 @@ import type { Dict } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import LangSwitcher from "./LangSwitcher";
 import SignOutButton from "./SignOutButton";
+import SearchModal from "./SearchModal";
 
 export default function SiteNav({
   locale,
@@ -33,6 +33,9 @@ export default function SiteNav({
   userName,
   isProvider,
   isAdmin,
+  categories,
+  cities,
+  city,
 }: {
   locale: Locale;
   t: Dict;
@@ -40,9 +43,12 @@ export default function SiteNav({
   userName: string | null;
   isProvider: boolean;
   isAdmin: boolean;
+  categories: { slug: string; label: string }[];
+  cities: string[];
+  city: string;
 }) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Закрытие по Escape и блокировка прокрутки под открытым меню.
   useEffect(() => {
@@ -57,13 +63,6 @@ export default function SiteNav({
   }, [open]);
 
   const close = () => setOpen(false);
-
-  const onSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const q = new FormData(e.currentTarget).get("q")?.toString().trim() ?? "";
-    close();
-    router.push(q ? `/catalog?q=${encodeURIComponent(q)}` : "/catalog");
-  };
 
   const roleLabel = isProvider ? t.rolePro : t.roleClient;
 
@@ -87,16 +86,27 @@ export default function SiteNav({
             DOMO<span>RA</span>
           </Link>
 
-          <form className="topsearch" onSubmit={onSearch} role="search">
+          <button type="button" className="topsearch" onClick={() => setSearchOpen(true)} aria-label={t.searchTop}>
             <Search size={16} />
-            <input name="q" type="search" placeholder={t.searchTop} aria-label={t.searchTop} />
-          </form>
+            <span className="topsearch-ph">
+              {city ? `${t.searchTop} · ${city}` : t.searchTop}
+            </span>
+          </button>
 
           <button className="burger" onClick={() => setOpen(true)} aria-label={t.menu} aria-expanded={open}>
             <Menu size={20} />
           </button>
         </div>
       </header>
+
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        t={t}
+        categories={categories}
+        cities={cities}
+        currentCity={city}
+      />
 
       {open && <div className="drawer-backdrop" onClick={close} />}
 

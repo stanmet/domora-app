@@ -639,3 +639,20 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .invoice{border:none;padding:0}
   @page{margin:16mm}
 }
+
+/* ============================================================
+   Разворачивающийся поиск (модалка) + строка-кнопка в шапке.
+   ============================================================ */
+.dm button.topsearch{cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif}
+.dm .topsearch-ph{flex:1;min-width:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.dm .smodal-back{position:fixed;inset:0;background:rgba(20,20,20,.45);z-index:55;display:flex;align-items:flex-start;justify-content:center;padding:64px 16px 24px;overflow-y:auto}
+.dm .smodal{background:#fff;border-radius:20px;width:100%;max-width:460px;padding:18px 20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.dm .smodal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.dm .smodal-head b{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:17px;text-transform:uppercase}
+.dm .smodal .form label:first-of-type{margin-top:8px}
+.dm .smodal-cta{display:flex;gap:10px;margin-top:18px}
+.dm .smodal-cta .btn{flex:1;justify-content:center}
+@media(max-width:560px){
+  .dm .smodal-back{padding:58px 12px 20px}
+  .dm .smodal-cta{flex-direction:column}
+}
