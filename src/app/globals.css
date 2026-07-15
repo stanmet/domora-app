@@ -206,6 +206,10 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .ob-step h4{font-size:14px;font-weight:700;flex:1}
 .dm .ob-step .tagnext{font-size:10px;font-weight:800;letter-spacing:.1em;background:var(--orange);color:#fff;border-radius:99px;padding:3px 8px;margin-left:6px;text-transform:uppercase}
 .dm .ob-step .donel{font-size:12px;font-weight:700;color:var(--green)}
+.dm .ob-step .laterl{font-size:12px;font-weight:600;color:var(--muted);text-align:right;max-width:120px;line-height:1.35}
+/* Спокойная подсказка про выплаты вместо красной ошибки */
+.dm .payinfo{background:var(--beige-bg);border-radius:12px;padding:14px;margin-top:14px}
+.dm .payinfo p{font-size:13px;color:#6b5a34;line-height:1.5;margin:0 0 10px}
 .dm .btn-line{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .dm .btn-line:hover{border-color:var(--ink)}
 

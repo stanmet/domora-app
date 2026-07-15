@@ -26,7 +26,9 @@ export default function ProOnboarding({
   const router = useRouter();
   const [availDone, setAvailDone] = useState(false);
   const [stripePending, setStripePending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Настройку выплат можно отложить: шаг перестаёт мешать и не пугает ошибкой.
+  const [stripeDeferred, setStripeDeferred] = useState(false);
+  const [payoutInfo, setPayoutInfo] = useState(false);
 
   const steps: Record<StepKey, boolean> = {
     stripe: stripeDone,
@@ -36,25 +38,24 @@ export default function ProOnboarding({
 
   const doneCount = Object.values(steps).filter(Boolean).length;
   const pct = Math.round((doneCount / 3) * 100);
-  const nextKey: StepKey | null = !steps.stripe ? "stripe" : !steps.listing ? "listing" : !steps.avail ? "avail" : null;
+  // Отложенный Stripe не считается "следующим": не подсвечиваем его как блокер.
+  const nextKey: StepKey | null =
+    !steps.stripe && !stripeDeferred ? "stripe" : !steps.listing ? "listing" : !steps.avail ? "avail" : null;
 
-  // Онбординг Connect Express: получаем ссылку и уходим на Stripe.
+  // Онбординг Connect Express: пробуем получить ссылку и уйти на Stripe. Если
+  // не удалось (например, платформа Stripe ещё не настроена) - не пугаем красной
+  // ошибкой, а показываем спокойную подсказку: выплаты можно настроить позже.
   async function startStripeOnboarding() {
     setStripePending(true);
-    setError(null);
+    setPayoutInfo(false);
     try {
       const res = await fetch("/api/connect/onboard", { method: "POST" });
-      const data = (await res.json().catch(() => null)) as { url?: string; error?: string; code?: string } | null;
-      if (!res.ok || !data?.url) {
-        // Известный случай (Accounts v1 выключен) показываем понятной подсказкой
-        // на языке интерфейса; иначе - настоящий текст ошибки от Stripe.
-        if (data?.code === "accounts_v1_disabled") throw new Error(t.errStripeV1);
-        throw new Error(data?.error || `onboard failed: ${res.status}`);
-      }
+      const data = (await res.json().catch(() => null)) as { url?: string } | null;
+      if (!res.ok || !data?.url) throw new Error(`onboard failed: ${res.status}`);
       window.location.assign(data.url);
     } catch (e) {
       console.error(e);
-      setError(e instanceof Error && e.message ? e.message : t.errGeneric);
+      setPayoutInfo(true);
       setStripePending(false);
     }
   }
@@ -103,6 +104,8 @@ export default function ProOnboarding({
                 </h4>
                 {done ? (
                   <span className="donel">{t.obDone}</span>
+                ) : s.key === "stripe" && stripeDeferred ? (
+                  <span className="laterl">{t.obPayoutDeferred}</span>
                 ) : (
                   <button
                     className="btn btn-ink btn-sm"
@@ -115,7 +118,14 @@ export default function ProOnboarding({
               </div>
             );
           })}
-          {error && <div className="err">{error}</div>}
+          {payoutInfo && !stripeDeferred && (
+            <div className="payinfo">
+              <p>{t.obPayoutLater}</p>
+              <button className="btn btn-line btn-sm" onClick={() => { setStripeDeferred(true); setPayoutInfo(false); }}>
+                {t.obLater}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
