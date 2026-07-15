@@ -17,6 +17,8 @@ html,body{min-height:100%;overflow-x:clip}
 .dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:clip}
 .dm a{color:inherit;text-decoration:none}
 .dm img{max-width:100%}
+/* Мгновенный отклик на тап: без 300ms-задержки и серого блика на iOS. */
+.dm a,.dm button,.dm .btn,.dm .chip,.dm .tab,.dm .cattab,.dm .cat,.dm .pcard2,.dm .taskcard,.dm input,.dm select,.dm textarea,.dm label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .dm .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
 
 /* type */

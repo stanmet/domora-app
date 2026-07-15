@@ -4,6 +4,7 @@
 // Ключ DeepL: переменная окружения DEEPL_API_KEY. Без ключа перевод просто
 // отключается: показывается оригинал, приложение работает как обычно.
 import { createHash } from "crypto";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/config";
 
@@ -68,13 +69,28 @@ export async function translateBatch(
   const missing = unique.filter((_, i) => !cachedHashes.has(hashes[i]));
   if (missing.length === 0) return result;
 
-  // 2. Недостающие - через DeepL (если есть ключ). Иначе оставляем оригинал.
-  const key = process.env.DEEPL_API_KEY;
-  if (!key) {
-    for (const t of missing) result.set(t, original(t, targetLang));
-    return result;
+  // 2. Недостающее показываем СРАЗУ в оригинале, чтобы не задерживать рендер
+  //    страницы (навигация должна быть мгновенной).
+  for (const t of missing) result.set(t, original(t, targetLang));
+
+  // 3. Сам перевод через DeepL выполняем в фоне, после ответа. При следующем
+  //    открытии эти тексты уже возьмутся из кеша переведёнными. Так тап по любой
+  //    кнопке/ссылке откликается сразу, не дожидаясь сети до DeepL.
+  if (process.env.DEEPL_API_KEY) {
+    try {
+      after(() => translateAndCache(missing, targetLang));
+    } catch {
+      // after доступен только в контексте запроса: вне его просто пропускаем.
+    }
   }
 
+  return result;
+}
+
+// Фоновый перевод недостающих строк и запись в кеш (не блокирует рендер).
+async function translateAndCache(missing: string[], targetLang: Locale): Promise<void> {
+  const key = process.env.DEEPL_API_KEY;
+  if (!key || missing.length === 0) return;
   try {
     const params = new URLSearchParams();
     for (const t of missing) params.append("text", t);
@@ -94,29 +110,14 @@ export async function translateBatch(
     const toCache: { sourceHash: string; targetLang: string; sourceLang: string; text: string }[] = [];
     missing.forEach((src, i) => {
       const tr = translations[i];
-      if (!tr) {
-        result.set(src, original(src, targetLang));
-        return;
-      }
+      if (!tr) return;
       const sourceLang = (tr.detected_source_language || targetLang).toLowerCase();
-      result.set(src, { text: tr.text, sourceLang, translated: sourceLang !== targetLang });
       toCache.push({ sourceHash: hashOf(src, targetLang), targetLang, sourceLang, text: tr.text });
     });
-
-    // 3. Кладём в кеш, чтобы не платить за повторный перевод.
-    if (toCache.length) {
-      try {
-        await prisma.translation.createMany({ data: toCache, skipDuplicates: true });
-      } catch {
-        // Кеш - необязательная оптимизация, ошибку записи игнорируем.
-      }
-    }
+    if (toCache.length) await prisma.translation.createMany({ data: toCache, skipDuplicates: true });
   } catch (e) {
     console.error("DeepL translate failed", e);
-    for (const t of missing) if (!result.has(t)) result.set(t, original(t, targetLang));
   }
-
-  return result;
 }
 
 // Перевод одного текста. Удобная обёртка над translateBatch.
