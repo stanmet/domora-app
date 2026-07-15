@@ -3,7 +3,7 @@
 // экран успеха после отправки запроса из view "done".
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Check, CreditCard, FileText, MapPin, Users } from "lucide-react";
+import { Calendar, Check, CreditCard, FileText, MapPin, ShieldCheck, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -13,6 +13,8 @@ import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
+import { confirmBooking, disputeBooking } from "./actions";
+import DisputeForm from "./DisputeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +98,26 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm">
                     <FileText size={14} /> {t.invoiceGet}
                   </Link>
+                )}
+
+                {/* Работа отмечена выполненной: клиент подтверждает или открывает спор */}
+                {b.status === "COMPLETED" && (
+                  <>
+                    <div className="hold" style={{ marginTop: 10 }}>
+                      <ShieldCheck size={15} /> {t.payoutNote}
+                    </div>
+                    <div className="bkbtns" style={{ marginTop: 8 }}>
+                      <form action={confirmBooking.bind(null, b.id)}>
+                        <button className="btn btn-green btn-sm">
+                          <Check size={14} /> {t.bConfirm}
+                        </button>
+                      </form>
+                      <DisputeForm
+                        action={disputeBooking.bind(null, b.id)}
+                        labels={{ open: t.bDispute, title: t.disputeTitle, ph: t.disputePh, send: t.disputeSend }}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             );

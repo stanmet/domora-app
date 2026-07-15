@@ -11,6 +11,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
+import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
 
 async function respondToRequest(bookingId: string, next: BookingStatus): Promise<void> {
   const authUser = await getAuthUser();
@@ -91,4 +92,58 @@ export async function acceptBooking(bookingId: string): Promise<void> {
 
 export async function declineBooking(bookingId: string): Promise<void> {
   await respondToRequest(bookingId, BookingStatus.DECLINED);
+}
+
+// Исполнитель отмечает, что приступил к работе: ACCEPTED -> IN_PROGRESS.
+export async function startBooking(bookingId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { providerId: true, status: true } });
+  if (!booking || booking.providerId !== user.id || booking.status !== BookingStatus.ACCEPTED) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.IN_PROGRESS } }),
+    prisma.bookingEvent.create({
+      data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.IN_PROGRESS } },
+    }),
+  ]);
+  revalidatePath("/pro/bookings");
+  revalidatePath("/bookings");
+}
+
+// Исполнитель отмечает работу выполненной: ACCEPTED|IN_PROGRESS -> COMPLETED.
+// Открывается окно спора; по его истечении (или после подтверждения клиентом)
+// уходит выплата.
+export async function completeBooking(bookingId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { providerId: true, status: true } });
+  if (
+    !booking ||
+    booking.providerId !== user.id ||
+    (booking.status !== BookingStatus.ACCEPTED && booking.status !== BookingStatus.IN_PROGRESS)
+  ) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+
+  const disputeWindowEndsAt = new Date(Date.now() + DISPUTE_WINDOW_HOURS * 3600 * 1000);
+  await prisma.$transaction([
+    prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.COMPLETED, disputeWindowEndsAt },
+    }),
+    prisma.bookingEvent.create({
+      data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.COMPLETED } },
+    }),
+  ]);
+  revalidatePath("/pro/bookings");
+  revalidatePath("/bookings");
 }

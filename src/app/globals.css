@@ -210,6 +210,10 @@ html,body{min-height:100%;overflow-x:clip}
 /* Спокойная подсказка про выплаты вместо красной ошибки */
 .dm .payinfo{background:var(--beige-bg);border-radius:12px;padding:14px;margin-top:14px}
 .dm .payinfo p{font-size:13px;color:#6b5a34;line-height:1.5;margin:0 0 10px}
+/* Форма открытия спора по заказу */
+.dm .dispute-form{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:8px}
+.dm .dispute-form b{font-size:13px}
+.dm .dispute-form textarea{width:100%}
 .dm .btn-line{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .dm .btn-line:hover{border-color:var(--ink)}
 

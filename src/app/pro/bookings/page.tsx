@@ -16,7 +16,9 @@ import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
-import { acceptBooking, declineBooking } from "./actions";
+import { after } from "next/server";
+import { acceptBooking, completeBooking, declineBooking, startBooking } from "./actions";
+import { processPayouts } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +100,22 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
           <FileText size={14} /> {t.invoiceGet}
         </Link>
       )}
+      {(b.status === BookingStatus.ACCEPTED || b.status === BookingStatus.IN_PROGRESS) && (
+        <div className="bkbtns" style={{ marginTop: 10 }}>
+          {b.status === BookingStatus.ACCEPTED && (
+            <form action={startBooking.bind(null, b.id)}>
+              <button className="btn btn-line btn-sm">
+                <Clock size={14} /> {t.bStart}
+              </button>
+            </form>
+          )}
+          <form action={completeBooking.bind(null, b.id)}>
+            <button className="btn btn-green btn-sm">
+              <Check size={14} /> {t.bComplete}
+            </button>
+          </form>
+        </div>
+      )}
       {isRequest && clientMessage && (
         <div className="bkmsg">
           <b>{t.clientMsgL}</b>
@@ -137,6 +155,8 @@ export default async function ProBookingsPage() {
   if (!user.roles.includes(Role.PROVIDER)) redirect("/account");
 
   await expireOverdueRequests({ providerId: user.id });
+  // Проводим созревшие выплаты в фоне после ответа (не тормозим страницу).
+  after(() => processPayouts().catch((e) => console.error("payout nudge failed", e)));
   const bookings = await loadBookings(user.id);
 
   const requests = bookings.filter((b) => b.status === BookingStatus.REQUESTED);

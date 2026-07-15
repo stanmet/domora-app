@@ -2,6 +2,9 @@
 // Файл без серверных импортов: используется и в клиентских компонентах.
 
 export const REQUEST_TTL_HOURS = 72;
+// Окно спора после завершения работы: если клиент не открыл спор за это время
+// (или подтвердил раньше), исполнителю уходит выплата (docs/domora-spec.md).
+export const DISPUTE_WINDOW_HOURS = 24;
 
 export type QtyConfig = { min: number; def: number; step: number };
 
