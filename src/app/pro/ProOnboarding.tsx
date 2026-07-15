@@ -44,9 +44,11 @@ export default function ProOnboarding({
     setError(null);
     try {
       const res = await fetch("/api/connect/onboard", { method: "POST" });
-      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string; code?: string } | null;
       if (!res.ok || !data?.url) {
-        // Показываем настоящую причину от Stripe, если сервер ее прислал.
+        // Известный случай (Accounts v1 выключен) показываем понятной подсказкой
+        // на языке интерфейса; иначе - настоящий текст ошибки от Stripe.
+        if (data?.code === "accounts_v1_disabled") throw new Error(t.errStripeV1);
         throw new Error(data?.error || `onboard failed: ${res.status}`);
       }
       window.location.assign(data.url);

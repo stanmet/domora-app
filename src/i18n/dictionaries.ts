@@ -183,6 +183,8 @@ const en = {
   errListing: "This service can't be booked right now.",
   errSelf: "You can't book your own service.",
   errGeneric: "Something went wrong. Please try again.",
+  errStripeV1:
+    "Stripe needs a one-time switch before payouts can start. Open your Stripe Dashboard, go to Settings then Features, turn on Accounts v1 support, then press Open again. Link: dashboard.stripe.com/settings/features",
   payL: "Card details",
   payHold: "We only place a hold on your card now. The money is charged after the pro accepts. If they decline or don't reply within 72 hours, the hold is released automatically.",
   errPay: "The payment didn't go through. Check your card details and try again.",
@@ -573,6 +575,8 @@ const ru: Dict = {
   errListing: "Эту услугу сейчас нельзя забронировать.",
   errSelf: "Нельзя бронировать собственную услугу.",
   errGeneric: "Что-то пошло не так. Попробуйте ещё раз.",
+  errStripeV1:
+    "Stripe требует один раз включить настройку перед выплатами. В кабинете Stripe откройте Settings, затем Features, включите поддержку Accounts v1 и снова нажмите Открыть. Ссылка: dashboard.stripe.com/settings/features",
   payL: "Данные карты",
   payHold: "Сейчас на карте только холд. Деньги спишутся после того, как исполнитель примет заказ. Если он откажет или не ответит за 72 часа, холд снимется автоматически.",
   errPay: "Оплата не прошла. Проверьте данные карты и попробуйте ещё раз.",
@@ -961,6 +965,8 @@ const uk: Dict = {
   errListing: "Цю послугу зараз не можна забронювати.",
   errSelf: "Не можна бронювати власну послугу.",
   errGeneric: "Щось пішло не так. Спробуйте ще раз.",
+  errStripeV1:
+    "Stripe потребує один раз увімкнути налаштування перед виплатами. У кабінеті Stripe відкрийте Settings, потім Features, увімкніть підтримку Accounts v1 і знову натисніть Відкрити. Посилання: dashboard.stripe.com/settings/features",
   payL: "Дані картки",
   payHold: "Зараз на картці лише холд. Гроші спишуться після того, як виконавець прийме замовлення. Якщо він відмовить або не відповість за 72 години, холд знімається автоматично.",
   errPay: "Оплата не пройшла. Перевірте дані картки та спробуйте ще раз.",
@@ -1349,6 +1355,8 @@ const pl: Dict = {
   errListing: "Tej usługi nie można teraz zarezerwować.",
   errSelf: "Nie możesz zarezerwować własnej usługi.",
   errGeneric: "Coś poszło nie tak. Spróbuj ponownie.",
+  errStripeV1:
+    "Stripe wymaga jednorazowego ustawienia przed wypłatami. W panelu Stripe otwórz Settings, potem Features, włącz obsługę Accounts v1 i naciśnij Otwórz ponownie. Link: dashboard.stripe.com/settings/features",
   payL: "Dane karty",
   payHold: "Na karcie blokujemy teraz tylko środki. Pieniądze zostaną pobrane dopiero, gdy fachowiec przyjmie zlecenie. Jeśli odmówi lub nie odpowie w ciągu 72 godzin, blokada zostanie zdjęta automatycznie.",
   errPay: "Płatność nie powiodła się. Sprawdź dane karty i spróbuj ponownie.",
@@ -1737,6 +1745,8 @@ const es: Dict = {
   errListing: "Este servicio no se puede reservar ahora.",
   errSelf: "No puedes reservar tu propio servicio.",
   errGeneric: "Algo salió mal. Inténtalo de nuevo.",
+  errStripeV1:
+    "Stripe necesita un ajuste único antes de los pagos. En tu panel de Stripe abre Settings y luego Features, activa el soporte de Accounts v1 y pulsa Abrir de nuevo. Enlace: dashboard.stripe.com/settings/features",
   payL: "Datos de la tarjeta",
   payHold: "Ahora solo retenemos el importe en tu tarjeta. El dinero se cobra cuando el profesional acepta el trabajo. Si rechaza o no responde en 72 horas, la retención se libera automáticamente.",
   errPay: "El pago no se ha realizado. Revisa los datos de la tarjeta e inténtalo de nuevo.",
@@ -2125,6 +2135,8 @@ const pt: Dict = {
   errListing: "Este serviço não pode ser reservado agora.",
   errSelf: "Não pode reservar o seu próprio serviço.",
   errGeneric: "Algo correu mal. Tente novamente.",
+  errStripeV1:
+    "A Stripe precisa de uma configuração única antes dos pagamentos. No painel da Stripe abra Settings e depois Features, ative o suporte a Accounts v1 e carregue em Abrir novamente. Ligação: dashboard.stripe.com/settings/features",
   payL: "Dados do cartão",
   payHold: "Por agora apenas cativamos o valor no seu cartão. O dinheiro é cobrado quando o profissional aceita o trabalho. Se recusar ou não responder em 72 horas, a cativação é libertada automaticamente.",
   errPay: "O pagamento não foi concluído. Verifique os dados do cartão e tente novamente.",

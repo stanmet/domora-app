@@ -69,6 +69,12 @@ export async function POST(req: Request) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Stripe onboarding failed";
     console.error("connect onboarding failed", user.id, message);
+    // Частый случай на новой платформе Stripe: создание аккаунтов Accounts v1
+    // выключено по умолчанию. Отдаём код, а клиент покажет понятную подсказку
+    // с шагами (Settings -> Features), а не сырой английский текст Stripe.
+    if (message.includes("Accounts v1")) {
+      return NextResponse.json({ code: "accounts_v1_disabled", error: message }, { status: 400 });
+    }
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
