@@ -22,6 +22,7 @@ export const SUBCATEGORIES: SubcatSeed[] = [
   { slug: "handy-painting", categorySlug: "handy", nameEn: "Painting & decorating", nameRu: "Малярные работы и декор" },
   { slug: "handy-repairs", categorySlug: "handy", nameEn: "Home repairs & carpentry", nameRu: "Ремонт и плотницкие работы" },
   { slug: "handy-electrical", categorySlug: "handy", nameEn: "Electrical help (RECI)", nameRu: "Электрика (RECI)" },
+  { slug: "handy-gas", categorySlug: "handy", nameEn: "Gas works (RGII)", nameRu: "Газовые работы (RGII)" },
   { slug: "handy-plumbing", categorySlug: "handy", nameEn: "Plumbing help", nameRu: "Сантехника" },
   { slug: "handy-appliance", categorySlug: "handy", nameEn: "Appliance installation", nameRu: "Установка техники" },
   { slug: "handy-flooring", categorySlug: "handy", nameEn: "Flooring & tiling", nameRu: "Полы и плитка" },
@@ -77,4 +78,16 @@ export async function seedSubcategories(): Promise<void> {
 
 export function subcatName(sub: { nameEn: string; nameRu: string }, locale: string): string {
   return locale === "ru" || locale === "uk" ? sub.nameRu : sub.nameEn;
+}
+
+// Регулируемые подкатегории в Ирландии: требуют подтверждающую лицензию.
+// Электромонтаж - регистрация RECI; газовые работы - RGII (docs/domora-spec.md,
+// каталог v3, раздел про Specialist Trades).
+export const REGULATED_LICENCE: Record<string, string> = {
+  "handy-electrical": "RECI",
+  "handy-gas": "RGII",
+};
+
+export function licenceFor(slug: string | null | undefined): string | null {
+  return slug ? REGULATED_LICENCE[slug] ?? null : null;
 }

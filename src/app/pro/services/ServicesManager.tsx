@@ -32,14 +32,16 @@ export default function ServicesManager({
 }: {
   listings: ListingRow[];
   categories: { slug: string; label: string }[];
-  subcategories?: { slug: string; label: string; categorySlug: string }[];
+  subcategories?: { slug: string; label: string; categorySlug: string; licence: string | null }[];
   t: Dict;
   locale: Locale;
 }) {
   const [adding, setAdding] = useState(false);
   const [cat, setCat] = useState(categories[0]?.slug ?? "");
+  const [sub, setSub] = useState("");
   const [state, formAction, pending] = useActionState<CreateListingState, FormData>(createListing, null);
   const subOptions = subcategories.filter((s) => s.categorySlug === cat);
+  const selectedLicence = subOptions.find((s) => s.slug === sub)?.licence ?? null;
 
   // Успешное создание закрывает форму; поля сбрасываются размонтированием.
   useEffect(() => {
@@ -54,7 +56,16 @@ export default function ServicesManager({
             <label htmlFor="svc-who">{t.liWho}</label>
             <input id="svc-who" name="who" className="f" placeholder={t.liWhoPh} maxLength={80} />
             <label htmlFor="svc-cat">{t.liCat}</label>
-            <select id="svc-cat" name="category" className="f" value={cat} onChange={(e) => setCat(e.target.value)}>
+            <select
+              id="svc-cat"
+              name="category"
+              className="f"
+              value={cat}
+              onChange={(e) => {
+                setCat(e.target.value);
+                setSub("");
+              }}
+            >
               {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.label}
@@ -64,14 +75,20 @@ export default function ServicesManager({
             {subOptions.length > 0 && (
               <>
                 <label htmlFor="svc-subcat">{t.liSubcat}</label>
-                <select id="svc-subcat" name="subcategory" className="f" defaultValue="">
+                <select id="svc-subcat" name="subcategory" className="f" value={sub} onChange={(e) => setSub(e.target.value)}>
                   <option value="">—</option>
                   {subOptions.map((s) => (
                     <option key={s.slug} value={s.slug}>
                       {s.label}
+                      {s.licence ? ` · ${s.licence}` : ""}
                     </option>
                   ))}
                 </select>
+                {selectedLicence && (
+                  <p className="fieldhint" style={{ color: "var(--orange)" }}>
+                    {t.licenceHint} (<a href="/pro/documents" style={{ color: "var(--green-dark)", fontWeight: 700 }}>{t.navDocs}</a>)
+                  </p>
+                )}
               </>
             )}
             <label htmlFor="svc-title">{t.liTitle}</label>

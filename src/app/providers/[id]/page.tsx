@@ -12,6 +12,7 @@ import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
+import { licenceFor } from "@/lib/subcategories";
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
@@ -31,7 +32,10 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
       listings: {
         where: { status: "ACTIVE" },
         orderBy: { createdAt: "asc" },
-        include: { category: { select: { slug: true, nameEn: true, nameRu: true } } },
+        include: {
+          category: { select: { slug: true, nameEn: true, nameRu: true } },
+          subcategory: { select: { slug: true } },
+        },
       },
       user: {
         select: {
@@ -52,6 +56,18 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const reviews = provider.user.reviewsGot;
   const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE" && !l.quoteFirst);
   const cheapest = priced.length ? priced.reduce((a, b) => (b.priceCents < a.priceCents ? b : a)) : null;
+
+  // Регулируемые услуги (электрика RECI, газ RGII): бейдж наличия лицензии.
+  const hasRegulated = provider.listings.some((l) => licenceFor(l.subcategory?.slug));
+  let docCount = 0;
+  if (hasRegulated) {
+    try {
+      docCount = await prisma.providerDocument.count({ where: { providerId: provider.userId } });
+    } catch {
+      // Таблица документов недоступна: считаем 0.
+    }
+  }
+  const licenceOk = hasRegulated && docCount > 0;
 
   // Обложка: первое фото портфолио, иначе фото любой услуги.
   const allPhotos = [...provider.portfolioPhotos, ...provider.listings.flatMap((l) => l.photos)];
@@ -151,6 +167,14 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                   <ShieldCheck size={12} /> {t.verified}
                 </span>
               )}
+              {hasRegulated && (
+                <span
+                  className="verified"
+                  style={licenceOk ? undefined : { background: "#FDEBE0", color: "var(--orange)" }}
+                >
+                  <ShieldCheck size={12} /> {licenceOk ? t.licenceOnFile : t.licenceRequired}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -211,6 +235,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                 const isQuote = l.unit === "FIXED_QUOTE" || l.priceCents === 0 || l.quoteFirst;
                 const catLabel = categoryLabel(t, l.category.slug, locale === "ru" ? l.category.nameRu : l.category.nameEn);
                 const bookable = !isQuote;
+                const lic = licenceFor(l.subcategory?.slug);
                 const inner = (
                   <>
                     <div className="svc-thumb" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
@@ -223,6 +248,14 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     </div>
                     <div className="svc-body">
                       <span className="svc-badge">{catLabel}</span>
+                      {lic && (
+                        <span
+                          className="svc-badge"
+                          style={{ marginLeft: 6, background: licenceOk ? "var(--sage)" : "#FDEBE0", color: licenceOk ? "var(--green-dark)" : "var(--orange)" }}
+                        >
+                          {lic} · {licenceOk ? t.licenceOnFile : t.licenceRequired}
+                        </span>
+                      )}
                       <TranslatableText
                         as="h4"
                         className="svc-title"

@@ -371,6 +371,11 @@ const en = {
   invoiceNote: "Domora is an intermediary marketplace and not a party to this service. The provider is responsible for their own taxes and any VAT.",
   invoiceGet: "Invoice",
   invoiceNA: "The invoice becomes available once the booking is confirmed.",
+  // Лицензионные фильтры (регулируемые услуги)
+  errNeedLicence: "This service is regulated and needs a licence (RECI for electrical, RGII for gas). Upload it in Documents first.",
+  licenceOnFile: "Licence on file",
+  licenceRequired: "Licence required",
+  licenceHint: "Regulated service. Upload your licence in Documents before publishing.",
 };
 
 export type Dict = typeof en;
@@ -744,6 +749,11 @@ const ru: Dict = {
   invoiceNote: "Domora - маркетплейс-посредник и не является стороной услуги. Исполнитель сам отвечает за свои налоги и НДС при наличии.",
   invoiceGet: "Инвойс",
   invoiceNA: "Инвойс станет доступен после подтверждения заказа.",
+  // Лицензионные фильтры (регулируемые услуги)
+  errNeedLicence: "Эта услуга регулируется и требует лицензию (RECI для электрики, RGII для газа). Сначала загрузите её в разделе Документы.",
+  licenceOnFile: "Лицензия загружена",
+  licenceRequired: "Нужна лицензия",
+  licenceHint: "Регулируемая услуга. Загрузите лицензию в разделе Документы перед публикацией.",
 };
 
 const uk: Dict = {
@@ -1115,6 +1125,11 @@ const uk: Dict = {
   invoiceNote: "Domora - маркетплейс-посередник і не є стороною послуги. Виконавець сам відповідає за свої податки та ПДВ за наявності.",
   invoiceGet: "Інвойс",
   invoiceNA: "Інвойс стане доступним після підтвердження замовлення.",
+  // Ліцензійні фільтри (регульовані послуги)
+  errNeedLicence: "Ця послуга регулюється і потребує ліцензію (RECI для електрики, RGII для газу). Спершу завантажте її в розділі Документи.",
+  licenceOnFile: "Ліцензію завантажено",
+  licenceRequired: "Потрібна ліцензія",
+  licenceHint: "Регульована послуга. Завантажте ліцензію в розділі Документи перед публікацією.",
 };
 
 const pl: Dict = {
@@ -1486,6 +1501,11 @@ const pl: Dict = {
   invoiceNote: "Domora to marketplace-pośrednik i nie jest stroną usługi. Wykonawca sam odpowiada za swoje podatki i ewentualny VAT.",
   invoiceGet: "Faktura",
   invoiceNA: "Faktura będzie dostępna po potwierdzeniu rezerwacji.",
+  // Filtry licencyjne (usługi regulowane)
+  errNeedLicence: "Ta usługa jest regulowana i wymaga licencji (RECI dla prac elektrycznych, RGII dla gazu). Najpierw prześlij ją w sekcji Dokumenty.",
+  licenceOnFile: "Licencja w aktach",
+  licenceRequired: "Wymagana licencja",
+  licenceHint: "Usługa regulowana. Prześlij licencję w sekcji Dokumenty przed publikacją.",
 };
 
 const es: Dict = {
@@ -1857,6 +1877,11 @@ const es: Dict = {
   invoiceNote: "Domora es un marketplace intermediario y no es parte del servicio. El profesional responde de sus propios impuestos y del IVA si corresponde.",
   invoiceGet: "Factura",
   invoiceNA: "La factura estará disponible cuando se confirme la reserva.",
+  // Filtros de licencia (servicios regulados)
+  errNeedLicence: "Este servicio está regulado y requiere una licencia (RECI para electricidad, RGII para gas). Súbela primero en Documentos.",
+  licenceOnFile: "Licencia registrada",
+  licenceRequired: "Licencia obligatoria",
+  licenceHint: "Servicio regulado. Sube tu licencia en Documentos antes de publicar.",
 };
 
 const pt: Dict = {
@@ -2228,6 +2253,11 @@ const pt: Dict = {
   invoiceNote: "A Domora é um marketplace intermediário e não é parte do serviço. O profissional responde pelos seus impostos e IVA quando aplicável.",
   invoiceGet: "Fatura",
   invoiceNA: "A fatura fica disponível quando a reserva for confirmada.",
+  // Filtros de licença (serviços regulados)
+  errNeedLicence: "Este serviço é regulado e exige uma licença (RECI para eletricidade, RGII para gás). Carregue-a primeiro em Documentos.",
+  licenceOnFile: "Licença em arquivo",
+  licenceRequired: "Licença obrigatória",
+  licenceHint: "Serviço regulado. Carregue a sua licença em Documentos antes de publicar.",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

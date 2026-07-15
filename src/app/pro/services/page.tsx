@@ -10,7 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { sortByCategoryOrder } from "@/components/categories";
-import { subcatName } from "@/lib/subcategories";
+import { licenceFor, subcatName } from "@/lib/subcategories";
 import ServicesManager from "./ServicesManager";
 
 export const dynamic = "force-dynamic";
@@ -39,13 +39,18 @@ export default async function ProServicesPage() {
   }));
 
   // Подкатегории для выпадающего списка (зависит от выбранной категории).
-  let subcategoryOptions: { slug: string; label: string; categorySlug: string }[] = [];
+  let subcategoryOptions: { slug: string; label: string; categorySlug: string; licence: string | null }[] = [];
   try {
     const subs = await prisma.subcategory.findMany({
       orderBy: { order: "asc" },
       include: { category: { select: { slug: true } } },
     });
-    subcategoryOptions = subs.map((s) => ({ slug: s.slug, label: subcatName(s, locale), categorySlug: s.category.slug }));
+    subcategoryOptions = subs.map((s) => ({
+      slug: s.slug,
+      label: subcatName(s, locale),
+      categorySlug: s.category.slug,
+      licence: licenceFor(s.slug),
+    }));
   } catch {
     // Таблица подкатегорий ещё не готова: список остаётся пустым.
   }

@@ -12,6 +12,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { licenceFor } from "@/lib/subcategories";
 
 // Единицы, доступные в форме. Цена по смете (FIXED_QUOTE) пойдет через сметы
 // в следующих спринтах, поэтому в форме ее нет. Из "use server"-файла можно
@@ -66,6 +67,17 @@ export async function createListing(
     } catch {
       // Таблица подкатегорий недоступна: сохраняем услугу без подкатегории.
     }
+  }
+
+  // Регулируемые услуги (электрика RECI, газ RGII) требуют загруженную лицензию.
+  if (licenceFor(subSlug)) {
+    let docCount = 0;
+    try {
+      docCount = await prisma.providerDocument.count({ where: { providerId: user.id } });
+    } catch {
+      // Таблица документов недоступна: не блокируем публикацию.
+    }
+    if (docCount === 0) return { error: t.errNeedLicence };
   }
 
   // Профиль исполнителя может еще не существовать (шаг Stripe не пройден).
