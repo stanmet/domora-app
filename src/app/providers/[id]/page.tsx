@@ -60,14 +60,30 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   // Регулируемые услуги (электрика RECI, газ RGII): бейдж наличия лицензии.
   const hasRegulated = provider.listings.some((l) => licenceFor(l.subcategory?.slug));
   let docCount = 0;
+  let verifiedCount = 0;
   if (hasRegulated) {
     try {
-      docCount = await prisma.providerDocument.count({ where: { providerId: provider.userId } });
+      const rows = await prisma.providerDocument.findMany({
+        where: { providerId: provider.userId },
+        select: { verifiedAt: true },
+      });
+      docCount = rows.length;
+      verifiedCount = rows.filter((r) => r.verifiedAt).length;
     } catch {
       // Таблица документов недоступна: считаем 0.
     }
   }
-  const licenceOk = hasRegulated && docCount > 0;
+  const licenceState: "verified" | "onfile" | "required" =
+    verifiedCount > 0 ? "verified" : docCount > 0 ? "onfile" : "required";
+  const licenceOk = licenceState !== "required";
+  const licenceLabel =
+    licenceState === "verified" ? t.licenceVerified : licenceState === "onfile" ? t.licenceOnFile : t.licenceRequired;
+  const licenceStyle =
+    licenceState === "verified"
+      ? undefined
+      : licenceState === "onfile"
+        ? { background: "#eef0ea", color: "var(--muted)" }
+        : { background: "#FDEBE0", color: "var(--orange)" };
 
   // Обложка: первое фото портфолио, иначе фото любой услуги.
   const allPhotos = [...provider.portfolioPhotos, ...provider.listings.flatMap((l) => l.photos)];
@@ -168,11 +184,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                 </span>
               )}
               {hasRegulated && (
-                <span
-                  className="verified"
-                  style={licenceOk ? undefined : { background: "#FDEBE0", color: "var(--orange)" }}
-                >
-                  <ShieldCheck size={12} /> {licenceOk ? t.licenceOnFile : t.licenceRequired}
+                <span className="verified" style={licenceStyle}>
+                  <ShieldCheck size={12} /> {licenceLabel}
                 </span>
               )}
             </div>
@@ -249,11 +262,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     <div className="svc-body">
                       <span className="svc-badge">{catLabel}</span>
                       {lic && (
-                        <span
-                          className="svc-badge"
-                          style={{ marginLeft: 6, background: licenceOk ? "var(--sage)" : "#FDEBE0", color: licenceOk ? "var(--green-dark)" : "var(--orange)" }}
-                        >
-                          {lic} · {licenceOk ? t.licenceOnFile : t.licenceRequired}
+                        <span className="svc-badge" style={{ marginLeft: 6, ...licenceStyle }}>
+                          {lic} · {licenceLabel}
                         </span>
                       )}
                       <TranslatableText

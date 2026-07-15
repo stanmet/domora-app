@@ -170,6 +170,7 @@ model ProviderDocument {
   url        String
   kind       String          @default("other") // certificate diploma permit licence insurance other
   label      String?
+  verifiedAt DateTime?       // проверено модерацией (админ подтвердил лицензию)
   createdAt  DateTime        @default(now())
 
   @@index([providerId])

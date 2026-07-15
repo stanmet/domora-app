@@ -562,8 +562,9 @@ html,body{min-height:100%;overflow-x:clip}
 
 @media(max-width:760px){
   .dm .botnav{display:block}
-  /* место под панель на всех страницах, чтобы она не перекрывала контент/подвал */
-  .dm{padding-bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
+  /* Подвал всегда идёт последним в потоке: даём ему нижний отступ на высоту
+     таб-бара, чтобы фон подвала продолжался ЗА иконками, а его текст не резался. */
+  .dm .site-footer{padding-bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
   /* на странице исполнителя панель заказа встаёт над таб-баром */
   .dm .bookbar{bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
   .dm .ppage{padding-bottom:96px}

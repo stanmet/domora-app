@@ -2,7 +2,7 @@
 // заказы с возвратами. Доступ только роли ADMIN. Дизайн в стиле проекта
 // (globals.css), тексты на английском и русском (см. i18n.ts).
 import Link from "next/link";
-import { ClipboardCheck, LayoutGrid, ShieldCheck, Users } from "lucide-react";
+import { ClipboardCheck, ExternalLink, FileCheck2, LayoutGrid, ShieldCheck, Users } from "lucide-react";
 import { ListingStatus, ProviderStatus, UserStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
@@ -11,14 +11,14 @@ import { eur } from "@/lib/format";
 import { statusPillClass } from "@/lib/booking-units";
 import { requireAdmin } from "@/lib/admin";
 import { getAdminDict, adminStatus } from "./i18n";
-import { approveListing, setProviderFrozen, setUserFrozen } from "./actions";
+import { approveListing, deleteDocument, setProviderFrozen, setUserFrozen, verifyDocument } from "./actions";
 import RejectForm from "./RejectForm";
 import RefundForm from "./RefundForm";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "moderation" | "users" | "providers" | "bookings";
-const TABS: Tab[] = ["moderation", "users", "providers", "bookings"];
+type Tab = "moderation" | "documents" | "users" | "providers" | "bookings";
+const TABS: Tab[] = ["moderation", "documents", "users", "providers", "bookings"];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requireAdmin();
@@ -32,6 +32,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   const tabMeta: Record<Tab, { label: string; icon: typeof ShieldCheck }> = {
     moderation: { label: at.tabModeration, icon: ShieldCheck },
+    documents: { label: at.tabDocuments, icon: FileCheck2 },
     users: { label: at.tabUsers, icon: Users },
     providers: { label: at.tabProviders, icon: LayoutGrid },
     bookings: { label: at.tabBookings, icon: ClipboardCheck },
@@ -55,6 +56,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
 
         {tab === "moderation" && <Moderation locale={locale} t={t} at={at} />}
+        {tab === "documents" && <Documents at={at} />}
         {tab === "users" && <UsersList at={at} />}
         {tab === "providers" && <ProvidersList at={at} />}
         {tab === "bookings" && <BookingsList locale={locale} at={at} />}
@@ -293,6 +295,56 @@ async function BookingsList({
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Модерация документов исполнителей: подтверждение лицензий (RECI/RGII и т.п.).
+async function Documents({ at }: { at: ReturnType<typeof getAdminDict> }) {
+  let docs: { id: string; url: string; label: string | null; provider: { displayName: string } }[] = [];
+  try {
+    docs = await prisma.providerDocument.findMany({
+      where: { verifiedAt: null },
+      orderBy: { createdAt: "asc" },
+      include: { provider: { select: { displayName: true } } },
+    });
+  } catch {
+    // Таблица ещё не готова.
+  }
+
+  if (docs.length === 0) return <div className="empty">{at.docModEmpty}</div>;
+
+  return (
+    <div className="adm-list">
+      {docs.map((d) => (
+        <div className="adm-card" key={d.id}>
+          <div className="adm-main">
+            <h4>{d.label || at.tabDocuments}</h4>
+            <div className="adm-meta">
+              <span>
+                {at.docProvider}: {d.provider.displayName}
+              </span>
+            </div>
+            <a
+              href={d.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="adm-mono"
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6 }}
+            >
+              <ExternalLink size={13} /> {at.docOpen}
+            </a>
+          </div>
+          <div className="adm-actions">
+            <form action={verifyDocument.bind(null, d.id)}>
+              <button className="btn btn-green btn-sm">{at.docVerify}</button>
+            </form>
+            <form action={deleteDocument.bind(null, d.id)}>
+              <button className="btn btn-red btn-sm">{at.docDelete}</button>
+            </form>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

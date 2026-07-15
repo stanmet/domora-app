@@ -376,6 +376,7 @@ const en = {
   licenceOnFile: "Licence on file",
   licenceRequired: "Licence required",
   licenceHint: "Regulated service. Upload your licence in Documents before publishing.",
+  licenceVerified: "Licence verified",
 };
 
 export type Dict = typeof en;
@@ -754,6 +755,7 @@ const ru: Dict = {
   licenceOnFile: "Лицензия загружена",
   licenceRequired: "Нужна лицензия",
   licenceHint: "Регулируемая услуга. Загрузите лицензию в разделе Документы перед публикацией.",
+  licenceVerified: "Лицензия проверена",
 };
 
 const uk: Dict = {
@@ -1130,6 +1132,7 @@ const uk: Dict = {
   licenceOnFile: "Ліцензію завантажено",
   licenceRequired: "Потрібна ліцензія",
   licenceHint: "Регульована послуга. Завантажте ліцензію в розділі Документи перед публікацією.",
+  licenceVerified: "Ліцензію перевірено",
 };
 
 const pl: Dict = {
@@ -1506,6 +1509,7 @@ const pl: Dict = {
   licenceOnFile: "Licencja w aktach",
   licenceRequired: "Wymagana licencja",
   licenceHint: "Usługa regulowana. Prześlij licencję w sekcji Dokumenty przed publikacją.",
+  licenceVerified: "Licencja zweryfikowana",
 };
 
 const es: Dict = {
@@ -1882,6 +1886,7 @@ const es: Dict = {
   licenceOnFile: "Licencia registrada",
   licenceRequired: "Licencia obligatoria",
   licenceHint: "Servicio regulado. Sube tu licencia en Documentos antes de publicar.",
+  licenceVerified: "Licencia verificada",
 };
 
 const pt: Dict = {
@@ -2258,6 +2263,7 @@ const pt: Dict = {
   licenceOnFile: "Licença em arquivo",
   licenceRequired: "Licença obrigatória",
   licenceHint: "Serviço regulado. Carregue a sua licença em Documentos antes de publicar.",
+  licenceVerified: "Licença verificada",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ru, uk, pl, es, pt };

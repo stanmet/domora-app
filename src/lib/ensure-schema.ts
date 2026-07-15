@@ -48,6 +48,7 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(
       `CREATE INDEX IF NOT EXISTS "ProviderDocument_providerId_idx" ON "ProviderDocument"("providerId")`,
     );
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderDocument" ADD COLUMN IF NOT EXISTS "verifiedAt" TIMESTAMP(3)`);
     // Дерево подкатегорий услуг.
     await prisma.$executeRawUnsafe(
       `CREATE TABLE IF NOT EXISTS "Subcategory" (

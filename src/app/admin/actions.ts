@@ -12,6 +12,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { removeImage } from "@/lib/storage";
 import { requireAdmin, adminActionLog } from "@/lib/admin";
 import { getLocale } from "@/i18n/server";
 import { getAdminDict } from "./i18n";
@@ -167,4 +168,44 @@ export async function refundBooking(bookingId: string, amountEuros: number | "fu
 
   revalidatePath("/admin");
   return { ok: true };
+}
+
+// Верификация документа исполнителя: подтверждение лицензии (RECI/RGII и т.п.).
+export async function verifyDocument(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true } });
+  if (!doc) return;
+  await prisma.$transaction([
+    prisma.providerDocument.update({ where: { id }, data: { verifiedAt: new Date() } }),
+    adminActionLog(admin.id, "document", id, "verify"),
+  ]);
+  revalidatePath("/admin");
+  revalidatePath(`/providers/${doc.providerId}`);
+}
+
+// Снять подтверждение документа.
+export async function unverifyDocument(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true } });
+  if (!doc) return;
+  await prisma.$transaction([
+    prisma.providerDocument.update({ where: { id }, data: { verifiedAt: null } }),
+    adminActionLog(admin.id, "document", id, "unverify"),
+  ]);
+  revalidatePath("/admin");
+  revalidatePath(`/providers/${doc.providerId}`);
+}
+
+// Удалить документ (не прошёл проверку).
+export async function deleteDocument(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true, url: true } });
+  if (!doc) return;
+  await prisma.$transaction([
+    prisma.providerDocument.delete({ where: { id } }),
+    adminActionLog(admin.id, "document", id, "delete"),
+  ]);
+  await removeImage(doc.url);
+  revalidatePath("/admin");
+  revalidatePath(`/providers/${doc.providerId}`);
 }
