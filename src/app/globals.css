@@ -98,8 +98,8 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* search + category tabs */
 .dm .search{display:flex;gap:10px;margin:16px 0 4px}
-.dm .sbox{flex:1;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:12px 18px;background:#fff}
-.dm .sbox input{border:none;outline:none;flex:1;font-size:16px;font-family:var(--font-inter),'Inter',sans-serif;background:transparent;color:var(--ink);padding:0}
+.dm .sbox{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:12px 18px;background:#fff}
+.dm .sbox input{border:none;outline:none;flex:1;min-width:0;font-size:16px;font-family:var(--font-inter),'Inter',sans-serif;background:transparent;color:var(--ink);padding:0}
 .dm .fbtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:0 16px;background:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;color:var(--ink)}
 .dm .fbtn.on{border-color:var(--ink)}
 .dm .citychips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 2px}
@@ -382,12 +382,12 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .cattab span{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2}
 
 .dm .homesec{padding:38px 0;border-top:1px solid var(--line)}
-.dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:0 15px}
+.dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:0 9px}
 .dm .homesec-head h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(20px,4.4vw,30px);min-width:0}
 .dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
 /* Лента открытых задач - отдельное окно с рамкой: задачи копятся и
    прокручиваются внутри него, не растягивая всю страницу. */
-.dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
+.dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px 8px;-webkit-overflow-scrolling:touch}
 .dm .scrollpanel::-webkit-scrollbar{width:8px}
 .dm .scrollpanel::-webkit-scrollbar-thumb{background:#c9c9c1;border-radius:99px}
 .dm .scrollpanel::-webkit-scrollbar-track{background:transparent}
@@ -435,6 +435,21 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .tr-note svg{color:var(--beige);flex-shrink:0}
 .dm .spin{animation:dm-spin 1s linear infinite}
 @keyframes dm-spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   Защита от вылезания за рамку экрана на всех страницах:
+   резиновые flex-элементы в карточках сжимаются, длинные слова
+   и ссылки переносятся, а не растягивают вёрстку.
+   ============================================================ */
+.dm .bkrow > div{min-width:0}
+.dm .offer-who{min-width:0}
+.dm .offer-top{gap:10px}
+.dm .li > div{min-width:0}
+.dm .ob-head > div{min-width:0}
+.dm .adm-card{min-width:0}
+.dm .bk h4,.dm .bk .meta,.dm .taskcard h3,.dm .taskdesc,.dm .offer-name,.dm .offer-msg,
+.dm .li h4,.dm .li p,.dm .cname,.dm .cprev,.dm .pcard2 .t,.dm .pcard2 .m,.dm .svc h4,.dm .svc p,
+.dm .phead h1,.dm h1.page,.dm .display{overflow-wrap:anywhere}
 
 /* ============================================================
    Сообщения (чат) и избранное.
