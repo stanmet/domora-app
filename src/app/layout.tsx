@@ -10,6 +10,7 @@ import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
@@ -20,6 +21,10 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const t = getDict(locale);
+
+  // Досоздаём схему новых возможностей (портфолио, переводы, просмотры задач),
+  // если её ещё нет. Работает через пул Supabase и не требует ручных шагов.
+  await ensureSchema();
 
   // Имя и роль в шапке: из таблицы User, при недоступной базе из метаданных Supabase.
   const authUser = await getAuthUser();
