@@ -2,8 +2,8 @@
 // заказы с возвратами. Доступ только роли ADMIN. Дизайн в стиле проекта
 // (globals.css), тексты на английском и русском (см. i18n.ts).
 import Link from "next/link";
-import { ClipboardCheck, ExternalLink, FileCheck2, LayoutGrid, ShieldCheck, Users } from "lucide-react";
-import { ListingStatus, ProviderStatus, UserStatus, Role } from "@prisma/client";
+import { ClipboardCheck, ExternalLink, FileCheck2, LayoutGrid, ShieldAlert, ShieldCheck, Users } from "lucide-react";
+import { DisputeStatus, ListingStatus, ProviderStatus, UserStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
 import { getDict, categoryLabel } from "@/i18n/dictionaries";
@@ -14,11 +14,12 @@ import { getAdminDict, adminStatus } from "./i18n";
 import { approveListing, deleteDocument, setProviderFrozen, setUserFrozen, verifyDocument } from "./actions";
 import RejectForm from "./RejectForm";
 import RefundForm from "./RefundForm";
+import DisputeResolveForm from "./DisputeResolveForm";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "moderation" | "documents" | "users" | "providers" | "bookings";
-const TABS: Tab[] = ["moderation", "documents", "users", "providers", "bookings"];
+type Tab = "moderation" | "disputes" | "documents" | "users" | "providers" | "bookings";
+const TABS: Tab[] = ["moderation", "disputes", "documents", "users", "providers", "bookings"];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requireAdmin();
@@ -32,6 +33,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   const tabMeta: Record<Tab, { label: string; icon: typeof ShieldCheck }> = {
     moderation: { label: at.tabModeration, icon: ShieldCheck },
+    disputes: { label: at.tabDisputes, icon: ShieldAlert },
     documents: { label: at.tabDocuments, icon: FileCheck2 },
     users: { label: at.tabUsers, icon: Users },
     providers: { label: at.tabProviders, icon: LayoutGrid },
@@ -56,6 +58,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
 
         {tab === "moderation" && <Moderation locale={locale} t={t} at={at} />}
+        {tab === "disputes" && <Disputes locale={locale} at={at} />}
         {tab === "documents" && <Documents at={at} />}
         {tab === "users" && <UsersList at={at} />}
         {tab === "providers" && <ProvidersList at={at} />}
@@ -295,6 +298,80 @@ async function BookingsList({
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Споры: дела в стадии договорённости и арбитража. Админ выносит решение
+// (полный/частичный возврат клиенту или выплата исполнителю).
+async function Disputes({
+  locale,
+  at,
+}: {
+  locale: Awaited<ReturnType<typeof getLocale>>;
+  at: ReturnType<typeof getAdminDict>;
+}) {
+  const disputes = await prisma.dispute.findMany({
+    where: { status: { in: [DisputeStatus.NEGOTIATION, DisputeStatus.ARBITRATION] } },
+    orderBy: { createdAt: "asc" },
+    include: {
+      booking: {
+        select: {
+          totalCents: true,
+          client: { select: { name: true } },
+          provider: { select: { displayName: true } },
+          listing: { select: { title: true } },
+        },
+      },
+    },
+  });
+
+  if (disputes.length === 0) return <div className="empty">{at.disputesEmpty}</div>;
+
+  return (
+    <div className="adm-list">
+      {disputes.map((d) => (
+        <div className="adm-card" key={d.id}>
+          <div className="adm-main">
+            <h4>{d.booking.listing.title}</h4>
+            <div className="adm-meta">
+              <span>
+                {at.colClient}: {d.booking.client.name}
+              </span>
+              <span>
+                {at.modProvider}: {d.booking.provider.displayName}
+              </span>
+              <span>
+                {at.colAmount}: {eur(d.booking.totalCents, locale)}
+              </span>
+              <span>
+                {at.disReason}: {d.reasonCode}
+              </span>
+              <span>
+                {at.disStage}: {d.status === DisputeStatus.ARBITRATION ? at.disStageArb : at.disStageNeg}
+              </span>
+            </div>
+            <Link
+              href={`/disputes/${d.id}`}
+              className="adm-mono"
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6 }}
+            >
+              <ExternalLink size={13} /> {at.disOpenChat}
+            </Link>
+            <DisputeResolveForm
+              disputeId={d.id}
+              labels={{
+                hint: at.disResolveHint,
+                refundFull: at.disRefundFull,
+                partial: at.disPartial,
+                partialAmount: at.disPartialAmount,
+                payProvider: at.disPayProvider,
+                error: at.errGeneric,
+              }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
