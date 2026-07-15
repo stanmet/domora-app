@@ -11,6 +11,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, statusLabel, unitLabel, type Dict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import type { Locale } from "@/i18n/config";
 import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
@@ -159,14 +160,20 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
   );
 }
 
-export default async function ProBookingsPage() {
+export default async function ProBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ conflict?: string }>;
+}) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro/bookings");
 
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
   if (!user.roles.includes(Role.PROVIDER)) redirect("/account");
+  const { conflict } = await searchParams;
 
   await expireOverdueRequests({ providerId: user.id });
   // Проводим созревшие выплаты в фоне после ответа (не тормозим страницу).
@@ -191,6 +198,7 @@ export default async function ProBookingsPage() {
           <ArrowLeft size={14} /> {t.back}
         </Link>
         <h1 className="page">{t.ordersT}</h1>
+        {conflict === "1" && <div className="err" style={{ marginBottom: 12 }}>{tx.slotTaken}</div>}
         <div className="tip" style={{ marginTop: 0 }}>
           <div className="ti">
             <ShieldCheck size={18} />

@@ -57,6 +57,7 @@ const en = {
 
   // Общие
   saving: "Saving...",
+  slotTaken: "This time is no longer available. Please choose another slot.",
   genericError: "Something went wrong. Please try again.",
 };
 
@@ -110,6 +111,7 @@ const ru: ExtraDict = {
   pwResetNoSession: "Ссылка для сброса недействительна или устарела. Запросите новую.",
 
   saving: "Сохранение...",
+  slotTaken: "Это время уже занято. Пожалуйста, выберите другое.",
   genericError: "Что-то пошло не так. Попробуйте ещё раз.",
 };
 
@@ -161,6 +163,7 @@ const uk: ExtraDict = {
   pwResetNoSession: "Посилання для скидання недійсне або застаріле. Запросіть нове.",
 
   saving: "Збереження...",
+  slotTaken: "Цей час уже зайнятий. Будь ласка, оберіть інший.",
   genericError: "Щось пішло не так. Спробуйте ще раз.",
 };
 
@@ -212,6 +215,7 @@ const pl: ExtraDict = {
   pwResetNoSession: "Link do resetu jest nieprawidłowy lub wygasł. Poproś o nowy.",
 
   saving: "Zapisywanie...",
+  slotTaken: "Ten termin jest już zajęty. Wybierz inny.",
   genericError: "Coś poszło nie tak. Spróbuj ponownie.",
 };
 
@@ -263,6 +267,7 @@ const es: ExtraDict = {
   pwResetNoSession: "Este enlace no es válido o ha caducado. Solicita uno nuevo.",
 
   saving: "Guardando...",
+  slotTaken: "Esta hora ya no está disponible. Elige otra franja.",
   genericError: "Algo salió mal. Inténtalo de nuevo.",
 };
 
@@ -314,6 +319,7 @@ const pt: ExtraDict = {
   pwResetNoSession: "Este link é inválido ou expirou. Peça um novo.",
 
   saving: "A guardar...",
+  slotTaken: "Este horário já não está disponível. Escolha outro.",
   genericError: "Algo correu mal. Tente novamente.",
 };
 
