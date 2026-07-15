@@ -13,7 +13,8 @@ import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
 import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
 import { notify } from "@/lib/notify";
-import { applyStrike, refundToClient } from "@/lib/cancellation";
+import { applyStrike, refundToClient, reopenTaskAndFindReplacements } from "@/lib/cancellation";
+import { issueCoupon } from "@/lib/coupons";
 import { StrikeType } from "@prisma/client";
 
 async function respondToRequest(bookingId: string, next: BookingStatus): Promise<void> {
@@ -191,8 +192,11 @@ export async function cancelByProvider(bookingId: string): Promise<void> {
     return;
   }
 
-  // Страйк исполнителю (может привести к заморозке профиля).
+  // Последствия: страйк исполнителю, купон заказчику (10% за счёт платформы),
+  // авто-подбор замены (если бронь была из задачи).
   await applyStrike(user.id, StrikeType.PROVIDER_CANCEL, bookingId);
+  await issueCoupon(booking.clientId, 10, "provider_cancel", bookingId);
+  await reopenTaskAndFindReplacements(bookingId, user.id);
   await notify(booking.clientId, "provider_cancelled", { bookingId });
 
   revalidatePath("/pro/bookings");

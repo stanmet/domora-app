@@ -2,7 +2,7 @@
 // Дизайн из prototypes/HostDashboard.jsx (обзор с онбординг-чеклистом).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ClipboardCheck, ClipboardList, FileCheck2, Images, Landmark, LayoutGrid } from "lucide-react";
+import { ArrowRight, ClipboardCheck, ClipboardList, FileCheck2, Gauge, Images, Landmark, LayoutGrid } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -11,6 +11,7 @@ import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { stripe } from "@/lib/stripe";
+import { providerHealth } from "@/lib/health";
 import ProOnboarding from "./ProOnboarding";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,8 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
   }
 
   const listingsCount = await prisma.listing.count({ where: { providerId: user.id } });
+  const health = await providerHealth(user.id);
+  const pctText = (v: number | null) => (v === null ? "—" : Math.round(v * 100) + "%");
 
   return (
     <main>
@@ -139,6 +142,30 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
             </Link>
           </div>
         </div>
+        {health.handled > 0 && (
+          <div className="card">
+            <div className="ob-head" style={{ marginBottom: 12, alignItems: "center" }}>
+              <div className="icircle" style={{ background: health.healthy ? "var(--sage)" : "#FDEBE0", color: health.healthy ? "var(--green)" : "var(--orange)" }}>
+                <Gauge size={22} strokeWidth={1.7} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3>{t.healthTitle}</h3>
+              </div>
+            </div>
+            <div className="health-row">
+              <div className="health-metric">
+                <b>{pctText(health.acceptanceRate)}</b>
+                <span>{t.healthAcceptance}</span>
+              </div>
+              <div className="health-metric">
+                <b>{pctText(health.cancellationRate)}</b>
+                <span>{t.healthCancellation}</span>
+              </div>
+            </div>
+            {!health.healthy && <p className="health-warn">{t.healthWarn}</p>}
+          </div>
+        )}
+
         <ProOnboarding t={t} stripeDone={!!profile?.payoutsEnabled} listingDone={listingsCount > 0} />
       </div>
     </main>

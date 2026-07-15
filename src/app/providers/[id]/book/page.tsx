@@ -6,8 +6,10 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
+import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getActiveCoupon } from "@/lib/coupons";
 import BookingForm, { type BookableListing } from "./BookingForm";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,8 @@ export default async function BookPage({
 
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect(`/login?next=/providers/${id}/book`);
+  const user = await ensureDbUser(authUser, locale);
+  const coupon = await getActiveCoupon(user.id);
 
   const provider = await prisma.providerProfile.findUnique({
     where: { userId: id },
@@ -62,6 +66,7 @@ export default async function BookPage({
         <BookingForm
           listings={listings}
           defaultListingId={listings.some((l) => l.id === preselected) ? (preselected as string) : listings[0].id}
+          coupon={coupon ? { code: coupon.code, pct: coupon.pct } : null}
           t={t}
           locale={locale}
         />

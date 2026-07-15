@@ -63,14 +63,20 @@ function totalFor(listing: BookableListing, qty: number): number {
   return subtotal + Math.round((subtotal * listing.clientFeePct) / 100);
 }
 
+export type BookingCoupon = { code: string; pct: number } | null;
+
 export default function BookingForm(props: {
   listings: BookableListing[];
   defaultListingId: string;
+  coupon: BookingCoupon;
   t: Dict;
   locale: Locale;
 }) {
   const listing = props.listings.find((l) => l.id === props.defaultListingId) ?? props.listings[0];
-  const initialAmount = totalFor(listing, qtyConfig(listing.unit).def);
+  const initialFull = totalFor(listing, qtyConfig(listing.unit).def);
+  const initialAmount = props.coupon
+    ? Math.max(initialFull - Math.round((initialFull * props.coupon.pct) / 100), 0)
+    : initialFull;
 
   if (!stripePromise) return <div className="err">{props.t.payUnavailable}</div>;
 
@@ -95,11 +101,13 @@ export default function BookingForm(props: {
 function InnerForm({
   listings,
   defaultListingId,
+  coupon,
   t,
   locale,
 }: {
   listings: BookableListing[];
   defaultListingId: string;
+  coupon: BookingCoupon;
   t: Dict;
   locale: Locale;
 }) {
@@ -122,11 +130,13 @@ function InnerForm({
 
   const subtotal = listing.priceCents * qty;
   const fee = Math.round((subtotal * listing.clientFeePct) / 100);
-  const total = subtotal + fee;
+  const gross = subtotal + fee;
+  const discount = coupon ? Math.round((gross * coupon.pct) / 100) : 0;
+  const total = Math.max(gross - discount, 0);
   const UnitIcon = UNIT_ICONS[listing.unit] ?? Users;
   const today = new Date().toISOString().slice(0, 10);
 
-  // Сумма холда в Stripe Elements следует за количеством и выбранной услугой.
+  // Сумма холда в Stripe Elements следует за количеством, услугой и скидкой.
   useEffect(() => {
     elements?.update({ amount: total });
   }, [elements, total]);
@@ -147,7 +157,7 @@ function InnerForm({
       const submitted = await elements.submit();
       if (submitted.error) return;
 
-      const res = await createBookingRequest({ listingId: listing.id, date, time, qty, address, message, draftBookingId });
+      const res = await createBookingRequest({ listingId: listing.id, date, time, qty, address, message, couponCode: coupon?.code, draftBookingId });
       if ("error" in res) {
         setError(res.error);
         return;
@@ -232,6 +242,14 @@ function InnerForm({
           </span>
           <span>{eur(fee, locale)}</span>
         </div>
+        {coupon && discount > 0 && (
+          <div className="row" style={{ color: "var(--green)" }}>
+            <span>
+              {t.couponL} {coupon.code} · -{coupon.pct}%
+            </span>
+            <span>-{eur(discount, locale)}</span>
+          </div>
+        )}
         <div className="row total">
           <span>{t.sumTotal}</span>
           <span>{eur(total, locale)}</span>

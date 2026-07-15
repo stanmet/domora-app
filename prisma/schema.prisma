@@ -258,6 +258,7 @@ model Booking {
   seriesId     String?       // подписка на регулярные услуги
   requestExpiresAt DateTime? // requested + 72h
   disputeWindowEndsAt DateTime? // completed + 48h
+  couponId     String?       // применённый купон-скидка
   createdAt    DateTime      @default(now())
 
   events   BookingEvent[]
@@ -424,6 +425,22 @@ model Subscription {
   createdAt  DateTime @default(now())
 
   @@index([clientId])
+}
+
+// Купон-скидка заказчику (например, за отмену исполнителем: 10% на следующий заказ).
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  clientId        String
+  pct             Int      @default(10)
+  reason          String
+  status          String   @default("active") // active | used | expired
+  sourceBookingId String?
+  usedBookingId   String?
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([clientId, status])
 }
 
 model Notification {

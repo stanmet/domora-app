@@ -14,7 +14,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { processPayouts } from "@/lib/jobs";
 import { notify } from "@/lib/notify";
-import { refundCentsForCancel, refundToClient } from "@/lib/cancellation";
+import { refundCentsForCancel, refundToClient, reopenTaskAndFindReplacements } from "@/lib/cancellation";
 import { releaseBookingHold } from "@/lib/payments";
 
 export async function confirmBooking(bookingId: string): Promise<void> {
@@ -176,6 +176,8 @@ export async function reportNoShow(bookingId: string): Promise<void> {
     return;
   }
 
+  // Исполнитель не пришёл: пробуем сразу подобрать замену через задачу.
+  await reopenTaskAndFindReplacements(bookingId, booking.providerId);
   await notify(booking.providerId, "dispute", { bookingId, reason: "no_show" });
   revalidatePath("/bookings");
   revalidatePath("/pro/bookings");

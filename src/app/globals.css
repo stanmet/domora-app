@@ -225,6 +225,14 @@ html,body{min-height:100%;overflow-x:clip}
 /* Доверительная строка в футере */
 .dm .foot-trust{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;color:var(--green);text-decoration:none;font-weight:600}
 .dm .foot-trust:hover{text-decoration:underline}
+/* Показатели исполнителя (здоровье-метрики) */
+.dm .health-row{display:flex;gap:12px}
+.dm .health-metric{flex:1;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.dm .health-metric b{display:block;font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:24px}
+.dm .health-metric span{font-size:12px;color:var(--muted)}
+.dm .health-warn{margin:12px 0 0;font-size:13px;line-height:1.5;color:var(--orange)}
+/* Бейдж купона */
+.dm .coupon-badge{background:var(--sage);color:var(--green);font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;flex-shrink:0}
 .dm .btn-line{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .dm .btn-line:hover{border-color:var(--ink)}
 

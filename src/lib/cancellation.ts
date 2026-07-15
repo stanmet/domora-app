@@ -1,10 +1,11 @@
 // Отмены, возвраты и страйки (docs/domora-spec.md, разделы 4 и 6).
 // Площадка - посредник и агент по платежу, не сторона сделки: возвраты идут
 // строго по тирам, решения по спорам принимает человек-арбитр, а не автоматика.
-import { PaymentStatus, ProviderStatus, StrikeType, type Payment } from "@prisma/client";
+import { ListingStatus, PaymentStatus, ProviderStatus, StrikeType, TaskStatus, type Payment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { releaseBookingHold } from "@/lib/payments";
+import { notify } from "@/lib/notify";
 
 export const STRIKE_TTL_DAYS = 90;
 // Порог: при скольких активных страйках профиль исполнителя замораживается.
@@ -84,5 +85,37 @@ export async function applyStrike(userId: string, type: StrikeType, bookingId?: 
     }
   } catch (e) {
     console.error("applyStrike failed", userId, type, e);
+  }
+}
+
+// Авто-подбор замены (spec 4.2): если бронь была из задачи, снова открываем
+// задачу и зовём топ-5 подходящих исполнителей города, кроме выбывшего.
+export async function reopenTaskAndFindReplacements(bookingId: string, excludeProviderId: string): Promise<void> {
+  try {
+    const task = await prisma.task.findFirst({
+      where: { bookingId },
+      select: { id: true, categoryId: true, city: true },
+    });
+    if (!task) return;
+
+    await prisma.task.update({
+      where: { id: task.id },
+      data: { status: TaskStatus.OPEN, bookingId: null, expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000) },
+    });
+
+    const pros = await prisma.providerProfile.findMany({
+      where: {
+        status: ProviderStatus.ACTIVE,
+        city: task.city,
+        userId: { not: excludeProviderId },
+        listings: { some: { status: ListingStatus.ACTIVE, categoryId: task.categoryId } },
+      },
+      orderBy: { ratingCached: "desc" },
+      take: 5,
+      select: { userId: true },
+    });
+    for (const p of pros) await notify(p.userId, "replacement", { taskId: task.id });
+  } catch (e) {
+    console.error("reopenTaskAndFindReplacements failed", bookingId, e);
   }
 }

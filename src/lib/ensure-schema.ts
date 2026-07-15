@@ -97,6 +97,26 @@ export async function ensureSchema(): Promise<void> {
     );
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Notification_userId_readAt_idx" ON "Notification"("userId","readAt")`);
 
+    // Купоны-скидки заказчику.
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "Coupon" (
+         "id" TEXT NOT NULL,
+         "code" TEXT NOT NULL,
+         "clientId" TEXT NOT NULL,
+         "pct" INTEGER NOT NULL DEFAULT 10,
+         "reason" TEXT NOT NULL,
+         "status" TEXT NOT NULL DEFAULT 'active',
+         "sourceBookingId" TEXT,
+         "usedBookingId" TEXT,
+         "expiresAt" TIMESTAMP(3) NOT NULL,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "Coupon_pkey" PRIMARY KEY ("id")
+       )`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Coupon_code_key" ON "Coupon"("code")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Coupon_clientId_status_idx" ON "Coupon"("clientId","status")`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "couponId" TEXT`);
+
     // Наполняем дерево подкатегорий данными (идемпотентно).
     await seedSubcategories();
   } catch (e) {

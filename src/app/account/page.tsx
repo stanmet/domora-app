@@ -1,7 +1,7 @@
 // Личный кабинет: данные пользователя из таблицы User, роль и выход.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarClock, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Ticket, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -45,6 +45,18 @@ export default async function AccountPage() {
     // Таблица подписок недоступна.
   }
 
+  // Активные купоны клиента.
+  let coupons: { id: string; code: string; pct: number }[] = [];
+  try {
+    coupons = await prisma.coupon.findMany({
+      where: { clientId: user.id, status: "active", expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, code: true, pct: true },
+    });
+  } catch {
+    // Таблица купонов недоступна.
+  }
+
   return (
     <main>
       <div className="wrap auth">
@@ -83,6 +95,27 @@ export default async function AccountPage() {
             </Link>
           )}
         </div>
+
+        {coupons.length > 0 && (
+          <section className="subs-sec">
+            <h2 className="subs-title">
+              <Ticket size={18} /> {t.myCoupons}
+            </h2>
+            <div className="subs-list">
+              {coupons.map((c) => (
+                <div className="subs-row" key={c.id}>
+                  <div className="subs-info">
+                    <span className="subs-name">{c.code}</span>
+                    <div className="subs-meta">
+                      -{c.pct}% {t.couponOff}
+                    </div>
+                  </div>
+                  <span className="coupon-badge">-{c.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="subs-sec">
           <h2 className="subs-title">

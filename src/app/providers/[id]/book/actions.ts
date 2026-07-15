@@ -17,6 +17,7 @@ import { encrypt } from "@/lib/crypto";
 import { calcBooking, stripe } from "@/lib/stripe";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
 import { qtyConfig } from "@/lib/booking-units";
+import { couponDiscount, findActiveCouponByCode, getCouponById, redeemCoupon } from "@/lib/coupons";
 
 export type BookingRequestInput = {
   listingId: string;
@@ -25,6 +26,8 @@ export type BookingRequestInput = {
   qty: number;
   address: string;
   message: string;
+  // Купон-скидка заказчика (10% за отмену исполнителем и т.п.).
+  couponCode?: string;
   // Бронь предыдущей неудачной попытки оплаты: переиспользуем вместо новой.
   draftBookingId?: string;
 };
@@ -77,27 +80,36 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
     Number(listing.category.providerFeePct),
   );
 
-  const bookingData = {
-    clientId: user.id,
-    providerId: listing.providerId,
-    listingId: listing.id,
-    dateStart,
-    qty,
-    unit: listing.unit,
-    priceCentsSnapshot: listing.priceCents,
-    subtotalCents: money.subtotal,
-    clientFeeCents: money.clientFee,
-    providerFeeCents: money.providerFee,
-    totalCents: money.total,
-    addressEncrypted: encrypt(address),
-  };
-
   try {
     let bookingId: string;
 
     const draft = input.draftBookingId
       ? await prisma.booking.findUnique({ where: { id: input.draftBookingId } })
       : null;
+
+    // Купон: явный код имеет приоритет; при повторной попытке берём тот, что уже
+    // привязан к черновику, чтобы сумма не менялась. Скидку финансирует площадка.
+    let coupon: { id: string; pct: number } | null = null;
+    if (input.couponCode) coupon = await findActiveCouponByCode(user.id, input.couponCode.trim());
+    else if (draft?.couponId) coupon = await getCouponById(draft.couponId);
+    const discount = coupon ? couponDiscount(money.total, coupon.pct) : 0;
+    const totalCents = Math.max(money.total - discount, 0);
+
+    const bookingData = {
+      clientId: user.id,
+      providerId: listing.providerId,
+      listingId: listing.id,
+      dateStart,
+      qty,
+      unit: listing.unit,
+      priceCentsSnapshot: listing.priceCents,
+      subtotalCents: money.subtotal,
+      clientFeeCents: money.clientFee,
+      providerFeeCents: money.providerFee,
+      totalCents,
+      couponId: coupon?.id ?? null,
+      addressEncrypted: encrypt(address),
+    };
 
     if (draft && draft.clientId === user.id && draft.status === BookingStatus.DRAFT) {
       await prisma.booking.update({ where: { id: draft.id }, data: bookingData });
@@ -126,7 +138,7 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
 
     const { clientSecret } = await createOrUpdateBookingHold({
       bookingId,
-      totalCents: money.total,
+      totalCents,
       email: user.email,
     });
     return { bookingId, clientSecret };
@@ -159,6 +171,8 @@ export async function finalizeBookingPayment(bookingId: string): Promise<Finaliz
     const intent = await stripe.paymentIntents.retrieve(booking.payment.stripePaymentIntentId);
     if (intent.status !== "requires_capture") return { error: t.errPay };
     await markBookingRequested(booking.id, user.id);
+    // Купон списываем только после успешного холда.
+    if (booking.couponId) await redeemCoupon(booking.couponId, booking.id);
     return {};
   } catch (e) {
     console.error("finalizeBookingPayment failed", e);
