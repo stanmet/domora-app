@@ -19,7 +19,7 @@ export default async function Home() {
   const t = getDict(locale);
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
-  const [categories, openTasks, listings] = await Promise.all([
+  const [categories, openTasks, listings, prosCount, tasksCount, reviewsCount] = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
       where: { status: "OPEN", expiresAt: { gt: new Date() } },
@@ -39,6 +39,9 @@ export default async function Home() {
         category: { select: { slug: true } },
       },
     }),
+    prisma.providerProfile.count({ where: { status: "ACTIVE" } }),
+    prisma.task.count(),
+    prisma.review.count({ where: { publishedAt: { not: null } } }),
   ]);
   const cats = sortByCategoryOrder(categories);
 
@@ -205,6 +208,24 @@ export default async function Home() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Статистика (в духе Kabanchik) */}
+      <div className="wrap" style={{ paddingTop: 8 }}>
+        <div className="stats">
+          <div className="statbox">
+            <b>{prosCount}</b>
+            <span>{t.statPros}</span>
+          </div>
+          <div className="statbox">
+            <b>{tasksCount}</b>
+            <span>{t.statTasks}</span>
+          </div>
+          <div className="statbox">
+            <b>{reviewsCount}</b>
+            <span>{t.statReviews}</span>
+          </div>
+        </div>
       </div>
 
       {/* Как это работает + доверие (из утверждённого прототипа) */}

@@ -564,3 +564,30 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .bookbar{bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
   .dm .ppage{padding-bottom:96px}
 }
+
+/* ============================================================
+   Футер в духе Kabanchik + блок статистики на главной.
+   ============================================================ */
+.dm .site-footer{display:block;padding:0;border-top:1px solid var(--line);margin-top:24px;background:#fafaf8;color:var(--muted)}
+.dm .foot-grid{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:28px;padding:40px 0 24px}
+.dm .foot-col{display:flex;flex-direction:column;gap:9px;min-width:0}
+.dm .foot-col h4{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.dm .foot-col a{font-size:13.5px;color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+.dm .foot-col a:hover{color:var(--green-dark)}
+.dm .foot-brand .logo{font-size:20px;color:var(--ink)}
+.dm .foot-brand p{font-size:12.5px;color:var(--muted);line-height:1.5;max-width:240px}
+.dm .foot-contact{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dm .foot-contact svg{color:var(--green);flex-shrink:0}
+.dm .foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:16px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media(max-width:760px){
+  .dm .foot-grid{grid-template-columns:1fr 1fr;gap:24px 20px;padding:30px 0 18px}
+  .dm .foot-brand{grid-column:1 / -1}
+}
+@media(max-width:420px){
+  .dm .foot-grid{grid-template-columns:1fr}
+}
+
+.dm .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:10px 0}
+.dm .statbox{border:1px solid var(--line);border-radius:16px;padding:20px 14px;text-align:center;background:#fff}
+.dm .statbox b{display:block;font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:clamp(22px,6vw,34px);color:var(--green-dark);line-height:1}
+.dm .statbox span{display:block;font-size:12px;color:var(--muted);margin-top:7px;line-height:1.3}

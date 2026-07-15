@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Domora",
@@ -58,15 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           isAdmin={isAdmin}
         />
         {children}
-        <footer>
-          <div
-            className="wrap"
-            style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, width: "100%" }}
-          >
-            <span>{t.footerLeft}</span>
-            <span>{t.footerRight}</span>
-          </div>
-        </footer>
+        <SiteFooter t={t} locale={locale} />
         <BottomNav
           labels={{
             home: t.navHome,

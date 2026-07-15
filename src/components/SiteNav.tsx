@@ -10,6 +10,7 @@ import {
   ArrowRight,
   ClipboardList,
   Heart,
+  HelpCircle,
   LayoutDashboard,
   LayoutGrid,
   ListTodo,
@@ -74,6 +75,8 @@ export default function SiteNav({
     { href: "/favorites", label: t.favorites, icon: Heart, auth: true },
     { href: "/messages", label: t.messages, icon: MessageCircle, auth: true },
     { href: "/account", label: t.profile, icon: UserRound, auth: true },
+    { href: "/how-it-works", label: t.navHowItWorks, icon: HelpCircle },
+    { href: "/safety", label: t.navSafety, icon: ShieldCheck },
   ];
 
   return (
