@@ -26,6 +26,7 @@ import type { Locale } from "@/i18n/config";
 import LangSwitcher from "./LangSwitcher";
 import SignOutButton from "./SignOutButton";
 import SearchModal from "./SearchModal";
+import BrandMark from "./BrandMark";
 
 export default function SiteNav({
   locale,
@@ -87,7 +88,8 @@ export default function SiteNav({
       <header>
         <div className="wrap hd">
           <Link href="/" className="logo" onClick={close}>
-            DOMO<span>RA</span>
+            <BrandMark size={26} className="logo-mark" />
+            <span className="logo-word">DOMORA</span>
           </Link>
 
           <button type="button" className="topsearch" onClick={() => setSearchOpen(true)} aria-label={t.searchTop}>
@@ -124,7 +126,8 @@ export default function SiteNav({
       <aside className={"drawer" + (open ? " open" : "")} aria-hidden={!open}>
         <div className="drawer-top">
           <span className="logo">
-            DOMO<span>RA</span>
+            <BrandMark size={24} className="logo-mark" />
+            <span className="logo-word">DOMORA</span>
           </span>
           <button className="burger" onClick={close} aria-label={t.close}>
             <X size={20} />

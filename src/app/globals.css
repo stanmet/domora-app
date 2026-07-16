@@ -9,6 +9,7 @@
   --sage:#EFF4EA; --green:#4C7C3F; --green-dark:#3d6533;
   --beige-bg:#F5EEDF; --beige:#A98F5F;
   --orange:#EA5B13; --line:#e7e7e2;
+  --brand:#2F6A45; --gold:#C6A24C;
   --botnav-h:58px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -34,8 +35,9 @@ html,body{min-height:100%;overflow-x:clip}
 /* header */
 .dm header{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);z-index:20}
 .dm .hd{display:flex;align-items:center;justify-content:space-between;height:60px}
-.dm .logo{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:19px;letter-spacing:.02em;cursor:pointer;text-transform:uppercase}
-.dm .logo span{color:var(--green)}
+.dm .logo{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:20px;letter-spacing:.03em;cursor:pointer;text-transform:uppercase;color:var(--brand)}
+.dm .logo-mark{flex-shrink:0}
+.dm .logo-word{color:var(--brand)}
 .dm .hd-right{display:flex;gap:10px;align-items:center}
 .dm .lang{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;font-family:var(--font-inter),'Inter',sans-serif;color:var(--ink)}
 .dm .lang:hover{border-color:var(--ink)}

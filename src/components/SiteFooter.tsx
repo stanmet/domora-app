@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { sortByCategoryOrder } from "@/components/categories";
+import BrandMark from "@/components/BrandMark";
 
 export default async function SiteFooter({ t, locale }: { t: Dict; locale: Locale }) {
   let categories: { slug: string; nameEn: string; nameRu: string }[] = [];
@@ -21,7 +22,8 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
       <div className="wrap foot-grid">
         <div className="foot-col foot-brand">
           <span className="logo">
-            DOMO<span>RA</span>
+            <BrandMark size={26} className="logo-mark" />
+            <span className="logo-word">DOMORA</span>
           </span>
           <p>{t.footerRights}</p>
           <Link href="/safety" className="foot-trust">
