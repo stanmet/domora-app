@@ -8,10 +8,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics";
 import type { Dict } from "@/i18n/dictionaries";
 import OAuthButtons from "@/components/OAuthButtons";
 
-export default function LoginForm({ t, next, initialError }: { t: Dict; next: string | null; initialError: string | null }) {
+export default function LoginForm({
+  t,
+  next,
+  initialError,
+  forgotLabel,
+}: {
+  t: Dict;
+  next: string | null;
+  initialError: string | null;
+  forgotLabel: string;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,6 +45,7 @@ export default function LoginForm({ t, next, initialError }: { t: Dict; next: st
       } else {
         // Полная перезагрузка: серверные компоненты подхватят cookies сессии,
         // а запись в таблице User создастся на целевой странице (ensureDbUser).
+        track("login");
         window.location.assign(next ?? "/account");
       }
     } catch {
@@ -111,6 +123,11 @@ export default function LoginForm({ t, next, initialError }: { t: Dict; next: st
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <div style={{ textAlign: "right", marginTop: 4 }}>
+        <Link href="/forgot-password" style={{ fontSize: 13 }}>
+          {forgotLabel}
+        </Link>
+      </div>
       {error && <div className="err">{error}</div>}
       <button className="btn btn-ink" style={{ width: "100%", justifyContent: "center", marginTop: 20 }} disabled={busy}>
         {busy ? t.signingIn : t.login}

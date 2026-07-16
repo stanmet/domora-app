@@ -7,6 +7,35 @@ import { BookingStatus, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { releaseBookingHold } from "@/lib/payments";
 
+// Занятость слота исполнителя. Считаем слот занятым, если у исполнителя уже есть
+// подтверждённая/идущая/завершённая бронь на то же время начала. Это защищает от
+// двойного бронирования одного времени двумя клиентами (docs QA, сценарий 7):
+// запрашивать одно время могут несколько клиентов, но подтвердить исполнитель
+// сможет только одну бронь.
+const SLOT_BUSY: BookingStatus[] = [
+  BookingStatus.ACCEPTED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.COMPLETED,
+  BookingStatus.CLOSED,
+];
+
+export async function slotTaken(
+  providerId: string,
+  dateStart: Date,
+  excludeBookingId?: string,
+): Promise<boolean> {
+  const clash = await prisma.booking.findFirst({
+    where: {
+      providerId,
+      dateStart,
+      status: { in: SLOT_BUSY },
+      ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
+    },
+    select: { id: true },
+  });
+  return Boolean(clash);
+}
+
 export async function expireOverdueRequests(where: Prisma.BookingWhereInput): Promise<void> {
   const overdue = await prisma.booking.findMany({
     where: { ...where, status: BookingStatus.REQUESTED, requestExpiresAt: { lt: new Date() } },

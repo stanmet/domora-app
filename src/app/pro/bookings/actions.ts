@@ -11,6 +11,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
+import { slotTaken } from "@/lib/bookings";
 import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
 import { notify } from "@/lib/notify";
 import { applyStrike, refundToClient, reopenTaskAndFindReplacements } from "@/lib/cancellation";
@@ -44,6 +45,12 @@ async function respondToRequest(bookingId: string, next: BookingStatus): Promise
     ]);
     revalidatePath("/pro/bookings");
     return;
+  }
+
+  // Перед принятием проверяем, не занял ли это время другой уже принятый заказ
+  // (два клиента запросили один слот). Если да - принять нельзя.
+  if (next === BookingStatus.ACCEPTED && (await slotTaken(booking.providerId, booking.dateStart, booking.id))) {
+    redirect("/pro/bookings?conflict=1");
   }
 
   const hasHold = booking.payment?.status === PaymentStatus.HOLD;

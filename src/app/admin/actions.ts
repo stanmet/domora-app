@@ -10,6 +10,7 @@ import {
   ProviderStatus,
   UserStatus,
 } from "@prisma/client";
+import { DisputeStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { removeImage } from "@/lib/storage";
@@ -17,6 +18,8 @@ import { requireAdmin, adminActionLog } from "@/lib/admin";
 import { getLocale } from "@/i18n/server";
 import { getAdminDict } from "./i18n";
 import { notify } from "@/lib/notify";
+import { refundToClient } from "@/lib/cancellation";
+import { processPayouts } from "@/lib/jobs";
 
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
@@ -213,4 +216,93 @@ export async function deleteDocument(id: string): Promise<void> {
   await removeImage(doc.url);
   revalidatePath("/admin");
   revalidatePath(`/providers/${doc.providerId}`);
+}
+
+export type DisputeOutcome = "full_refund" | "partial_refund" | "provider_paid";
+export type ResolveResult = { ok: true } | { error: string };
+
+// Арбитраж спора: окончательное решение поддержки (docs/domora-spec.md 6.1).
+// - full_refund: заказчику полный возврат, исполнителю выплата не идёт.
+// - partial_refund: заказчику возврат указанной суммы, исполнителю обычная выплата
+//   (разницу берёт на себя площадка из своей комиссии).
+// - provider_paid: возврата нет, исполнителю уходит выплата.
+// Заказ закрывается, спор помечается RESOLVED, обе стороны получают уведомление.
+export async function resolveDispute(
+  disputeId: string,
+  outcome: DisputeOutcome,
+  amountEuros?: number,
+): Promise<ResolveResult> {
+  const admin = await requireAdmin();
+  const t = getAdminDict(await getLocale());
+
+  const dispute = await prisma.dispute.findUnique({
+    where: { id: disputeId },
+    include: { booking: { include: { payment: true } } },
+  });
+  if (!dispute?.booking || dispute.status === DisputeStatus.RESOLVED) return { error: t.errGeneric };
+  const booking = dispute.booking;
+
+  // Сумма частичного возврата в центах, ограничена итогом заказа.
+  let refundCents = 0;
+  if (outcome === "full_refund") {
+    refundCents = booking.payment?.amountCents ?? booking.totalCents;
+  } else if (outcome === "partial_refund") {
+    refundCents = Math.round(Number(amountEuros) * 100);
+    if (!Number.isFinite(refundCents) || refundCents <= 0) return { error: t.errRefund };
+    refundCents = Math.min(refundCents, booking.payment?.amountCents ?? booking.totalCents);
+  }
+
+  try {
+    // Возврат заказчику (если предусмотрен решением).
+    if (refundCents > 0) await refundToClient(booking.id, refundCents, `arbitration_${outcome}`);
+
+    const payProvider = outcome !== "full_refund";
+    const canPay =
+      payProvider &&
+      (booking.payment?.status === PaymentStatus.CAPTURED ||
+        booking.payment?.status === PaymentStatus.PARTIAL_REFUND);
+
+    await prisma.$transaction([
+      prisma.dispute.update({
+        where: { id: disputeId },
+        data: {
+          status: DisputeStatus.RESOLVED,
+          resolutionCode: outcome,
+          resolutionCents: refundCents,
+          arbiterId: admin.id,
+        },
+      }),
+      // Если платим исполнителю - переводим заказ в COMPLETED и открываем окно
+      // выплаты немедленно; иначе закрываем заказ сразу.
+      prisma.booking.update({
+        where: { id: booking.id },
+        data: canPay
+          ? { status: BookingStatus.COMPLETED, disputeWindowEndsAt: new Date() }
+          : { status: BookingStatus.CLOSED },
+      }),
+      prisma.bookingEvent.create({
+        data: {
+          bookingId: booking.id,
+          actorId: admin.id,
+          type: "dispute_resolved",
+          payload: { outcome, refundCents },
+        },
+      }),
+      adminActionLog(admin.id, "dispute", disputeId, `resolve_${outcome}`, `${refundCents} cents`),
+    ]);
+
+    // Выплату исполнителю проводим best-effort (processPayouts идемпотентен).
+    if (canPay) await processPayouts().catch((e) => console.error("payout after arbitration failed", e));
+  } catch (e) {
+    console.error("resolveDispute failed", disputeId, e);
+    return { error: t.errGeneric };
+  }
+
+  await notify(booking.clientId, "dispute", { bookingId: booking.id, resolved: true });
+  await notify(booking.providerId, "dispute", { bookingId: booking.id, resolved: true });
+
+  revalidatePath("/admin");
+  revalidatePath("/bookings");
+  revalidatePath("/pro/bookings");
+  return { ok: true };
 }

@@ -8,18 +8,28 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { eur } from "@/lib/format";
 import { cancelSubscription } from "@/app/subscriptions/actions";
+import { updateProfile, deleteAccount } from "./actions";
+import AccountForm from "./AccountForm";
+import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; err?: string }>;
+}) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/account");
 
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
+  const { saved, err } = await searchParams;
   const isPro = user.roles.includes(Role.PROVIDER);
   const isAdmin = user.roles.includes(Role.ADMIN);
 
@@ -62,9 +72,10 @@ export default async function AccountPage() {
       <div className="wrap auth">
         <h1 className="page">{t.accountTitle}</h1>
         <p className="sub">{t.accountSub}</p>
-        <div className="form">
-          <label>{t.nameL}</label>
-          <div className="acc-val">{user.name}</div>
+
+        {err === "active" && <div className="err" style={{ marginBottom: 12 }}>{tx.accDeleteActive}</div>}
+
+        <div className="form" style={{ marginBottom: 8 }}>
           <label>{t.emailL}</label>
           <div className="acc-val">{user.email}</div>
           <label>{t.roleTitle}</label>
@@ -73,6 +84,13 @@ export default async function AccountPage() {
             {isPro && <span className="tag">{t.rolePro}</span>}
           </div>
         </div>
+
+        <AccountForm
+          action={updateProfile}
+          current={{ name: user.name, phone: user.phone ?? "", locale }}
+          labels={{ ...tx, nameL: t.nameL }}
+          savedFlag={saved === "1"}
+        />
         <div className="acc-actions">
           <Link href="/bookings" className="btn btn-line">
             {t.myBookings}
@@ -150,6 +168,18 @@ export default async function AccountPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="subs-sec">
+          <h2 className="subs-title">{tx.accDangerZone}</h2>
+          <p className="sub" style={{ marginTop: 0 }}>{tx.accDangerText}</p>
+          <ConfirmAction
+            action={deleteAccount}
+            label={tx.accDeleteBtn}
+            warning={tx.accDangerText}
+            confirmLabel={tx.accDeleteConfirm}
+            backLabel={tx.accDeleteBack}
+          />
         </section>
       </div>
     </main>

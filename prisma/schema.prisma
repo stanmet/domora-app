@@ -238,6 +238,7 @@ model Listing {
 
 model Booking {
   id           String        @id @default(cuid())
+  ref          String?       @unique // читаемый номер заказа DM-XXXXXX
   clientId     String
   client       User          @relation("client", fields: [clientId], references: [id])
   providerId   String

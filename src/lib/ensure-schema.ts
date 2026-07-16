@@ -117,6 +117,14 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Coupon_clientId_status_idx" ON "Coupon"("clientId","status")`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "couponId" TEXT`);
 
+    // Читаемый номер заказа DM-XXXXXX. Добавляем колонку, разово проставляем
+    // номер старым заказам (из хеша id), затем делаем индекс уникальным.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "ref" TEXT`);
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Booking" SET "ref" = 'DM-' || upper(substr(md5("id" || random()::text), 1, 6)) WHERE "ref" IS NULL`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Booking_ref_key" ON "Booking"("ref")`);
+
     // Наполняем дерево подкатегорий данными (идемпотентно).
     await seedSubcategories();
   } catch (e) {

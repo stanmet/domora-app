@@ -16,6 +16,7 @@ import { qtyFieldLabel, unitLabel } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { eur } from "@/lib/format";
 import { qtyConfig } from "@/lib/booking-units";
+import { track } from "@/lib/analytics";
 import { createBookingRequest, finalizeBookingPayment } from "./actions";
 
 export type BookableListing = {
@@ -180,6 +181,8 @@ function InnerForm({
         setError(fin.error);
         return;
       }
+      track("booking_created");
+      track("payment_success");
       router.push("/bookings?sent=1");
     } catch (err) {
       console.error("booking payment failed", err);

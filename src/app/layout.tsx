@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Archivo, Inter } from "next/font/google";
 import { Role } from "@prisma/client";
 import "./globals.css";
@@ -17,9 +18,26 @@ import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
 import SiteFooter from "@/components/SiteFooter";
 
+const SITE_DESC = "Verified chefs, cleaners and handymen across Ireland. Clear prices, secure card payment, real reviews.";
+
 export const metadata: Metadata = {
-  title: "Domora",
-  description: "Home services in Ireland",
+  metadataBase: process.env.APP_URL ? new URL(process.env.APP_URL) : undefined,
+  title: { default: "Domora · Home services in Ireland", template: "%s · Domora" },
+  description: SITE_DESC,
+  applicationName: "Domora",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Domora",
+    title: "Domora · Home services in Ireland",
+    description: SITE_DESC,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Domora · Home services in Ireland",
+    description: SITE_DESC,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -73,9 +91,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // База недоступна: поиск покажется без списков категорий/городов.
   }
 
+  // Аналитика: Plausible (без cookи, приватная). Подключается только если задан
+  // домен NEXT_PUBLIC_PLAUSIBLE_DOMAIN. Событийный API доступен как window.plausible.
+  const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+
   return (
     <html lang={locale}>
       <body className={`dm ${archivo.variable} ${inter.variable}`}>
+        {plausibleDomain && (
+          <>
+            <Script defer data-domain={plausibleDomain} src="https://plausible.io/js/script.js" strategy="afterInteractive" />
+            <Script id="plausible-init" strategy="afterInteractive">
+              {`window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments) }`}
+            </Script>
+          </>
+        )}
         <SiteNav
           locale={locale}
           t={t}

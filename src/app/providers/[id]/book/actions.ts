@@ -13,8 +13,12 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { encrypt } from "@/lib/crypto";
 import { calcBooking, stripe } from "@/lib/stripe";
+import { slotTaken } from "@/lib/bookings";
+import { genBookingRef } from "@/lib/booking-ref";
+import { rateLimit } from "@/lib/rate-limit";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
 import { qtyConfig } from "@/lib/booking-units";
 import { couponDiscount, findActiveCouponByCode, getCouponById, redeemCoupon } from "@/lib/coupons";
@@ -44,6 +48,11 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
   if (!authUser?.email) redirect("/login?next=/bookings");
   const user = await ensureDbUser(authUser, locale);
 
+  // Ограничение частоты: не более 12 попыток брони за 10 минут с аккаунта.
+  if (!rateLimit(`book:${user.id}`, 12, 10 * 60 * 1000)) {
+    return { error: getExtra(locale).tooMany };
+  }
+
   const address = input.address.trim();
   const message = input.message.trim();
   const qty = Number(input.qty);
@@ -72,6 +81,11 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
   }
   if (listing.providerId === user.id) return { error: t.errSelf };
   if (qty < qtyConfig(listing.unit).min) return { error: t.errForm };
+
+  // Слот занят подтверждённой бронью этого исполнителя: не даём забронировать.
+  if (await slotTaken(listing.providerId, dateStart, input.draftBookingId)) {
+    return { error: getExtra(locale).slotTaken };
+  }
 
   const money = calcBooking(
     listing.priceCents,
@@ -118,6 +132,7 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
       const booking = await prisma.booking.create({
         data: {
           ...bookingData,
+          ref: genBookingRef(),
           status: BookingStatus.DRAFT,
           events: {
             create: {

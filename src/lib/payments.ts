@@ -61,7 +61,10 @@ async function createHoldIntent(input: { bookingId: string; totalCents: number; 
     amount: input.totalCents,
     currency: "eur",
     capture_method: "manual",
-    payment_method_types: ["card"],
+    // Автоматический выбор способов оплаты: карта плюс кошельки Apple Pay и
+    // Google Pay (появляются в Payment Element сами). allow_redirects: "never"
+    // отсекает методы с редиректом, несовместимые с холдом (manual capture).
+    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
     receipt_email: input.email,
     transfer_group: input.bookingId, // separate charges and transfers: связка с выплатой
     metadata: { bookingId: input.bookingId },
