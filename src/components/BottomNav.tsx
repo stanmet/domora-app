@@ -2,10 +2,11 @@
 
 // Нижняя панель навигации (таб-бар) в стиле мобильного приложения: Главная,
 // Заказы, Избранное, Сообщения, Профиль. Видна только на телефоне/планшете,
-// активная вкладка подсвечивается по текущему адресу.
+// активная вкладка подсвечивается по текущему адресу. Один набор иконок для
+// всех: гость по «закрытым» вкладкам попадает на вход.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Heart, Home, HelpCircle, LogIn, MessageCircle, Search, UserRound, type LucideIcon } from "lucide-react";
+import { ClipboardList, Heart, Home, MessageCircle, UserRound, type LucideIcon } from "lucide-react";
 
 export type BottomNavLabels = {
   home: string;
@@ -18,25 +19,16 @@ export type BottomNavLabels = {
   login: string;
 };
 
-export default function BottomNav({ labels, isLoggedIn }: { labels: BottomNavLabels; isLoggedIn: boolean }) {
+export default function BottomNav({ labels }: { labels: BottomNavLabels; isLoggedIn?: boolean }) {
   const path = usePathname() || "/";
 
-  // Гостю не показываем «закрытые» вкладки (заказы/сообщения ведут на вход):
-  // вместо тупиков даём полезные пункты и явный вход.
-  const items: { href: string; label: string; icon: LucideIcon; active: boolean }[] = isLoggedIn
-    ? [
-        { href: "/", label: labels.home, icon: Home, active: path === "/" },
-        { href: "/bookings", label: labels.bookings, icon: ClipboardList, active: path.startsWith("/bookings") },
-        { href: "/favorites", label: labels.favorites, icon: Heart, active: path.startsWith("/favorites") },
-        { href: "/messages", label: labels.messages, icon: MessageCircle, active: path.startsWith("/messages") },
-        { href: "/account", label: labels.profile, icon: UserRound, active: path.startsWith("/account") },
-      ]
-    : [
-        { href: "/", label: labels.home, icon: Home, active: path === "/" },
-        { href: "/catalog", label: labels.search, icon: Search, active: path.startsWith("/catalog") },
-        { href: "/how-it-works", label: labels.howItWorks, icon: HelpCircle, active: path.startsWith("/how-it-works") },
-        { href: "/login", label: labels.login, icon: LogIn, active: path.startsWith("/login") },
-      ];
+  const items: { href: string; label: string; icon: LucideIcon; active: boolean }[] = [
+    { href: "/", label: labels.home, icon: Home, active: path === "/" },
+    { href: "/bookings", label: labels.bookings, icon: ClipboardList, active: path.startsWith("/bookings") },
+    { href: "/favorites", label: labels.favorites, icon: Heart, active: path.startsWith("/favorites") },
+    { href: "/messages", label: labels.messages, icon: MessageCircle, active: path.startsWith("/messages") },
+    { href: "/account", label: labels.profile, icon: UserRound, active: path.startsWith("/account") },
+  ];
 
   return (
     <nav className="botnav" aria-label={labels.home}>
