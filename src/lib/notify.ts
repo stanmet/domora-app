@@ -3,7 +3,7 @@
 // Дополнительно отправляется email (если подключён почтовый сервис Resend,
 // см. src/lib/email.ts). Никогда не роняет основной поток: ошибки логируются.
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Role, type Prisma } from "@prisma/client";
 import { getDict, type Dict } from "@/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/i18n/config";
 import { emailEnabled, emailLayout, sendEmail } from "@/lib/email";
@@ -32,7 +32,8 @@ export type NotificationType =
   | "provider_cancelled"
   | "replacement"
   | "listing_approved"
-  | "listing_rejected";
+  | "listing_rejected"
+  | "chargeback";
 
 // Тип уведомления -> ключ локализованного текста и путь для ссылки в письме.
 const META: Record<NotificationType, { textKey: keyof Dict; path: string }> = {
@@ -50,6 +51,7 @@ const META: Record<NotificationType, { textKey: keyof Dict; path: string }> = {
   replacement: { textKey: "ntfReplacement", path: "/tasks" },
   listing_approved: { textKey: "ntfApproved", path: "/pro/services" },
   listing_rejected: { textKey: "ntfRejected", path: "/pro/services" },
+  chargeback: { textKey: "ntfChargeback", path: "/admin?tab=disputes" },
 };
 
 // Событие-сообщение шлём в почту редко (шумно): пропускаем email для "message".
@@ -96,5 +98,16 @@ export async function notify(
     });
   } catch (e) {
     console.error("notify email failed", userId, type, e);
+  }
+}
+
+// Уведомить всех администраторов о серьёзном событии (например, chargeback).
+// Тестовые аккаунты в админы не попадают, поэтому фильтр по isTest не нужен.
+export async function notifyAdmins(type: NotificationType, payload: Prisma.InputJsonValue = {}): Promise<void> {
+  try {
+    const admins = await prisma.user.findMany({ where: { roles: { has: Role.ADMIN } }, select: { id: true } });
+    await Promise.all(admins.map((a) => notify(a.id, type, payload)));
+  } catch (e) {
+    console.error("notifyAdmins failed", type, e);
   }
 }

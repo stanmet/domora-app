@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { markBookingRequested } from "@/lib/payments";
+import { notifyAdmins } from "@/lib/notify";
 import type Stripe from "stripe";
 
 function verifyBySecret(raw: string, sig: string): Stripe.Event | null {
@@ -132,7 +133,7 @@ export async function POST(req: Request) {
             where: { bookingId: payment.bookingId, status: "SCHEDULED" },
             data: { status: "FROZEN" },
           });
-          // TODO: notifyAdmins("chargeback", payment.bookingId)
+          await notifyAdmins("chargeback", { bookingId: payment.bookingId });
           // Доказательства для ответа: переписка, фото работ, booking_events с геометками.
         }
       }

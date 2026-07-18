@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
 import { genBookingRef } from "@/lib/booking-ref";
+import { notify } from "@/lib/notify";
 
 export async function POST(req: Request) {
   const user = await requireUser(req);
@@ -71,6 +72,6 @@ export async function POST(req: Request) {
     },
   });
 
-  // TODO: notify(provider, "new_request", booking)
+  await notify(booking.providerId, "new_request", { bookingId: booking.id });
   return NextResponse.json({ bookingId: booking.id, clientSecret: intent.client_secret });
 }

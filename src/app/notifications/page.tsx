@@ -46,6 +46,8 @@ function notifMeta(type: string): { textKey: keyof Dict; href: string } {
       return { textKey: "ntfApproved", href: "/pro/services" };
     case "listing_rejected":
       return { textKey: "ntfRejected", href: "/pro/services" };
+    case "chargeback":
+      return { textKey: "ntfChargeback", href: "/admin?tab=disputes" };
     default:
       return { textKey: "notifTitle", href: "/" };
   }
