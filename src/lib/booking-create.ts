@@ -11,8 +11,10 @@ import { isProviderAvailable } from "@/lib/availability";
 import { genBookingRef } from "@/lib/booking-ref";
 import { rateLimit } from "@/lib/rate-limit";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
-import { qtyConfig } from "@/lib/booking-units";
+import { qtyConfig, REQUEST_TTL_HOURS } from "@/lib/booking-units";
 import { couponDiscount, findActiveCouponByCode, getCouponById, redeemCoupon } from "@/lib/coupons";
+import { isDemoMode } from "@/lib/test-users/bots";
+import { notify } from "@/lib/notify";
 
 export type BookingRequestInput = {
   listingId: string;
@@ -26,7 +28,13 @@ export type BookingRequestInput = {
 };
 
 export type BookingErrorCode = "form" | "past" | "listing" | "self" | "slot" | "unavailable" | "rate" | "generic";
-export type CreateHoldResult = { bookingId: string; clientSecret: string } | { error: BookingErrorCode };
+// simulated: бронь у тестового (ботовского) исполнителя в демо-режиме. Она НЕ
+// создаёт холд и не касается Stripe - реальная карта не списывается. Клиент
+// пропускает шаг оплаты, а «исполнитель»-бот подтверждает бронь автоматически.
+export type CreateHoldResult =
+  | { bookingId: string; clientSecret: string }
+  | { bookingId: string; simulated: true }
+  | { error: BookingErrorCode };
 
 // Создаёт (или переиспользует) черновик брони и холд на полную сумму.
 // Дальше клиент подтверждает карту и вызывает finalizeBookingHold.
@@ -59,13 +67,17 @@ export async function createBookingHold(
     !listing ||
     listing.status !== "ACTIVE" ||
     listing.provider.status !== "ACTIVE" ||
-    listing.provider.user.isTest ||
     listing.quoteFirst ||
     listing.unit === "FIXED_QUOTE" ||
     listing.priceCents <= 0
   ) {
     return { error: "listing" };
   }
+  // Тестовый (ботовский) исполнитель: обычно недоступен для брони. В демо-режиме
+  // бронь разрешена, но проходит как симуляция (без Stripe, без списания карты).
+  const providerIsTest = listing.provider.user.isTest;
+  const simulated = providerIsTest && (await isDemoMode());
+  if (providerIsTest && !simulated) return { error: "listing" };
   if (listing.providerId === userId) return { error: "self" };
   if (qty < qtyConfig(listing.unit).min) return { error: "form" };
 
@@ -107,6 +119,34 @@ export async function createBookingHold(
       couponId: coupon?.id ?? null,
       addressEncrypted: encrypt(address),
     };
+
+    // Демо-симуляция: без холда и Payment-записи бронь сразу становится REQUESTED
+    // (как будто карта уже подтверждена). Ни одна операция не уходит в Stripe -
+    // это гарантируется отсутствием Payment (все обращения к Stripe в проекте
+    // защищены проверкой наличия платежа). Бот-исполнитель примет её сам.
+    if (simulated) {
+      const booking = await prisma.booking.create({
+        data: {
+          ...bookingData,
+          couponId: null, // купон в демо не «сжигаем»
+          ref: genBookingRef(),
+          status: BookingStatus.REQUESTED,
+          requestExpiresAt: new Date(Date.now() + REQUEST_TTL_HOURS * 3600 * 1000),
+          events: {
+            create: { actorId: userId, type: "status_change", payload: { to: BookingStatus.REQUESTED, reason: "demo_simulated" } },
+          },
+          thread: {
+            create: message
+              ? { messages: { create: { authorId: userId, textOriginal: message, langOriginal: locale } } }
+              : {},
+          },
+        },
+      });
+      // Уведомление боту-исполнителю пропускается автоматически (notify не шлёт
+      // тестовым аккаунтам), но вызов держим для единообразия флоу.
+      await notify(listing.providerId, "new_request", { bookingId: booking.id });
+      return { bookingId: booking.id, simulated: true };
+    }
 
     let bookingId: string;
     if (draft && draft.clientId === userId && draft.status === BookingStatus.DRAFT) {

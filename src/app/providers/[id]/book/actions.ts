@@ -27,7 +27,10 @@ export type BookingRequestInput = {
   draftBookingId?: string;
 };
 
-export type BookingRequestResult = { error: string } | { bookingId: string; clientSecret: string };
+export type BookingRequestResult =
+  | { error: string }
+  | { bookingId: string; clientSecret: string }
+  | { bookingId: string; simulated: true };
 
 function errorText(code: BookingErrorCode, locale: Locale): string {
   const t = getDict(locale);

@@ -19,6 +19,7 @@ import { genBookingRef } from "@/lib/booking-ref";
 import { filterContacts } from "@/lib/contact-filter";
 import { MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import { notify } from "@/lib/notify";
+import { isDemoMode } from "@/lib/test-users/bots";
 
 export type OfferState = { ok: true } | { error: string } | null;
 
@@ -42,8 +43,15 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
     include: { client: { select: { isTest: true } } },
   });
   // Тестовые задачи скрыты от реальных исполнителей: откликнуться нельзя даже
-  // по прямой ссылке.
-  if (!task || task.client.isTest || task.status !== TaskStatus.OPEN || task.expiresAt.getTime() < Date.now()) {
+  // по прямой ссылке. В демо-режиме отклик на задачу бота разрешён (бот-клиент
+  // сам примет отклик по сценарию).
+  const demo = task?.client.isTest ? await isDemoMode() : false;
+  if (
+    !task ||
+    (task.client.isTest && !demo) ||
+    task.status !== TaskStatus.OPEN ||
+    task.expiresAt.getTime() < Date.now()
+  ) {
     return { error: t.offerClosed };
   }
   if (task.clientId === user.id) return { error: t.offerNoListing };

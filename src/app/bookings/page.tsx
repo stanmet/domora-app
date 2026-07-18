@@ -13,6 +13,7 @@ import { getExtra } from "@/i18n/extra";
 import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
+import { isDemoMode, progressDemoBookings } from "@/lib/test-users/bots";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
 import { refundCentsForCancel } from "@/lib/cancellation";
@@ -45,6 +46,9 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   const { sent } = await searchParams;
 
   await expireOverdueRequests({ clientId: user.id });
+  // Демо: бот-исполнитель подтверждает симулированную бронь сразу при открытии
+  // заказов, чтобы демо выглядело живым без ожидания cron.
+  if (await isDemoMode()) await progressDemoBookings().catch(() => 0);
 
   const bookings = await prisma.booking.findMany({
     where: { clientId: user.id },

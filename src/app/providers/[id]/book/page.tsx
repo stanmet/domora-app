@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { getActiveCoupon } from "@/lib/coupons";
+import { isDemoMode } from "@/lib/test-users/bots";
 import BookingForm, { type BookableListing } from "./BookingForm";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function BookPage({
   const provider = await prisma.providerProfile.findUnique({
     where: { userId: id },
     include: {
+      user: { select: { isTest: true } },
       listings: {
         where: { status: "ACTIVE", quoteFirst: false, unit: { not: "FIXED_QUOTE" }, priceCents: { gt: 0 } },
         orderBy: { priceCents: "asc" },
@@ -42,6 +44,9 @@ export default async function BookPage({
     },
   });
   if (!provider || provider.status !== "ACTIVE") notFound();
+
+  // Демо-режим + тестовый исполнитель: бронь симулируется (без оплаты картой).
+  const simulated = provider.user.isTest && (await isDemoMode());
 
   const listings: BookableListing[] = provider.listings.map((l) => ({
     id: l.id,
@@ -81,6 +86,7 @@ export default async function BookPage({
           defaultListingId={listings.some((l) => l.id === preselected) ? (preselected as string) : listings[0].id}
           coupon={coupon ? { code: coupon.code, pct: coupon.pct } : null}
           avail={avail}
+          simulated={simulated}
           t={t}
           locale={locale}
         />
