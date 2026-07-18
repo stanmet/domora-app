@@ -635,7 +635,9 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .site-footer{padding-bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
   /* на странице исполнителя панель заказа встаёт над таб-баром */
   .dm .bookbar{bottom:calc(var(--botnav-h) + env(safe-area-inset-bottom))}
-  .dm .ppage{padding-bottom:96px}
+  /* Нижний отступ страницы = высота таб-бара + высота панели заказа + воздух,
+     чтобы последняя карточка услуги не пряталась под двумя нижними панелями. */
+  .dm .ppage{padding-bottom:calc(var(--botnav-h) + 96px + env(safe-area-inset-bottom))}
 }
 
 /* ============================================================
