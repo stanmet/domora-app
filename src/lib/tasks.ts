@@ -25,6 +25,8 @@ export function openTaskVisibilityWhere(): Prisma.TaskWhereInput {
   return {
     status: TaskStatus.OPEN,
     expiresAt: { gt: now },
+    // Тестовые задачи (от синтетических клиентов) не показываем реальным людям.
+    client: { isTest: false },
     OR: [{ dateWanted: null }, { dateWanted: { gte: startOfToday } }],
   };
 }

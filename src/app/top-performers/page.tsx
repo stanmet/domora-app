@@ -14,7 +14,7 @@ export default async function TopPerformersPage() {
   const t = getDict(locale);
 
   const providers = await prisma.providerProfile.findMany({
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE", user: { isTest: false } },
     orderBy: [{ ratingCached: "desc" }, { jobsCount: "desc" }],
     take: 20,
     include: {

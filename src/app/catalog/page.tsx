@@ -70,6 +70,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     status: "ACTIVE",
     provider: {
       status: "ACTIVE",
+      user: { isTest: false }, // без синтетических исполнителей в поиске
       ...(city ? { city } : {}),
       ...(minRatingNum ? { ratingCached: { gte: minRatingNum } } : {}),
     },
@@ -91,7 +92,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const [categories, cityRows, listings] = await Promise.all([
     prisma.category.findMany(),
     prisma.providerProfile.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", user: { isTest: false } },
       select: { city: true },
       distinct: ["city"],
       orderBy: { city: "asc" },

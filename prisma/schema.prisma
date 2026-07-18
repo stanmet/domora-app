@@ -117,6 +117,7 @@ model User {
   city          String?
   roles         Role[]     @default([CLIENT])
   status        UserStatus @default(ACTIVE)
+  isTest        Boolean    @default(false) // TEST_ACCOUNT: скрытый флаг синтетического аккаунта
   stripeCustomerId String? @unique
   createdAt     DateTime   @default(now())
 
@@ -129,6 +130,21 @@ model User {
   reviewsGot    Review[]   @relation("target")
   messages      Message[]
   notifications Notification[]
+
+  @@index([isTest])
+}
+
+// Журнал аудита модуля тестовых пользователей: кто и когда создавал/удалял
+// синтетические аккаунты. Отдельная таблица, чтобы не смешивать с AdminAction.
+model TestAuditLog {
+  id        String   @id @default(cuid())
+  action    String   // create | delete
+  actorId   String?  // id администратора, выполнившего действие
+  count     Int      @default(0) // сколько аккаунтов затронуто
+  detail    String?  // человекочитаемое описание (роли, категория, город, метод)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model ProviderProfile {

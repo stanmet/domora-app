@@ -65,6 +65,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
       },
       user: {
         select: {
+          isTest: true,
           reviewsGot: {
             where: { publishedAt: { not: null } },
             orderBy: { publishedAt: "desc" },
@@ -76,7 +77,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
     },
   });
 
-  if (!provider || provider.status !== "ACTIVE") notFound();
+  // Тестовых исполнителей не показываем даже по прямой ссылке.
+  if (!provider || provider.status !== "ACTIVE" || provider.user.isTest) notFound();
 
   const rating = Number(provider.ratingCached);
   const reviews = provider.user.reviewsGot;
