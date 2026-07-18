@@ -725,3 +725,24 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .smodal-back{padding:58px 12px 20px}
   .dm .smodal-cta{flex-direction:column}
 }
+
+/* Раздел админки «Тестовые пользователи» */
+.dm .tu{display:block}
+.dm .tu-stats{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.dm .tu-stats .statbox{flex:1 1 120px;min-width:120px}
+.dm .tu-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+.dm .tu-muted{color:var(--muted);font-size:12.5px}
+.dm .tu-h{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:16px;margin:22px 0 10px}
+.dm .tu-listhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dm .tu-form{background:var(--beige-bg);border-radius:14px;padding:16px}
+.dm .tu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.dm .tu-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.dm .tu-form input,.dm .tu-form select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+.dm .tu-actions{margin-top:14px}
+.dm .tu-note{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.45}
+.dm .tu-note.ok{background:#E9F2E2;color:#375a2b}
+.dm .tu-note.err{background:#F6E3E0;color:#7a3128}
+.dm .tu-audit{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.dm .tu-audit li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.dm .tu-audit-count{font-weight:700}
+.dm .tu-audit-time{margin-left:auto;color:var(--muted);font-size:12px}

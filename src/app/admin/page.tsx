@@ -2,7 +2,7 @@
 // заказы с возвратами. Доступ только роли ADMIN. Дизайн в стиле проекта
 // (globals.css), тексты на английском и русском (см. i18n.ts).
 import Link from "next/link";
-import { ClipboardCheck, ExternalLink, FileCheck2, LayoutGrid, ShieldAlert, ShieldCheck, Users } from "lucide-react";
+import { ClipboardCheck, ExternalLink, FileCheck2, FlaskConical, LayoutGrid, ShieldAlert, ShieldCheck, Users } from "lucide-react";
 import { DisputeStatus, ListingStatus, ProviderStatus, UserStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
@@ -16,21 +16,31 @@ import { approveListing, deleteDocument, setProviderFrozen, setUserFrozen, verif
 import RejectForm from "./RejectForm";
 import RefundForm from "./RefundForm";
 import DisputeResolveForm from "./DisputeResolveForm";
+import TestUsersSection, { type TestFilter } from "./test-users/TestUsersSection";
+import type { CreateRole } from "@/lib/test-users";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "moderation" | "disputes" | "documents" | "users" | "providers" | "bookings";
-const TABS: Tab[] = ["moderation", "disputes", "documents", "users", "providers", "bookings"];
+type Tab = "moderation" | "disputes" | "documents" | "users" | "providers" | "bookings" | "testUsers";
+const TABS: Tab[] = ["moderation", "disputes", "documents", "users", "providers", "bookings", "testUsers"];
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; turole?: string; tucat?: string }>;
+}) {
   await requireAdmin();
 
   const locale = await getLocale();
   const t = getDict(locale);
   const at = getAdminDict(locale);
 
-  const { tab: tabParam } = await searchParams;
+  const { tab: tabParam, turole, tucat } = await searchParams;
   const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "moderation";
+  const testFilter: TestFilter = {
+    role: turole === "provider" || turole === "client" ? (turole as CreateRole) : undefined,
+    categorySlug: tucat || undefined,
+  };
 
   const tabMeta: Record<Tab, { label: string; icon: typeof ShieldCheck }> = {
     moderation: { label: at.tabModeration, icon: ShieldCheck },
@@ -39,6 +49,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     users: { label: at.tabUsers, icon: Users },
     providers: { label: at.tabProviders, icon: LayoutGrid },
     bookings: { label: at.tabBookings, icon: ClipboardCheck },
+    testUsers: { label: locale === "ru" ? "Тестовые" : "Test users", icon: FlaskConical },
   };
 
   return (
@@ -64,6 +75,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         {tab === "users" && <UsersList at={at} />}
         {tab === "providers" && <ProvidersList at={at} />}
         {tab === "bookings" && <BookingsList locale={locale} at={at} />}
+        {tab === "testUsers" && <TestUsersSection locale={locale} filter={testFilter} />}
       </div>
     </main>
   );

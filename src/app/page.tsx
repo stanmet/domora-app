@@ -34,7 +34,7 @@ export default async function Home() {
       },
     }),
     prisma.listing.findMany({
-      where: { status: "ACTIVE", provider: { status: "ACTIVE", ...(city ? { city } : {}) } },
+      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: { isTest: false }, ...(city ? { city } : {}) } },
       orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
       take: 8,
       include: {
@@ -42,9 +42,9 @@ export default async function Home() {
         category: { select: { slug: true } },
       },
     }),
-    prisma.providerProfile.count({ where: { status: "ACTIVE" } }),
-    prisma.task.count(),
-    prisma.review.count({ where: { publishedAt: { not: null } } }),
+    prisma.providerProfile.count({ where: { status: "ACTIVE", user: { isTest: false } } }),
+    prisma.task.count({ where: { client: { isTest: false } } }),
+    prisma.review.count({ where: { publishedAt: { not: null }, author: { isTest: false }, target: { isTest: false } } }),
   ]);
   const cats = sortByCategoryOrder(categories);
 
