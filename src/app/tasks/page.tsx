@@ -14,6 +14,7 @@ import type { Locale } from "@/i18n/config";
 import { CATEGORY_ICONS, sortByCategoryOrder } from "@/components/categories";
 import { dateTime, eur } from "@/lib/format";
 import { expireOverdueTasks, openTaskVisibilityWhere, providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
+import { reachable } from "@/lib/ireland";
 import OfferForm from "./OfferForm";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,10 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
 
   if (!user.roles.includes(Role.PROVIDER)) return notAvailable;
 
-  const profile = await prisma.providerProfile.findUnique({ where: { userId: user.id }, select: { city: true } });
+  const profile = await prisma.providerProfile.findUnique({
+    where: { userId: user.id },
+    select: { city: true, travelRadiusKm: true },
+  });
   const activeCategoryIds = await providerActiveCategoryIds(user.id);
   if (!profile || activeCategoryIds.length === 0) return notAvailable;
 
@@ -67,14 +71,15 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
 
   await expireOverdueTasks({ categoryId: { in: activeCategoryIds } });
 
+  // Город в SQL не фильтруем: ниже отбираем задачи по радиусу выезда исполнителя
+  // из его города (кнопка «все города» показывает задачи по всей стране).
   const where: Prisma.TaskWhereInput = {
     ...openTaskVisibilityWhere(),
     clientId: { not: user.id },
     categoryId: activeCat ? activeCat.id : { in: activeCategoryIds },
-    ...(showAllCities ? {} : { city: profile.city }),
   };
 
-  const tasks = await prisma.task.findMany({
+  const tasksRaw = await prisma.task.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: {
@@ -82,6 +87,9 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
       offers: { select: { providerId: true } },
     },
   });
+  const tasks = showAllCities
+    ? tasksRaw
+    : tasksRaw.filter((task) => reachable(profile.city, profile.travelRadiusKm, task.city));
 
   return (
     <main className="wrap sec">

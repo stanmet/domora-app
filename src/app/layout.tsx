@@ -13,6 +13,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getCity } from "@/lib/city";
 import { sortByCategoryOrder } from "@/components/categories";
+import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
 import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
@@ -80,13 +81,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   try {
     const cats = sortByCategoryOrder(await prisma.category.findMany());
     categoryOptions = cats.map((c) => ({ slug: c.slug, label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn) }));
-    const [provCities, taskCities] = await Promise.all([
-      prisma.providerProfile.findMany({ where: { status: "ACTIVE", user: { isTest: false } }, select: { city: true }, distinct: ["city"] }),
-      prisma.task.findMany({ where: { client: { isTest: false } }, select: { city: true }, distinct: ["city"], take: 100 }),
-    ]);
-    cities = Array.from(
-      new Set([...provCities.map((p) => p.city), ...taskCities.map((x) => x.city)].filter(Boolean)),
-    ).sort();
+    // Клиент выбирает свой город из главных городов Ирландии; подбор исполнителей
+    // идёт по их радиусу выезда до этого города (см. src/lib/ireland.ts).
+    cities = [...IRELAND_TOWN_NAMES].sort();
   } catch {
     // База недоступна: поиск покажется без списков категорий/городов.
   }

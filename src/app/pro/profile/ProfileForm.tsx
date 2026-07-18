@@ -4,6 +4,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Dict } from "@/i18n/dictionaries";
+import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
 import { updateProviderProfile, type ProfileState } from "./actions";
 
 interface Values {
@@ -37,7 +38,12 @@ export default function ProfileForm({ t, values }: { t: Dict; values: Values }) 
       </label>
       <label className="f-row">
         <span>{t.ppCity}</span>
-        <input name="city" defaultValue={values.city} required maxLength={60} />
+        <input name="city" defaultValue={values.city} required maxLength={60} list="ie-towns" />
+        <datalist id="ie-towns">
+          {IRELAND_TOWN_NAMES.map((n) => (
+            <option key={n} value={n} />
+          ))}
+        </datalist>
       </label>
       <label className="f-row">
         <span>{t.ppBio}</span>
@@ -45,7 +51,8 @@ export default function ProfileForm({ t, values }: { t: Dict; values: Values }) 
       </label>
       <label className="f-row">
         <span>{t.ppRadius}</span>
-        <input type="number" name="travelRadiusKm" defaultValue={values.travelRadiusKm} min={1} max={100} />
+        <input type="number" name="travelRadiusKm" defaultValue={values.travelRadiusKm} min={1} max={500} step={5} />
+        <small className="tu-muted">{t.ppRadiusHint}</small>
       </label>
       <div style={{ marginTop: 14 }}>
         <SaveButton label={t.ppSave} />
