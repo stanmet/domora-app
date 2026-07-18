@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
 import { genBookingRef } from "@/lib/booking-ref";
 import { notify } from "@/lib/notify";
+import { isProviderAvailable } from "@/lib/availability";
 
 export async function POST(req: Request) {
   const user = await requireUser(req);
@@ -20,6 +21,12 @@ export async function POST(req: Request) {
   // Тестовую услугу нельзя забронировать даже прямым запросом к API.
   if (listing.status !== "ACTIVE" || listing.provider.status !== "ACTIVE" || listing.provider.user.isTest) {
     return NextResponse.json({ error: "listing_unavailable" }, { status: 409 });
+  }
+
+  // Единая проверка расписания исполнителя (та же логика, что на сайте).
+  const dateStart = new Date(body.dateStart);
+  if (Number.isNaN(dateStart.getTime()) || !(await isProviderAvailable(listing.providerId, dateStart))) {
+    return NextResponse.json({ error: "provider_unavailable" }, { status: 409 });
   }
 
   const money = calcBooking(

@@ -762,3 +762,15 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .pp-form input,.dm .pp-form textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;font-family:inherit}
 .dm .pp-form textarea{resize:vertical}
 .dm .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;margin-bottom:10px}
+
+/* Календарь доступности исполнителя */
+.dm .av-days{display:flex;flex-wrap:wrap;gap:8px}
+.dm .av-day{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;cursor:pointer;font-size:13.5px;user-select:none}
+.dm .av-day.on{background:var(--sage);border-color:var(--sage-ink,#7c9c6b);font-weight:600}
+.dm .av-day input{margin:0}
+.dm .av-hours{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.dm .av-hours .f-row{flex:1 1 140px}
+.dm .av-addoff{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.dm .av-addoff input{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px}
+.dm .av-list{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.dm .av-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px}

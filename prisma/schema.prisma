@@ -202,12 +202,32 @@ model ProviderProfile {
   status            ProviderStatus @default(DRAFT)
   portfolioPhotos   String[] @default([]) // до 20 фото работ в профиле (Supabase Storage)
 
+  // Календарь доступности: рабочие дни недели (0=вс..6=сб) и окно приёма заказов
+  // в минутах от полуночи. Конкретные выходные/отпуск - в TimeOff.
+  workDays     Int[] @default([1, 2, 3, 4, 5]) // по умолчанию будни
+  workStartMin Int   @default(540)  // 09:00
+  workEndMin   Int   @default(1200) // 20:00
+
   listings  Listing[]
   bookings  Booking[] @relation("provider")
   offers    Offer[]
   documents ProviderDocument[]
+  timeOff   TimeOff[]
 
   @@index([city, status])
+}
+
+// Заблокированные дни исполнителя (выходной, отпуск): в эти даты нельзя
+// забронировать. Одна строка на календарный день.
+model TimeOff {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [userId], onDelete: Cascade)
+  date       DateTime @db.Date
+  createdAt  DateTime @default(now())
+
+  @@unique([providerId, date])
+  @@index([providerId])
 }
 
 // Документы исполнителя для верификации: сертификаты, дипломы, разрешения,

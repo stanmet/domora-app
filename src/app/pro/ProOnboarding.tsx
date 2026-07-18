@@ -63,7 +63,9 @@ export default function ProOnboarding({
   function stepAction(key: StepKey) {
     if (key === "stripe") return startStripeOnboarding();
     if (key === "listing") return router.push("/pro/services");
+    // Шаг доступности ведёт на реальную страницу расписания.
     setAvailDone(true);
+    router.push("/pro/availability");
   }
 
   const stepDefs: { key: StepKey; label: string; icon: typeof Wallet }[] = [
