@@ -1,84 +1,47 @@
-// POST /api/bookings
-// Создает бронь в статусе REQUESTED и холд (manual capture) на карте клиента.
-// Деньги НЕ списываются до подтверждения исполнителем.
+// POST /api/bookings - создание брони для мобильного приложения.
+// Использует ТО ЖЕ ядро, что и сайт (src/lib/booking-create.ts): та же валидация,
+// холд на карте и черновик брони. Возвращает { bookingId, clientSecret };
+// клиент подтверждает карту через Stripe SDK и вызывает /api/bookings/:id/finalize.
 import { NextResponse } from "next/server";
-import { stripe, calcBooking } from "@/lib/stripe";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { encrypt } from "@/lib/crypto";
-import { genBookingRef } from "@/lib/booking-ref";
-import { notify } from "@/lib/notify";
-import { isProviderAvailable } from "@/lib/availability";
+import { createBookingHold, type BookingErrorCode } from "@/lib/booking-create";
+
+const HTTP_STATUS: Record<BookingErrorCode, number> = {
+  form: 400,
+  past: 400,
+  listing: 409,
+  self: 409,
+  slot: 409,
+  unavailable: 409,
+  rate: 429,
+  generic: 500,
+};
 
 export async function POST(req: Request) {
-  const user = await requireUser(req);
-  const body = await req.json(); // { listingId, dateStart, qty, address, accessNote, paymentMethodId }
-
-  const listing = await prisma.listing.findUniqueOrThrow({
-    where: { id: body.listingId },
-    include: { category: true, provider: { include: { user: { select: { isTest: true } } } } },
-  });
-  // Тестовую услугу нельзя забронировать даже прямым запросом к API.
-  if (listing.status !== "ACTIVE" || listing.provider.status !== "ACTIVE" || listing.provider.user.isTest) {
-    return NextResponse.json({ error: "listing_unavailable" }, { status: 409 });
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // Единая проверка расписания исполнителя (та же логика, что на сайте).
-  const dateStart = new Date(body.dateStart);
-  if (Number.isNaN(dateStart.getTime()) || !(await isProviderAvailable(listing.providerId, dateStart))) {
-    return NextResponse.json({ error: "provider_unavailable" }, { status: 409 });
+  const body = await req.json().catch(() => null); // { listingId, date, time, qty, address, message?, couponCode?, draftBookingId? }
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "form" }, { status: 400 });
   }
 
-  const money = calcBooking(
-    listing.priceCents,
-    body.qty,
-    Number(listing.category.clientFeePct),
-    Number(listing.category.providerFeePct),
-  );
-
-  const booking = await prisma.booking.create({
-    data: {
-      clientId: user.id,
-      providerId: listing.providerId,
-      listingId: listing.id,
-      ref: genBookingRef(),
-      status: "REQUESTED",
-      dateStart: new Date(body.dateStart),
-      qty: body.qty,
-      unit: listing.unit,
-      priceCentsSnapshot: listing.priceCents,
-      subtotalCents: money.subtotal,
-      clientFeeCents: money.clientFee,
-      providerFeeCents: money.providerFee,
-      totalCents: money.total,
-      addressEncrypted: body.address ? encrypt(body.address) : null,
-      accessNoteEncrypted: body.accessNote ? encrypt(body.accessNote) : null,
-      requestExpiresAt: new Date(Date.now() + 72 * 3600 * 1000),
-      thread: { create: {} },
-      events: { create: { actorId: user.id, type: "status_change", payload: { to: "REQUESTED" } } },
-    },
+  const locale = (req.headers.get("accept-language") ?? "en").slice(0, 2);
+  const res = await createBookingHold(user.id, user.email, locale, {
+    listingId: String(body.listingId ?? ""),
+    date: String(body.date ?? ""),
+    time: String(body.time ?? ""),
+    qty: Number(body.qty),
+    address: String(body.address ?? ""),
+    message: body.message ? String(body.message) : undefined,
+    couponCode: body.couponCode ? String(body.couponCode) : undefined,
+    draftBookingId: body.draftBookingId ? String(body.draftBookingId) : undefined,
   });
 
-  // Холд: capture_method manual. Живет до 7 дней, наш таймаут 72 часа.
-  const intent = await stripe.paymentIntents.create({
-    amount: money.total,
-    currency: "eur",
-    customer: user.stripeCustomerId ?? undefined,
-    payment_method: body.paymentMethodId,
-    capture_method: "manual",
-    confirm: true,
-    metadata: { bookingId: booking.id },
-  });
-
-  await prisma.payment.create({
-    data: {
-      bookingId: booking.id,
-      stripePaymentIntentId: intent.id,
-      amountCents: money.total,
-      status: "HOLD",
-    },
-  });
-
-  await notify(booking.providerId, "new_request", { bookingId: booking.id });
-  return NextResponse.json({ bookingId: booking.id, clientSecret: intent.client_secret });
+  if ("error" in res) return NextResponse.json({ error: res.error }, { status: HTTP_STATUS[res.error] });
+  return NextResponse.json(res);
 }
