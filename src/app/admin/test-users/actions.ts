@@ -3,7 +3,7 @@
 // Экшены раздела «Тестовые пользователи». Каждый проверяет роль ADMIN.
 // Создание/удаление синтетических аккаунтов и запись в журнал аудита - в index.ts.
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdminScope } from "@/lib/admin";
 import {
   createTestUsers,
   deleteTestUsers,
@@ -12,6 +12,7 @@ import {
   type CreateRole,
 } from "@/lib/test-users";
 import type { TextQuality } from "@/lib/test-users/ai";
+import { runBotTick, setAllBotsEnabled, setBotConfig, setBotEnabled } from "@/lib/test-users/bots";
 
 export type CreateState = { ok: boolean; message: string } | null;
 
@@ -20,7 +21,7 @@ const QUALITIES: TextQuality[] = ["basic", "ai", "ai_high"];
 const LANGS = ["", "en", "ru", "uk", "pl", "es", "pt"];
 
 export async function createTestUsersAction(_prev: CreateState, formData: FormData): Promise<CreateState> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("testUsers");
 
   const count = Number(formData.get("count"));
   const roleRaw = String(formData.get("role") ?? "mixed");
@@ -53,15 +54,48 @@ export async function createTestUsersAction(_prev: CreateState, formData: FormDa
 
 // Удалить все тестовые аккаунты.
 export async function deleteAllTestUsersAction(): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("testUsers");
   await deleteTestUsers(admin.id);
   revalidatePath("/admin");
 }
 
 // Удалить выбранные (чекбоксы name="id").
 export async function deleteSelectedTestUsersAction(formData: FormData): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("testUsers");
   const ids = formData.getAll("id").map(String).filter(Boolean);
   if (ids.length) await deleteTestUsers(admin.id, ids);
+  revalidatePath("/admin");
+}
+
+// Настройки ботов: мастер-переключатель, интенсивность, провайдер.
+export async function saveBotConfigAction(formData: FormData): Promise<void> {
+  await requireAdminScope("testUsers");
+  const enabled = formData.get("enabled") === "on";
+  const activityLevel = Math.max(0, Math.min(100, Math.floor(Number(formData.get("activityLevel")) || 0)));
+  const provider = String(formData.get("provider") ?? "anthropic");
+  await setBotConfig({ enabled, activityLevel, provider });
+  revalidatePath("/admin");
+}
+
+// Включить/выключить всех ботов сразу.
+export async function toggleAllBotsAction(formData: FormData): Promise<void> {
+  await requireAdminScope("testUsers");
+  await setAllBotsEnabled(formData.get("enabled") === "1");
+  revalidatePath("/admin");
+}
+
+// Переключить одного бота (кнопка в строке списка).
+export async function toggleBotAction(formData: FormData): Promise<void> {
+  await requireAdminScope("testUsers");
+  const id = String(formData.get("id") ?? "");
+  const enabled = formData.get("enabled") === "1";
+  if (id) await setBotEnabled(id, enabled);
+  revalidatePath("/admin");
+}
+
+// Прогнать один тик сценария вручную (для демо).
+export async function runBotTickAction(): Promise<void> {
+  await requireAdminScope("testUsers");
+  await runBotTick();
   revalidatePath("/admin");
 }

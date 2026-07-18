@@ -259,6 +259,7 @@ export interface TestUserRow {
   city: string | null;
   isProvider: boolean;
   category: string | null;
+  botEnabled: boolean;
 }
 
 // Список тестовых аккаунтов для админки с фильтром по роли и категории.
@@ -276,6 +277,7 @@ export async function listTestUsers(filter: { role?: CreateRole; categorySlug?: 
       name: true,
       city: true,
       roles: true,
+      botEnabled: true,
       providerProfile: {
         select: { listings: { select: { category: { select: { slug: true } } }, take: 1 } },
       },
@@ -288,7 +290,7 @@ export async function listTestUsers(filter: { role?: CreateRole; categorySlug?: 
     const category = isProvider
       ? u.providerProfile?.listings[0]?.category.slug ?? null
       : u.tasks[0]?.category.slug ?? null;
-    return { id: u.id, name: u.name, city: u.city, isProvider, category };
+    return { id: u.id, name: u.name, city: u.city, isProvider, category, botEnabled: u.botEnabled };
   });
 
   if (filter.categorySlug) rows = rows.filter((r) => r.category === filter.categorySlug);

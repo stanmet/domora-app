@@ -2,7 +2,7 @@
 // заказы с возвратами. Доступ только роли ADMIN. Дизайн в стиле проекта
 // (globals.css), тексты на английском и русском (см. i18n.ts).
 import Link from "next/link";
-import { ClipboardCheck, ExternalLink, FileCheck2, FlaskConical, LayoutGrid, ShieldAlert, ShieldCheck, Users } from "lucide-react";
+import { ClipboardCheck, ExternalLink, FileCheck2, FlaskConical, LayoutGrid, ShieldAlert, ShieldCheck, UserCog, Users } from "lucide-react";
 import { DisputeStatus, ListingStatus, ProviderStatus, UserStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
@@ -10,33 +10,38 @@ import { getDict, categoryLabel } from "@/i18n/dictionaries";
 import { eur } from "@/lib/format";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin, hasScope, type AdminScope } from "@/lib/admin";
 import { getAdminDict, adminStatus } from "./i18n";
 import { approveListing, deleteDocument, setProviderFrozen, setUserFrozen, verifyDocument } from "./actions";
 import RejectForm from "./RejectForm";
 import RefundForm from "./RefundForm";
 import DisputeResolveForm from "./DisputeResolveForm";
 import TestUsersSection, { type TestFilter } from "./test-users/TestUsersSection";
+import AdminsSection from "./admins/AdminsSection";
 import type { CreateRole } from "@/lib/test-users";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "moderation" | "disputes" | "documents" | "users" | "providers" | "bookings" | "testUsers";
-const TABS: Tab[] = ["moderation", "disputes", "documents", "users", "providers", "bookings", "testUsers"];
+type Tab = "moderation" | "disputes" | "documents" | "users" | "providers" | "bookings" | "testUsers" | "admins";
+const TABS: Tab[] = ["moderation", "disputes", "documents", "users", "providers", "bookings", "testUsers", "admins"];
 
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string; turole?: string; tucat?: string }>;
 }) {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const locale = await getLocale();
   const t = getDict(locale);
   const at = getAdminDict(locale);
 
+  // Каждой вкладке соответствует одноимённое право доступа.
+  const allowed = TABS.filter((k) => hasScope(me, k as AdminScope));
+
   const { tab: tabParam, turole, tucat } = await searchParams;
-  const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "moderation";
+  const requested = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : allowed[0];
+  const tab: Tab = allowed.includes(requested) ? requested : allowed[0];
   const testFilter: TestFilter = {
     role: turole === "provider" || turole === "client" ? (turole as CreateRole) : undefined,
     categorySlug: tucat || undefined,
@@ -50,6 +55,7 @@ export default async function AdminPage({
     providers: { label: at.tabProviders, icon: LayoutGrid },
     bookings: { label: at.tabBookings, icon: ClipboardCheck },
     testUsers: { label: locale === "ru" ? "Тестовые" : "Test users", icon: FlaskConical },
+    admins: { label: locale === "ru" ? "Администраторы" : "Administrators", icon: UserCog },
   };
 
   return (
@@ -59,7 +65,7 @@ export default async function AdminPage({
         <p className="sub">{at.sub}</p>
 
         <div className="tabs" style={{ marginTop: 4 }}>
-          {TABS.map((k) => {
+          {allowed.map((k) => {
             const Icon = tabMeta[k].icon;
             return (
               <Link key={k} href={`/admin?tab=${k}`} className={"tab" + (tab === k ? " on" : "")}>
@@ -76,6 +82,7 @@ export default async function AdminPage({
         {tab === "providers" && <ProvidersList at={at} />}
         {tab === "bookings" && <BookingsList locale={locale} at={at} />}
         {tab === "testUsers" && <TestUsersSection locale={locale} filter={testFilter} />}
+        {tab === "admins" && <AdminsSection locale={locale} meId={me.id} />}
       </div>
     </main>
   );
