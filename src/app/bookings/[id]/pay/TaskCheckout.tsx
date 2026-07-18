@@ -59,7 +59,10 @@ export default function TaskCheckout(props: CheckoutProps) {
         amount: props.totalCents,
         currency: "eur",
         captureMethod: "manual",
-        paymentMethodTypes: ["card"],
+        // Способы оплаты не перечисляем: сервер создаёт PaymentIntent с
+        // automatic_payment_methods (карта + Apple Pay/Google Pay). Если задать
+        // здесь paymentMethodTypes, конфиги клиента и сервера разойдутся и
+        // confirmPayment упадёт с ошибкой несовместимости.
         appearance: APPEARANCE,
         locale: STRIPE_LOCALES[props.locale] ?? "auto",
       }}
