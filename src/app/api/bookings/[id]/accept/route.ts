@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,6 +36,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   ]);
 
   // Обмен адресом и прокси-телефонами открывается с этого момента.
-  // TODO: notify(client, "booking_accepted"), createProxyNumbers(booking)
+  await notify(booking.clientId, "accepted", { bookingId: booking.id });
   return NextResponse.json({ ok: true });
 }
