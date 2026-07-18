@@ -18,6 +18,7 @@ import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
 import SiteFooter from "@/components/SiteFooter";
+import FooterGate from "@/components/FooterGate";
 
 const SITE_DESC = "Verified chefs, cleaners and handymen across Ireland. Clear prices, secure card payment, real reviews.";
 
@@ -116,7 +117,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           city={city}
         />
         {children}
-        <SiteFooter t={t} locale={locale} />
+        <FooterGate>
+          <SiteFooter t={t} locale={locale} />
+        </FooterGate>
         <BottomNav
           isLoggedIn={Boolean(authUser?.email)}
           labels={{
