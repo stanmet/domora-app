@@ -79,8 +79,8 @@ export default function CreateForm({ categories, cities }: { categories: CatOpti
         <label>
           <span>Качество текста</span>
           <select name="quality" defaultValue="ai">
-            <option value="ai">AI — стандарт (Claude)</option>
-            <option value="ai_high">AI — высокое качество</option>
+            <option value="ai">AI: стандарт (Claude)</option>
+            <option value="ai_high">AI: высокое качество</option>
             <option value="basic">Встроенный (быстро, без AI)</option>
           </select>
         </label>
