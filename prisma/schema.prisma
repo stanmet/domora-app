@@ -118,6 +118,8 @@ model User {
   roles         Role[]     @default([CLIENT])
   status        UserStatus @default(ACTIVE)
   isTest        Boolean    @default(false) // TEST_ACCOUNT: скрытый флаг синтетического аккаунта
+  botEnabled    Boolean    @default(true)  // индивидуальный переключатель бота (только для isTest)
+  adminScopes   String[]   @default([])    // точечные права администратора; пусто или "all" = полный доступ
   stripeCustomerId String? @unique
   createdAt     DateTime   @default(now())
 
@@ -142,6 +144,26 @@ model TestAuditLog {
   actorId   String?  // id администратора, выполнившего действие
   count     Int      @default(0) // сколько аккаунтов затронуто
   detail    String?  // человекочитаемое описание (роли, категория, город, метод)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Настройки автосценариев ботов (одна строка-синглтон id="singleton").
+model TestBotConfig {
+  id            String   @id @default("singleton")
+  enabled       Boolean  @default(false) // мастер-выключатель всех ботов
+  activityLevel Int      @default(30)    // 0..100 - интенсивность действий за тик
+  provider      String   @default("anthropic") // anthropic | openai | gemini | local
+  updatedAt     DateTime @updatedAt
+}
+
+// История активности ботов (мониторинг действий в админке).
+model TestBotActivity {
+  id        String   @id @default(cuid())
+  action    String   // task_created | offer_made | offer_accepted | message_sent | self_disabled | tick
+  actorId   String?
+  detail    String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])

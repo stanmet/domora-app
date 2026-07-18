@@ -4,6 +4,7 @@
 // задан, проверяем его, чтобы адрес нельзя было дёргать снаружи.
 import { NextResponse } from "next/server";
 import { expireStaleRequests, processPayouts } from "@/lib/jobs";
+import { runBotTick } from "@/lib/test-users/bots";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,11 @@ export async function GET(req: Request) {
 
   await expireStaleRequests().catch((e) => console.error("cron expire failed", e));
   await processPayouts().catch((e) => console.error("cron payouts failed", e));
+  // Тик автосценариев тестовых ботов (уступает место реальным пользователям).
+  const bots = await runBotTick().catch((e) => {
+    console.error("cron bot tick failed", e);
+    return null;
+  });
 
-  return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
+  return NextResponse.json({ ok: true, ranAt: new Date().toISOString(), bots });
 }

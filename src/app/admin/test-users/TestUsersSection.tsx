@@ -12,8 +12,16 @@ import {
   TEST_CITIES,
   type CreateRole,
 } from "@/lib/test-users";
+import { getBotConfig, recentBotActivity } from "@/lib/test-users/bots";
 import CreateForm from "./CreateForm";
-import { deleteAllTestUsersAction, deleteSelectedTestUsersAction } from "./actions";
+import {
+  deleteAllTestUsersAction,
+  deleteSelectedTestUsersAction,
+  runBotTickAction,
+  saveBotConfigAction,
+  toggleAllBotsAction,
+  toggleBotAction,
+} from "./actions";
 
 export type TestFilter = { role?: CreateRole; categorySlug?: string };
 
@@ -46,6 +54,22 @@ function tr(locale: Locale) {
     auditTitle: ru ? "Журнал действий" : "Audit log",
     auditEmpty: ru ? "Действий пока нет." : "No actions yet.",
     byCategory: ru ? "По категориям" : "By category",
+    botsTitle: ru ? "Автосценарии (боты)" : "Automation (bots)",
+    botsIntro: ru
+      ? "Боты сами создают задачи, откликаются, принимают отклики и обмениваются сообщениями по расписанию (ежедневный cron) или по кнопке. При появлении реального пользователя с теми же параметрами бот сам отключается."
+      : "Bots create tasks, make and accept offers and exchange messages on schedule or on demand. A bot self-disables when a real user with the same parameters appears.",
+    master: ru ? "Боты включены" : "Bots enabled",
+    activity: ru ? "Интенсивность" : "Activity level",
+    providerL: ru ? "AI-провайдер" : "AI provider",
+    save: ru ? "Сохранить" : "Save",
+    runNow: ru ? "Прогнать сценарий сейчас" : "Run tick now",
+    enableAll: ru ? "Включить всех" : "Enable all",
+    disableAll: ru ? "Выключить всех" : "Disable all",
+    botOn: ru ? "вкл" : "on",
+    botOff: ru ? "выкл" : "off",
+    colBot: ru ? "Бот" : "Bot",
+    actionLog: ru ? "Активность ботов" : "Bot activity",
+    actionLogEmpty: ru ? "Активности пока нет." : "No activity yet.",
   };
 }
 
@@ -59,11 +83,13 @@ export default async function TestUsersSection({
   const l = tr(locale);
   const t = getDict(locale);
 
-  const [stats, categoriesRaw, rows, audit] = await Promise.all([
+  const [stats, categoriesRaw, rows, audit, botConfig, botActivity] = await Promise.all([
     testStats(locale),
     prisma.category.findMany(),
     listTestUsers(filter),
     recentAudit(15),
+    getBotConfig(),
+    recentBotActivity(25),
   ]);
   const categories = sortByCategoryOrder(categoriesRaw).map((c) => ({
     slug: c.slug,
@@ -102,6 +128,38 @@ export default async function TestUsersSection({
         </div>
       )}
 
+      {/* Автосценарии (боты) */}
+      <h3 className="tu-h">{l.botsTitle}</h3>
+      <p className="tu-muted" style={{ marginBottom: 10 }}>{l.botsIntro}</p>
+      <form action={saveBotConfigAction} className="tu-form">
+        <div className="tu-grid">
+          <label className="tu-check">
+            <input type="checkbox" name="enabled" defaultChecked={botConfig.enabled} /> <span>{l.master}</span>
+          </label>
+          <label>
+            <span>{l.activity}: {botConfig.activityLevel}</span>
+            <input type="range" name="activityLevel" min={0} max={100} step={5} defaultValue={botConfig.activityLevel} />
+          </label>
+          <label>
+            <span>{l.providerL}</span>
+            <select name="provider" defaultValue={botConfig.provider}>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="local">{locale === "ru" ? "Локально (без AI)" : "Local (no AI)"}</option>
+            </select>
+          </label>
+        </div>
+        <div className="tu-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-green">{l.save}</button>
+        </div>
+      </form>
+      <div className="tu-botbtns">
+        <form action={runBotTickAction}><button className="btn btn-ink btn-sm">{l.runNow}</button></form>
+        <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="1" /><button className="btn btn-sm">{l.enableAll}</button></form>
+        <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="0" /><button className="btn btn-sm">{l.disableAll}</button></form>
+      </div>
+
       {/* Создание */}
       <h3 className="tu-h">{l.createTitle}</h3>
       <CreateForm categories={categories} cities={[...TEST_CITIES]} />
@@ -131,7 +189,10 @@ export default async function TestUsersSection({
       {rows.length === 0 ? (
         <div className="empty">{l.empty}</div>
       ) : (
-        <form action={deleteSelectedTestUsersAction}>
+        <>
+          {/* Форма массового удаления: чекбоксы привязаны к ней через form="tuDelete",
+              поэтому таблицу не нужно оборачивать (тоггл бота - своя форма в строке). */}
+          <form id="tuDelete" action={deleteSelectedTestUsersAction} />
           <div className="adm-table-wrap">
             <table className="adm-table">
               <thead>
@@ -141,25 +202,35 @@ export default async function TestUsersSection({
                   <th>{l.colRole}</th>
                   <th>{l.colCity}</th>
                   <th>{l.colCategory}</th>
+                  <th>{l.colBot}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
-                    <td><input type="checkbox" name="id" value={r.id} /></td>
+                    <td><input type="checkbox" name="id" value={r.id} form="tuDelete" /></td>
                     <td>{r.name}</td>
                     <td>{r.isProvider ? l.provider : l.client}</td>
                     <td>{r.city ?? "—"}</td>
                     <td>{catLabel(r.category)}</td>
+                    <td>
+                      <form action={toggleBotAction}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <input type="hidden" name="enabled" value={r.botEnabled ? "0" : "1"} />
+                        <button className={"btn btn-sm " + (r.botEnabled ? "btn-green" : "btn-red")}>
+                          {r.botEnabled ? l.botOn : l.botOff}
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <div style={{ marginTop: 12 }}>
-            <button className="btn btn-red btn-sm">{l.deleteSelected}</button>
+            <button className="btn btn-red btn-sm" form="tuDelete">{l.deleteSelected}</button>
           </div>
-        </form>
+        </>
       )}
 
       {/* Аудит */}
@@ -172,6 +243,22 @@ export default async function TestUsersSection({
             <li key={a.id}>
               <span className={"pill " + (a.action === "delete" ? "dec" : "ok")}>{a.action}</span>
               <span className="tu-audit-count">{a.count}</span>
+              <span className="tu-muted">{a.detail}</span>
+              <span className="tu-audit-time">{a.createdAt.toISOString().slice(0, 16).replace("T", " ")}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Мониторинг действий ботов */}
+      <h3 className="tu-h">{l.actionLog}</h3>
+      {botActivity.length === 0 ? (
+        <div className="empty">{l.actionLogEmpty}</div>
+      ) : (
+        <ul className="tu-audit">
+          {botActivity.map((a) => (
+            <li key={a.id}>
+              <span className={"pill " + (a.action === "self_disabled" ? "dec" : "ok")}>{a.action}</span>
               <span className="tu-muted">{a.detail}</span>
               <span className="tu-audit-time">{a.createdAt.toISOString().slice(0, 16).replace("T", " ")}</span>
             </li>

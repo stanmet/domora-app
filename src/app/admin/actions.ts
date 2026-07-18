@@ -14,7 +14,7 @@ import { DisputeStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { removeImage } from "@/lib/storage";
-import { requireAdmin, adminActionLog } from "@/lib/admin";
+import { requireAdminScope, adminActionLog } from "@/lib/admin";
 import { getLocale } from "@/i18n/server";
 import { getAdminDict } from "./i18n";
 import { notify } from "@/lib/notify";
@@ -24,7 +24,7 @@ import { processPayouts } from "@/lib/jobs";
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
 export async function approveListing(listingId: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("moderation");
 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing || listing.status !== ListingStatus.MODERATION) return;
@@ -56,7 +56,7 @@ export async function approveListing(listingId: string): Promise<void> {
 
 // Отклонение услуги с комментарием для исполнителя.
 export async function rejectListing(listingId: string, reason: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("moderation");
   const note = reason.trim().slice(0, 500) || null;
 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
@@ -77,7 +77,7 @@ export async function rejectListing(listingId: string, reason: string): Promise<
 
 // Заморозка и разблокировка пользователя (UserStatus ACTIVE <-> FROZEN).
 export async function setUserFrozen(userId: string, frozen: boolean): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("users");
   if (userId === admin.id) return; // админ не замораживает сам себя
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -97,7 +97,7 @@ export async function setUserFrozen(userId: string, frozen: boolean): Promise<vo
 // Заморозка и разблокировка профиля исполнителя (ProviderStatus FROZEN <-> ACTIVE).
 // Замороженный исполнитель и его услуги пропадают из каталога.
 export async function setProviderFrozen(userId: string, frozen: boolean): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("providers");
 
   const provider = await prisma.providerProfile.findUnique({ where: { userId } });
   if (!provider) return;
@@ -120,7 +120,7 @@ export type RefundResult = { ok: true } | { error: string };
 // только списанный платеж (CAPTURED или уже частично возвращенный). Сумма
 // ограничивается остатком. Пишем Refund, обновляем статус Payment и лог.
 export async function refundBooking(bookingId: string, amountEuros: number | "full"): Promise<RefundResult> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("bookings");
   const t = getAdminDict(await getLocale());
 
   const booking = await prisma.booking.findUnique({
@@ -180,7 +180,7 @@ export async function refundBooking(bookingId: string, amountEuros: number | "fu
 
 // Верификация документа исполнителя: подтверждение лицензии (RECI/RGII и т.п.).
 export async function verifyDocument(id: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("documents");
   const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true } });
   if (!doc) return;
   await prisma.$transaction([
@@ -193,7 +193,7 @@ export async function verifyDocument(id: string): Promise<void> {
 
 // Снять подтверждение документа.
 export async function unverifyDocument(id: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("documents");
   const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true } });
   if (!doc) return;
   await prisma.$transaction([
@@ -206,7 +206,7 @@ export async function unverifyDocument(id: string): Promise<void> {
 
 // Удалить документ (не прошёл проверку).
 export async function deleteDocument(id: string): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("documents");
   const doc = await prisma.providerDocument.findUnique({ where: { id }, select: { providerId: true, url: true } });
   if (!doc) return;
   await prisma.$transaction([
@@ -232,7 +232,7 @@ export async function resolveDispute(
   outcome: DisputeOutcome,
   amountEuros?: number,
 ): Promise<ResolveResult> {
-  const admin = await requireAdmin();
+  const admin = await requireAdminScope("disputes");
   const t = getAdminDict(await getLocale());
 
   const dispute = await prisma.dispute.findUnique({

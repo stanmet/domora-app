@@ -746,3 +746,11 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .tu-audit li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .dm .tu-audit-count{font-weight:700}
 .dm .tu-audit-time{margin-left:auto;color:var(--muted);font-size:12px}
+
+/* Боты и права администраторов */
+.dm .tu-check{flex-direction:row!important;align-items:center;gap:8px}
+.dm .tu-check input{width:auto}
+.dm .tu-botbtns{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+.dm .tu-scopes{margin-top:12px}
+.dm .tu-scopes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:6px}
+.dm .tu-scopelist{font-size:12.5px}
