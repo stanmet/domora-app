@@ -137,6 +137,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         labels={{
           searchPh: t.searchPh,
           filters: t.filters,
+          cityL: t.taskCityL,
           cityAll: t.cityAll,
           all: t.all,
           sort: tx.catSort,

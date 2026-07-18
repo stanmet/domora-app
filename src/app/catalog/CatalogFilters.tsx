@@ -11,6 +11,7 @@ import { CATEGORY_ICONS } from "@/components/categories";
 type Labels = {
   searchPh: string;
   filters: string;
+  cityL: string;
   cityAll: string;
   all: string;
   sort: string;
@@ -97,16 +98,17 @@ export default function CatalogFilters({ q, cat, city, sort, maxPrice, minRating
             </select>
           </div>
 
-          {/* Город */}
-          <div className="citychips">
-            <button className={"chip" + (city === "" ? " on" : "")} onClick={() => apply({ city: "" })}>
-              {labels.cityAll}
-            </button>
-            {cities.map((c) => (
-              <button key={c} className={"chip" + (city === c ? " on" : "")} onClick={() => apply({ city: c })}>
-                {c}
-              </button>
-            ))}
+          {/* Город: выпадающий список в такой же рамке, как сортировка */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <label style={{ fontSize: 13, color: "var(--muted)" }}>{labels.cityL}</label>
+            <select className="f" style={{ maxWidth: 220 }} value={city} onChange={(e) => apply({ city: e.target.value })}>
+              <option value="">{labels.cityAll}</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Рейтинг от */}
