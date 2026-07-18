@@ -25,6 +25,8 @@ export async function createTaskHold(bookingId: string): Promise<HoldResult> {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.clientId !== user.id) return { error: t.errGeneric };
   if (booking.status !== BookingStatus.DRAFT) return { error: t.errGeneric };
+  // Нельзя оплачивать бронь на прошедшую дату (услуга «в прошлом»).
+  if (booking.dateStart.getTime() <= Date.now()) return { error: t.errPast };
 
   try {
     const { clientSecret } = await createOrUpdateBookingHold({

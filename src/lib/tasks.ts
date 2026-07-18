@@ -9,8 +9,16 @@ export const TASK_TTL_DAYS = 7;
 export const MAX_OFFERS_PER_TASK = 5;
 
 export async function expireOverdueTasks(where: Prisma.TaskWhereInput): Promise<void> {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Закрываем OPEN-задачи, у которых вышел 7-дневный срок ИЛИ прошла желаемая
+  // дата: по такой задаче нельзя выбрать исполнителя и оплатить «в прошлое».
   await prisma.task.updateMany({
-    where: { ...where, status: TaskStatus.OPEN, expiresAt: { lt: new Date() } },
+    where: {
+      ...where,
+      status: TaskStatus.OPEN,
+      OR: [{ expiresAt: { lt: now } }, { dateWanted: { lt: startOfToday } }],
+    },
     data: { status: TaskStatus.EXPIRED },
   });
 }
