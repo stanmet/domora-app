@@ -9,6 +9,7 @@ import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
+import { openTaskVisibilityWhere } from "@/lib/tasks";
 import { getCity } from "@/lib/city";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
@@ -24,7 +25,7 @@ export default async function Home() {
   const [categories, openTasks, listings, prosCount, tasksCount, reviewsCount] = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
-      where: { status: "OPEN", expiresAt: { gt: new Date() }, ...(city ? { city } : {}) },
+      where: { ...openTaskVisibilityWhere(), ...(city ? { city } : {}) },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
@@ -91,9 +92,6 @@ export default async function Home() {
             <h3>{t.openTasksTitle}</h3>
             <p>{t.openTasksSub}</p>
           </div>
-          <Link href="/tasks/new" className="btn btn-green">
-            {t.postTask} <ArrowRight size={16} />
-          </Link>
         </div>
 
         {openTasks.length === 0 ? (

@@ -341,7 +341,7 @@ const en = {
   msgSend: "Send",
   // Открытые задачи на главной
   openTasksTitle: "Open tasks",
-  openTasksSub: "Latest tasks from clients, visible to everyone. Reply with your price or post your own.",
+  openTasksSub: "Latest tasks from clients, visible to everyone. Reply with your price.",
   openTasksEmpty: "No open tasks right now. Be the first to post one.",
   // Прозрачность задачи
   statViewed: "pros saw it",
@@ -806,7 +806,7 @@ const ru: Dict = {
   msgSend: "Отправить",
   // Открытые задачи на главной
   openTasksTitle: "Открытые задачи",
-  openTasksSub: "Свежие задачи от заказчиков, видны всем. Откликнитесь со своей ценой или разместите свою.",
+  openTasksSub: "Свежие задачи от заказчиков, видны всем. Откликнитесь со своей ценой.",
   openTasksEmpty: "Сейчас открытых задач нет. Разместите первую.",
   // Прозрачность задачи
   statViewed: "исполнителей увидели",
@@ -1269,7 +1269,7 @@ const uk: Dict = {
   msgSend: "Надіслати",
   // Відкриті задачі на головній
   openTasksTitle: "Відкриті задачі",
-  openTasksSub: "Свіжі задачі від замовників, видно всім. Відгукніться зі своєю ціною або розмістіть свою.",
+  openTasksSub: "Свіжі задачі від замовників, видно всім. Відгукніться зі своєю ціною.",
   openTasksEmpty: "Зараз відкритих задач немає. Розмістіть першу.",
   // Прозорість задачі
   statViewed: "виконавців побачили",
@@ -1732,7 +1732,7 @@ const pl: Dict = {
   msgSend: "Wyślij",
   // Otwarte zlecenia na stronie głównej
   openTasksTitle: "Otwarte zlecenia",
-  openTasksSub: "Najnowsze zlecenia od klientów, widoczne dla wszystkich. Odpowiedz swoją ceną lub dodaj własne.",
+  openTasksSub: "Najnowsze zlecenia od klientów, widoczne dla wszystkich. Odpowiedz swoją ceną.",
   openTasksEmpty: "Brak otwartych zleceń. Dodaj pierwsze.",
   // Przejrzystość zlecenia
   statViewed: "wykonawców zobaczyło",
@@ -2195,7 +2195,7 @@ const es: Dict = {
   msgSend: "Enviar",
   // Tareas abiertas en la página principal
   openTasksTitle: "Tareas abiertas",
-  openTasksSub: "Últimas tareas de clientes, visibles para todos. Responde con tu precio o publica la tuya.",
+  openTasksSub: "Últimas tareas de clientes, visibles para todos. Responde con tu precio.",
   openTasksEmpty: "No hay tareas abiertas ahora. Publica la primera.",
   // Transparencia de la tarea
   statViewed: "profesionales la vieron",
@@ -2658,7 +2658,7 @@ const pt: Dict = {
   msgSend: "Enviar",
   // Tarefas abertas na página inicial
   openTasksTitle: "Tarefas abertas",
-  openTasksSub: "Tarefas recentes de clientes, visíveis para todos. Responda com o seu preço ou publique a sua.",
+  openTasksSub: "Tarefas recentes de clientes, visíveis para todos. Responda com o seu preço.",
   openTasksEmpty: "Sem tarefas abertas agora. Publique a primeira.",
   // Transparência da tarefa
   statViewed: "profissionais viram",

@@ -13,7 +13,7 @@ import { categoryLabel, getDict, type Dict } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { CATEGORY_ICONS, sortByCategoryOrder } from "@/components/categories";
 import { dateTime, eur } from "@/lib/format";
-import { expireOverdueTasks, providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
+import { expireOverdueTasks, openTaskVisibilityWhere, providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import OfferForm from "./OfferForm";
 
 export const dynamic = "force-dynamic";
@@ -68,8 +68,7 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
   await expireOverdueTasks({ categoryId: { in: activeCategoryIds } });
 
   const where: Prisma.TaskWhereInput = {
-    status: "OPEN",
-    expiresAt: { gt: new Date() },
+    ...openTaskVisibilityWhere(),
     clientId: { not: user.id },
     categoryId: activeCat ? activeCat.id : { in: activeCategoryIds },
     ...(showAllCities ? {} : { city: profile.city }),
