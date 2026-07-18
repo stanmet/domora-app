@@ -17,6 +17,7 @@ import { getExtra } from "@/i18n/extra";
 import { encrypt } from "@/lib/crypto";
 import { calcBooking, stripe } from "@/lib/stripe";
 import { slotTaken } from "@/lib/bookings";
+import { isProviderAvailable } from "@/lib/availability";
 import { genBookingRef } from "@/lib/booking-ref";
 import { rateLimit } from "@/lib/rate-limit";
 import { createOrUpdateBookingHold, markBookingRequested } from "@/lib/payments";
@@ -85,6 +86,11 @@ export async function createBookingRequest(input: BookingRequestInput): Promise<
   // Слот занят подтверждённой бронью этого исполнителя: не даём забронировать.
   if (await slotTaken(listing.providerId, dateStart, input.draftBookingId)) {
     return { error: getExtra(locale).slotTaken };
+  }
+
+  // Время вне расписания исполнителя (нерабочий день, вне окна или отпуск).
+  if (!(await isProviderAvailable(listing.providerId, dateStart))) {
+    return { error: t.errUnavailable };
   }
 
   const money = calcBooking(

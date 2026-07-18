@@ -16,6 +16,7 @@ import { qtyFieldLabel, unitLabel } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { eur } from "@/lib/format";
 import { qtyConfig } from "@/lib/booking-units";
+import { isWithinSchedule, minToHHMM } from "@/lib/availability-core";
 import { track } from "@/lib/analytics";
 import { createBookingRequest, finalizeBookingPayment } from "./actions";
 
@@ -66,10 +67,18 @@ function totalFor(listing: BookableListing, qty: number): number {
 
 export type BookingCoupon = { code: string; pct: number } | null;
 
+export type Availability = {
+  workDays: number[];
+  workStartMin: number;
+  workEndMin: number;
+  blockedDays: string[]; // ключи YYYY-MM-DD
+};
+
 export default function BookingForm(props: {
   listings: BookableListing[];
   defaultListingId: string;
   coupon: BookingCoupon;
+  avail: Availability;
   t: Dict;
   locale: Locale;
 }) {
@@ -103,12 +112,14 @@ function InnerForm({
   listings,
   defaultListingId,
   coupon,
+  avail,
   t,
   locale,
 }: {
   listings: BookableListing[];
   defaultListingId: string;
   coupon: BookingCoupon;
+  avail: Availability;
   t: Dict;
   locale: Locale;
 }) {
@@ -136,6 +147,15 @@ function InnerForm({
   const total = Math.max(gross - discount, 0);
   const UnitIcon = UNIT_ICONS[listing.unit] ?? Users;
   const today = new Date().toISOString().slice(0, 10);
+
+  // Доступность выбранного слота по расписанию исполнителя (авторитетно всё
+  // равно проверяет сервер; здесь - подсказка и блокировка кнопки).
+  const blockedSet = new Set(avail.blockedDays);
+  const schedule = { workDays: avail.workDays, workStartMin: avail.workStartMin, workEndMin: avail.workEndMin };
+  const slotChosen = Boolean(date && time);
+  const slotOk = !slotChosen || isWithinSchedule(schedule, new Date(`${date}T${time}:00Z`), blockedSet);
+  const workFrom = minToHHMM(avail.workStartMin);
+  const workTo = minToHHMM(avail.workEndMin);
 
   // Сумма холда в Stripe Elements следует за количеством, услугой и скидкой.
   useEffect(() => {
@@ -210,7 +230,8 @@ function InnerForm({
       <label>{t.dateL}</label>
       <input className="f" type="date" name="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} required />
       <label>{t.timeL}</label>
-      <input className="f" type="time" name="time" value={time} onChange={(e) => setTime(e.target.value)} required />
+      <input className="f" type="time" name="time" min={workFrom} max={workTo} value={time} onChange={(e) => setTime(e.target.value)} required />
+      {slotChosen && !slotOk && <div className="err" style={{ marginTop: 6 }}>{t.errUnavailable}</div>}
 
       <label>{qtyFieldLabel(t, listing.unit)}</label>
       <div className="stepper">
@@ -279,7 +300,7 @@ function InnerForm({
       <button
         type="submit"
         className="btn btn-green"
-        disabled={pending || !stripe || !elements}
+        disabled={pending || !stripe || !elements || !slotOk}
         style={{ width: "100%", justifyContent: "center", marginTop: 16 }}
       >
         {pending ? t.bSending : `${t.bSend} · ${eur(total, locale)}`}

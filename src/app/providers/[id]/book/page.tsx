@@ -51,6 +51,19 @@ export default async function BookPage({
     clientFeePct: Number(l.category.clientFeePct),
   }));
 
+  // Доступность исполнителя для формы: расписание + ближайшие заблокированные дни.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const timeOff = await prisma.timeOff.findMany({
+    where: { providerId: id, date: { gte: new Date(`${todayKey}T00:00:00.000Z`) } },
+    select: { date: true },
+  });
+  const avail = {
+    workDays: provider.workDays,
+    workStartMin: provider.workStartMin,
+    workEndMin: provider.workEndMin,
+    blockedDays: timeOff.map((o) => o.date.toISOString().slice(0, 10)),
+  };
+
   return (
     <main className="wrap bform">
       <Link href={`/providers/${id}`} className="back">
@@ -67,6 +80,7 @@ export default async function BookPage({
           listings={listings}
           defaultListingId={listings.some((l) => l.id === preselected) ? (preselected as string) : listings[0].id}
           coupon={coupon ? { code: coupon.code, pct: coupon.pct } : null}
+          avail={avail}
           t={t}
           locale={locale}
         />
