@@ -79,6 +79,7 @@ export default function BookingForm(props: {
   defaultListingId: string;
   coupon: BookingCoupon;
   avail: Availability;
+  simulated?: boolean;
   t: Dict;
   locale: Locale;
 }) {
@@ -113,6 +114,7 @@ function InnerForm({
   defaultListingId,
   coupon,
   avail,
+  simulated,
   t,
   locale,
 }: {
@@ -120,6 +122,7 @@ function InnerForm({
   defaultListingId: string;
   coupon: BookingCoupon;
   avail: Availability;
+  simulated?: boolean;
   t: Dict;
   locale: Locale;
 }) {
@@ -170,10 +173,25 @@ function InnerForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!stripe || !elements || pending) return;
+    if (pending) return;
     setPending(true);
     setError(null);
     try {
+      // Демо-режим у тестового (ботовского) исполнителя: реальная карта не
+      // участвует. Создаём симулированную бронь и сразу ведём в «Мои заказы» -
+      // бот-исполнитель подтвердит её автоматически.
+      if (simulated) {
+        const res = await createBookingRequest({ listingId: listing.id, date, time, qty, address, message, couponCode: coupon?.code, draftBookingId });
+        if ("error" in res) {
+          setError(res.error);
+          return;
+        }
+        track("booking_created");
+        router.push("/bookings?sent=1");
+        return;
+      }
+
+      if (!stripe || !elements) return;
       // Валидация полей карты; свои ошибки PaymentElement показывает сам.
       const submitted = await elements.submit();
       if (submitted.error) return;
@@ -181,6 +199,11 @@ function InnerForm({
       const res = await createBookingRequest({ listingId: listing.id, date, time, qty, address, message, couponCode: coupon?.code, draftBookingId });
       if ("error" in res) {
         setError(res.error);
+        return;
+      }
+      if ("simulated" in res) {
+        track("booking_created");
+        router.push("/bookings?sent=1");
         return;
       }
       setDraftBookingId(res.bookingId);
@@ -300,7 +323,7 @@ function InnerForm({
       <button
         type="submit"
         className="btn btn-green"
-        disabled={pending || !stripe || !elements || !slotOk}
+        disabled={pending || (!simulated && (!stripe || !elements)) || !slotOk}
         style={{ width: "100%", justifyContent: "center", marginTop: 16 }}
       >
         {pending ? t.bSending : `${t.bSend} · ${eur(total, locale)}`}

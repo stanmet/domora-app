@@ -2,10 +2,13 @@
 // очередь действий за тик, самоотключение при появлении реального пользователя
 // с теми же параметрами (категория + город), лог активности и переключатели.
 // Боты действуют только между собой и никогда не касаются платежей.
-import { ListingStatus, OfferStatus, Role, TaskStatus } from "@prisma/client";
+import { BookingStatus, ListingStatus, OfferStatus, PriceUnit, Role, TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
+import { calcBooking } from "@/lib/stripe";
+import { genBookingRef } from "@/lib/booking-ref";
+import { REQUEST_TTL_HOURS } from "@/lib/booking-units";
 import { CATEGORY_PACKS } from "./personas";
 
 const CONFIG_ID = "singleton";
@@ -187,6 +190,9 @@ export async function runBotTick(): Promise<TickResult> {
     }
   }
 
+  // Демо: боты подтверждают симулированные брони от реальных клиентов.
+  await progressDemoBookings().catch(() => 0);
+
   await log("tick", undefined, `создано задач ${result.tasksCreated}, откликов ${result.offersMade}, принято ${result.offersAccepted}, самоотключено ${result.selfDisabled}`);
   return result;
 }
@@ -274,6 +280,9 @@ async function makeBotOffer(): Promise<boolean> {
 }
 
 // Тестовый заказчик принимает один из откликов (смена статуса, без оплаты).
+// Если принятый отклик от РЕАЛЬНОГО исполнителя (демо-режим), дополнительно
+// создаём симулированную бронь - реальный исполнитель увидит настоящий заказ в
+// «Мои заказы», но без Stripe (у брони нет Payment, деньги не двигаются).
 async function acceptBotOffer(): Promise<{ taskId: string; clientId: string; providerId: string } | null> {
   const task = await prisma.task.findFirst({
     where: {
@@ -281,7 +290,19 @@ async function acceptBotOffer(): Promise<{ taskId: string; clientId: string; pro
       client: { isTest: true },
       offers: { some: { status: OfferStatus.PENDING } },
     },
-    select: { id: true, clientId: true, offers: { where: { status: OfferStatus.PENDING }, select: { id: true, providerId: true }, take: 5 } },
+    select: {
+      id: true,
+      clientId: true,
+      categoryId: true,
+      dateWanted: true,
+      addressEncrypted: true,
+      category: { select: { clientFeePct: true, providerFeePct: true } },
+      offers: {
+        where: { status: OfferStatus.PENDING },
+        select: { id: true, providerId: true, priceCents: true, message: true },
+        take: 5,
+      },
+    },
   });
   if (!task) return null;
   const offer = rand(task.offers);
@@ -292,6 +313,50 @@ async function acceptBotOffer(): Promise<{ taskId: string; clientId: string; pro
     prisma.offer.updateMany({ where: { taskId: task.id, NOT: { id: offer.id } }, data: { status: OfferStatus.REJECTED } }),
     prisma.task.update({ where: { id: task.id }, data: { status: TaskStatus.OFFER_ACCEPTED } }),
   ]);
+
+  // Реальный исполнитель: заводим симулированную бронь по цене из отклика.
+  const offerProvider = await prisma.user.findUnique({ where: { id: offer.providerId }, select: { isTest: true } });
+  if (offerProvider && !offerProvider.isTest) {
+    try {
+      const listing = await prisma.listing.findFirst({
+        where: { providerId: offer.providerId, categoryId: task.categoryId, status: ListingStatus.ACTIVE },
+        select: { id: true },
+      });
+      if (listing) {
+        const money = calcBooking(offer.priceCents, 1, Number(task.category.clientFeePct), Number(task.category.providerFeePct));
+        const dateStart = task.dateWanted ?? new Date(Date.now() + 24 * 3600 * 1000);
+        const booking = await prisma.booking.create({
+          data: {
+            clientId: task.clientId,
+            providerId: offer.providerId,
+            listingId: listing.id,
+            ref: genBookingRef(),
+            status: BookingStatus.REQUESTED,
+            requestExpiresAt: new Date(Date.now() + REQUEST_TTL_HOURS * 3600 * 1000),
+            dateStart,
+            qty: 1,
+            unit: PriceUnit.PER_EVENT,
+            priceCentsSnapshot: offer.priceCents,
+            subtotalCents: money.subtotal,
+            clientFeeCents: money.clientFee,
+            providerFeeCents: money.providerFee,
+            totalCents: money.total,
+            addressEncrypted: task.addressEncrypted,
+            events: {
+              create: { actorId: task.clientId, type: "status_change", payload: { to: BookingStatus.REQUESTED, reason: "demo_simulated" } },
+            },
+            thread: {
+              create: { messages: { create: { authorId: offer.providerId, textOriginal: offer.message, langOriginal: "ru" } } },
+            },
+          },
+        });
+        await prisma.task.update({ where: { id: task.id }, data: { bookingId: booking.id } });
+      }
+    } catch (e) {
+      console.error("demo booking from offer failed", e);
+    }
+  }
+
   await log("offer_accepted", task.clientId, `принят отклик исполнителя ${offer.providerId}`);
   return { taskId: task.id, clientId: task.clientId, providerId: offer.providerId };
 }
@@ -318,6 +383,42 @@ async function sendBotMessage(taskId: string, clientId: string, providerId: stri
   });
   await log("message_sent", clientId, `диалог по задаче ${taskId}`);
   return true;
+}
+
+// Демо: бот-исполнитель принимает симулированную бронь (реальный клиент
+// забронировал бота). Stripe не участвует - у симулированной брони нет Payment,
+// поэтому фильтр payment=null безопасно отбирает только их. REQUESTED -> ACCEPTED.
+// Вызывается из тика и лениво при открытии списков заказов, чтобы демо выглядело
+// живым без ожидания cron.
+export async function progressDemoBookings(): Promise<number> {
+  let advanced = 0;
+  try {
+    const requests = await prisma.booking.findMany({
+      where: {
+        status: BookingStatus.REQUESTED,
+        payment: null,
+        provider: { user: { isTest: true } },
+      },
+      select: { id: true, providerId: true },
+      take: 50,
+    });
+    for (const b of requests) {
+      try {
+        await prisma.$transaction([
+          prisma.booking.update({ where: { id: b.id }, data: { status: BookingStatus.ACCEPTED } }),
+          prisma.bookingEvent.create({
+            data: { bookingId: b.id, actorId: b.providerId, type: "status_change", payload: { to: BookingStatus.ACCEPTED, reason: "demo_simulated" } },
+          }),
+        ]);
+        advanced++;
+      } catch (e) {
+        console.error("progressDemoBookings item failed", b.id, e);
+      }
+    }
+  } catch (e) {
+    console.error("progressDemoBookings failed", e);
+  }
+  return advanced;
 }
 
 export interface BotActivityRow {
