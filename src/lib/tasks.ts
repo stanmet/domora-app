@@ -15,6 +15,20 @@ export async function expireOverdueTasks(where: Prisma.TaskWhereInput): Promise<
   });
 }
 
+// Фильтр «живой» открытой задачи для публичных лент: статус OPEN (значит,
+// исполнитель ещё не принят), не истёк 7-дневный срок и желаемая дата, если
+// она указана, ещё не прошла. Такие задачи сами пропадают из ленты, как только
+// срок вышел или клиент выбрал исполнителя.
+export function openTaskVisibilityWhere(): Prisma.TaskWhereInput {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return {
+    status: TaskStatus.OPEN,
+    expiresAt: { gt: now },
+    OR: [{ dateWanted: null }, { dateWanted: { gte: startOfToday } }],
+  };
+}
+
 // Категории, в которых у исполнителя есть активная (одобренная) услуга.
 // Только по ним он видит задачи в ленте и может откликаться.
 export async function providerActiveCategoryIds(providerId: string): Promise<string[]> {
