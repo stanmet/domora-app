@@ -61,6 +61,10 @@ function tr(locale: Locale) {
       ? "Боты сами создают задачи, откликаются, принимают отклики и обмениваются сообщениями по расписанию (ежедневный cron) или по кнопке. При появлении реального пользователя с теми же параметрами бот сам отключается."
       : "Bots create tasks, make and accept offers and exchange messages on schedule or on demand. A bot self-disables when a real user with the same parameters appears.",
     master: ru ? "Боты включены" : "Bots enabled",
+    demoMode: ru ? "Демо-режим (показывать тестовые данные на сайте)" : "Demo mode (show test data on the public site)",
+    demoModeHint: ru
+      ? "Осторожно: включает тестовые аккаунты и их задачи на публичном сайте (главная, каталог, лента задач). Для наполнения витрины перед запуском. Выключите перед приходом реальных клиентов."
+      : "Caution: shows test accounts and their tasks on the public site (home, catalog, task feed). For populating the storefront before launch. Turn off before real clients arrive.",
     activity: ru ? "Интенсивность" : "Activity level",
     providerL: ru ? "AI-провайдер" : "AI provider",
     save: ru ? "Сохранить" : "Save",
@@ -147,6 +151,9 @@ export default async function TestUsersSection({
           <label className="tu-check">
             <input type="checkbox" name="enabled" defaultChecked={botConfig.enabled} /> <span>{l.master}</span>
           </label>
+          <label className="tu-check">
+            <input type="checkbox" name="demoMode" defaultChecked={botConfig.demoMode} /> <span>{l.demoMode}</span>
+          </label>
           <label>
             <span>{l.activity}: {botConfig.activityLevel}</span>
             <input type="range" name="activityLevel" min={0} max={100} step={5} defaultValue={botConfig.activityLevel} />
@@ -174,6 +181,7 @@ export default async function TestUsersSection({
           <span className="chip">{l.today}: {aiUsage.todayTokens.toLocaleString()} ток.</span>
           <span className="chip">{l.month}: {aiUsage.monthTokens.toLocaleString()} ток.</span>
         </div>
+        <p className="tu-muted" style={{ marginTop: 8, ...(botConfig.demoMode ? { color: "var(--rust, #b45309)" } : {}) }}>⚠ {l.demoModeHint}</p>
         <div className="tu-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn btn-green">{l.save}</button>
         </div>

@@ -11,6 +11,7 @@ import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/cate
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
+import { isDemoMode } from "@/lib/test-users/bots";
 import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
@@ -67,11 +68,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     }
   }
 
+  // Демо-режим: показываем тестовых (ботовских) исполнителей в поиске.
+  const demo = await isDemoMode();
+
   const where: Prisma.ListingWhereInput = {
     status: "ACTIVE",
     provider: {
       status: "ACTIVE",
-      user: { isTest: false }, // без синтетических исполнителей в поиске
+      user: demo ? {} : { isTest: false }, // без синтетических исполнителей в поиске (кроме демо-режима)
       // Город здесь НЕ фильтруем: подбор по радиусу выезда исполнителя делаем
       // ниже (reachable), чтобы исполнитель находился и в соседних областях.
       ...(minRatingNum ? { ratingCached: { gte: minRatingNum } } : {}),

@@ -158,6 +158,7 @@ model TestBotConfig {
   provider            String   @default("anthropic") // anthropic | openai | gemini | local
   aiDailyTokenLimit   Int      @default(200000) // лимит токенов AI в день (0 = без лимита)
   aiMonthlyTokenLimit Int      @default(3000000) // лимит токенов AI в месяц (0 = без лимита)
+  demoMode            Boolean  @default(false) // показывать тестовые данные на публичном сайте
   updatedAt           DateTime @updatedAt
 }
 

@@ -22,6 +22,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { toggleFavorite } from "@/app/favorites/actions";
 import SubscribeBox from "@/components/SubscribeBox";
 import { createSubscription } from "@/app/subscriptions/actions";
+import { isDemoMode } from "@/lib/test-users/bots";
 
 export const dynamic = "force-dynamic";
 
@@ -77,8 +78,9 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
     },
   });
 
-  // Тестовых исполнителей не показываем даже по прямой ссылке.
-  if (!provider || provider.status !== "ACTIVE" || provider.user.isTest) notFound();
+  // Тестовых исполнителей не показываем даже по прямой ссылке (кроме демо-режима).
+  const demo = await isDemoMode();
+  if (!provider || provider.status !== "ACTIVE" || (provider.user.isTest && !demo)) notFound();
 
   const rating = Number(provider.ratingCached);
   const reviews = provider.user.reviewsGot;

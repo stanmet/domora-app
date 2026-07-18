@@ -27,14 +27,17 @@ export async function expireOverdueTasks(where: Prisma.TaskWhereInput): Promise<
 // исполнитель ещё не принят), не истёк 7-дневный срок и желаемая дата, если
 // она указана, ещё не прошла. Такие задачи сами пропадают из ленты, как только
 // срок вышел или клиент выбрал исполнителя.
-export function openTaskVisibilityWhere(): Prisma.TaskWhereInput {
+// includeTest=true (демо-режим) показывает и тестовые задачи от синтетических
+// клиентов; по умолчанию они скрыты от реальных людей.
+export function openTaskVisibilityWhere(includeTest = false): Prisma.TaskWhereInput {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return {
     status: TaskStatus.OPEN,
     expiresAt: { gt: now },
-    // Тестовые задачи (от синтетических клиентов) не показываем реальным людям.
-    client: { isTest: false },
+    // Тестовые задачи (от синтетических клиентов) не показываем реальным людям,
+    // кроме включённого демо-режима.
+    ...(includeTest ? {} : { client: { isTest: false } }),
     OR: [{ dateWanted: null }, { dateWanted: { gte: startOfToday } }],
   };
 }

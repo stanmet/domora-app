@@ -10,6 +10,7 @@ import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
 import { openTaskVisibilityWhere } from "@/lib/tasks";
+import { isDemoMode } from "@/lib/test-users/bots";
 import { getCity } from "@/lib/city";
 import { reachable } from "@/lib/ireland";
 import { translateBatch } from "@/lib/translate";
@@ -23,10 +24,14 @@ export default async function Home() {
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
   const city = await getCity();
+  // Демо-режим: когда включён, показываем тестовые (ботовские) данные на публичном
+  // сайте. По умолчанию выключен — реальные клиенты не видят синтетические аккаунты.
+  const demo = await isDemoMode();
+  const notTest = demo ? {} : { isTest: false };
   const [categories, openTasks, listingsRaw, prosCount, tasksCount, reviewsCount] = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
-      where: { ...openTaskVisibilityWhere(), ...(city ? { city } : {}) },
+      where: { ...openTaskVisibilityWhere(demo), ...(city ? { city } : {}) },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
@@ -36,7 +41,7 @@ export default async function Home() {
     }),
     // Город не фильтруем в SQL: ниже отбираем исполнителей по радиусу выезда.
     prisma.listing.findMany({
-      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: { isTest: false } } },
+      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: notTest } },
       orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
       take: 40,
       include: {
@@ -44,9 +49,9 @@ export default async function Home() {
         category: { select: { slug: true } },
       },
     }),
-    prisma.providerProfile.count({ where: { status: "ACTIVE", user: { isTest: false } } }),
-    prisma.task.count({ where: { client: { isTest: false } } }),
-    prisma.review.count({ where: { publishedAt: { not: null }, author: { isTest: false }, target: { isTest: false } } }),
+    prisma.providerProfile.count({ where: { status: "ACTIVE", user: notTest } }),
+    prisma.task.count({ where: { client: notTest } }),
+    prisma.review.count({ where: { publishedAt: { not: null }, author: notTest, target: notTest } }),
   ]);
   const cats = sortByCategoryOrder(categories);
 

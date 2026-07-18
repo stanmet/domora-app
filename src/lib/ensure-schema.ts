@@ -152,6 +152,7 @@ export async function ensureSchema(): Promise<void> {
     );
     await prisma.$executeRawUnsafe(`ALTER TABLE "TestBotConfig" ADD COLUMN IF NOT EXISTS "aiDailyTokenLimit" INTEGER NOT NULL DEFAULT 200000`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "TestBotConfig" ADD COLUMN IF NOT EXISTS "aiMonthlyTokenLimit" INTEGER NOT NULL DEFAULT 3000000`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "TestBotConfig" ADD COLUMN IF NOT EXISTS "demoMode" BOOLEAN NOT NULL DEFAULT false`);
     await prisma.$executeRawUnsafe(
       `CREATE TABLE IF NOT EXISTS "TestBotActivity" (
          "id" TEXT NOT NULL, "action" TEXT NOT NULL, "actorId" TEXT, "detail" TEXT,
