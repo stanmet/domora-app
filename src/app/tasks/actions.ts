@@ -108,6 +108,13 @@ export async function acceptOffer(offerId: string): Promise<void> {
     revalidatePath("/tasks/mine");
     return;
   }
+  // Нельзя выбрать исполнителя на задачу с прошедшей желаемой датой.
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  if (task.dateWanted && task.dateWanted.getTime() < startOfToday.getTime()) {
+    revalidatePath("/tasks/mine");
+    return;
+  }
 
   // Бронь ссылается на активную услугу исполнителя в категории задачи
   // (обязательное поле listingId). Она гарантированно есть: без неё отклик
