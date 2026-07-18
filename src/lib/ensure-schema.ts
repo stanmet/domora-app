@@ -125,6 +125,58 @@ export async function ensureSchema(): Promise<void> {
     );
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Booking_ref_key" ON "Booking"("ref")`);
 
+    // Тестовые пользователи (флаг TEST_ACCOUNT) и журнал аудита.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isTest" BOOLEAN NOT NULL DEFAULT false`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_isTest_idx" ON "User"("isTest")`);
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "TestAuditLog" (
+         "id" TEXT NOT NULL, "action" TEXT NOT NULL, "actorId" TEXT, "count" INTEGER NOT NULL DEFAULT 0,
+         "detail" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "TestAuditLog_pkey" PRIMARY KEY ("id"))`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TestAuditLog_createdAt_idx" ON "TestAuditLog"("createdAt")`);
+
+    // Индивидуальный переключатель бота и точечные права администратора.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "botEnabled" BOOLEAN NOT NULL DEFAULT true`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "adminScopes" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_isTest_botEnabled_idx" ON "User"("isTest", "botEnabled")`);
+
+    // Настройки и активность ботов, учёт токенов AI.
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "TestBotConfig" (
+         "id" TEXT NOT NULL DEFAULT 'singleton', "enabled" BOOLEAN NOT NULL DEFAULT false,
+         "activityLevel" INTEGER NOT NULL DEFAULT 30, "provider" TEXT NOT NULL DEFAULT 'anthropic',
+         "aiDailyTokenLimit" INTEGER NOT NULL DEFAULT 200000, "aiMonthlyTokenLimit" INTEGER NOT NULL DEFAULT 3000000,
+         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "TestBotConfig_pkey" PRIMARY KEY ("id"))`,
+    );
+    await prisma.$executeRawUnsafe(`ALTER TABLE "TestBotConfig" ADD COLUMN IF NOT EXISTS "aiDailyTokenLimit" INTEGER NOT NULL DEFAULT 200000`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "TestBotConfig" ADD COLUMN IF NOT EXISTS "aiMonthlyTokenLimit" INTEGER NOT NULL DEFAULT 3000000`);
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "TestBotActivity" (
+         "id" TEXT NOT NULL, "action" TEXT NOT NULL, "actorId" TEXT, "detail" TEXT,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         CONSTRAINT "TestBotActivity_pkey" PRIMARY KEY ("id"))`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TestBotActivity_createdAt_idx" ON "TestBotActivity"("createdAt")`);
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "TestAiUsage" (
+         "day" TEXT NOT NULL, "inputTokens" INTEGER NOT NULL DEFAULT 0, "outputTokens" INTEGER NOT NULL DEFAULT 0,
+         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "TestAiUsage_pkey" PRIMARY KEY ("day"))`,
+    );
+
+    // Календарь доступности исполнителя.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "workDays" INTEGER[] NOT NULL DEFAULT ARRAY[1,2,3,4,5]::INTEGER[]`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "workStartMin" INTEGER NOT NULL DEFAULT 540`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "workEndMin" INTEGER NOT NULL DEFAULT 1200`);
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "TimeOff" (
+         "id" TEXT NOT NULL, "providerId" TEXT NOT NULL, "date" DATE NOT NULL,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "TimeOff_pkey" PRIMARY KEY ("id"))`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "TimeOff_providerId_date_key" ON "TimeOff"("providerId", "date")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TimeOff_providerId_idx" ON "TimeOff"("providerId")`);
+
     // Наполняем дерево подкатегорий данными (идемпотентно).
     await seedSubcategories();
   } catch (e) {
