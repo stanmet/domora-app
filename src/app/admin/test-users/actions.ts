@@ -75,7 +75,8 @@ export async function saveBotConfigAction(formData: FormData): Promise<void> {
   const provider = String(formData.get("provider") ?? "anthropic");
   const aiDailyTokenLimit = Math.max(0, Math.floor(Number(formData.get("aiDailyTokenLimit")) || 0));
   const aiMonthlyTokenLimit = Math.max(0, Math.floor(Number(formData.get("aiMonthlyTokenLimit")) || 0));
-  await setBotConfig({ enabled, activityLevel, provider, aiDailyTokenLimit, aiMonthlyTokenLimit });
+  const demoMode = formData.get("demoMode") === "on";
+  await setBotConfig({ enabled, activityLevel, provider, aiDailyTokenLimit, aiMonthlyTokenLimit, demoMode });
   revalidatePath("/admin");
 }
 

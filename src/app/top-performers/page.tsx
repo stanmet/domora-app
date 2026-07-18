@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
 import { eur } from "@/lib/format";
+import { isDemoMode } from "@/lib/test-users/bots";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,11 @@ export default async function TopPerformersPage() {
   const locale = await getLocale();
   const t = getDict(locale);
 
+  // Демо-режим: показываем тестовых (ботовских) исполнителей в топе.
+  const demo = await isDemoMode();
+
   const providers = await prisma.providerProfile.findMany({
-    where: { status: "ACTIVE", user: { isTest: false } },
+    where: { status: "ACTIVE", user: demo ? {} : { isTest: false } },
     orderBy: [{ ratingCached: "desc" }, { jobsCount: "desc" }],
     take: 20,
     include: {

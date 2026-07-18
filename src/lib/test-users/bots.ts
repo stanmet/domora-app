@@ -16,6 +16,7 @@ export interface BotConfig {
   provider: string;
   aiDailyTokenLimit: number;
   aiMonthlyTokenLimit: number;
+  demoMode: boolean;
 }
 
 export async function getBotConfig(): Promise<BotConfig> {
@@ -23,7 +24,14 @@ export async function getBotConfig(): Promise<BotConfig> {
     where: { id: CONFIG_ID },
     update: {},
     create: { id: CONFIG_ID },
-    select: { enabled: true, activityLevel: true, provider: true, aiDailyTokenLimit: true, aiMonthlyTokenLimit: true },
+    select: {
+      enabled: true,
+      activityLevel: true,
+      provider: true,
+      aiDailyTokenLimit: true,
+      aiMonthlyTokenLimit: true,
+      demoMode: true,
+    },
   });
   return row;
 }
@@ -35,8 +43,20 @@ export async function setBotConfig(patch: Partial<BotConfig>): Promise<void> {
     ...(patch.provider ? { provider: patch.provider } : {}),
     ...(patch.aiDailyTokenLimit !== undefined ? { aiDailyTokenLimit: Math.max(0, patch.aiDailyTokenLimit) } : {}),
     ...(patch.aiMonthlyTokenLimit !== undefined ? { aiMonthlyTokenLimit: Math.max(0, patch.aiMonthlyTokenLimit) } : {}),
+    ...(patch.demoMode !== undefined ? { demoMode: patch.demoMode } : {}),
   };
   await prisma.testBotConfig.upsert({ where: { id: CONFIG_ID }, update: data, create: { id: CONFIG_ID, ...data } });
+}
+
+// Демо-режим: показывать ли тестовые/ботовские данные на публичном сайте.
+// Читается на публичных страницах; ошибка/отсутствие строки = выключен (изоляция).
+export async function isDemoMode(): Promise<boolean> {
+  try {
+    const row = await prisma.testBotConfig.findUnique({ where: { id: CONFIG_ID }, select: { demoMode: true } });
+    return row?.demoMode ?? false;
+  } catch {
+    return false;
+  }
 }
 
 // Переключатель одного бота (только тестовый аккаунт).

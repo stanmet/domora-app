@@ -15,6 +15,7 @@ import { CATEGORY_ICONS, sortByCategoryOrder } from "@/components/categories";
 import { dateTime, eur } from "@/lib/format";
 import { expireOverdueTasks, openTaskVisibilityWhere, providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import { reachable } from "@/lib/ireland";
+import { isDemoMode } from "@/lib/test-users/bots";
 import OfferForm from "./OfferForm";
 
 export const dynamic = "force-dynamic";
@@ -71,10 +72,13 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
 
   await expireOverdueTasks({ categoryId: { in: activeCategoryIds } });
 
+  // Демо-режим: показываем тестовые (ботовские) задачи и в ленте исполнителей.
+  const demo = await isDemoMode();
+
   // Город в SQL не фильтруем: ниже отбираем задачи по радиусу выезда исполнителя
   // из его города (кнопка «все города» показывает задачи по всей стране).
   const where: Prisma.TaskWhereInput = {
-    ...openTaskVisibilityWhere(),
+    ...openTaskVisibilityWhere(demo),
     clientId: { not: user.id },
     categoryId: activeCat ? activeCat.id : { in: activeCategoryIds },
   };
