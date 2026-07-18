@@ -2,7 +2,7 @@
 // Дизайн из prototypes/HostDashboard.jsx (обзор с онбординг-чеклистом).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ClipboardCheck, ClipboardList, FileCheck2, Gauge, Images, Landmark, LayoutGrid } from "lucide-react";
+import { ArrowRight, ClipboardCheck, ClipboardList, FileCheck2, Gauge, Images, Landmark, LayoutGrid, UserRound } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -96,6 +96,20 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
               </p>
             </div>
             <Link href="/pro/services" className="btn btn-ink btn-sm">
+              {t.obGo} <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
+        <div className="card">
+          <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
+            <div className="icircle">
+              <UserRound size={22} strokeWidth={1.7} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3>{t.proProfile}</h3>
+              <p>{t.proProfileSub}</p>
+            </div>
+            <Link href="/pro/profile" className="btn btn-ink btn-sm">
               {t.obGo} <ArrowRight size={13} />
             </Link>
           </div>

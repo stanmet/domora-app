@@ -754,3 +754,11 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .tu-scopes{margin-top:12px}
 .dm .tu-scopes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:6px}
 .dm .tu-scopelist{font-size:12.5px}
+
+/* Форма профиля исполнителя */
+.dm .pp-form{display:flex;flex-direction:column;gap:14px;max-width:560px}
+.dm .pp-form .f-row{display:flex;flex-direction:column;gap:6px}
+.dm .pp-form .f-row>span{font-size:13px;color:var(--muted)}
+.dm .pp-form input,.dm .pp-form textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;font-family:inherit}
+.dm .pp-form textarea{resize:vertical}
+.dm .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;margin-bottom:10px}
