@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/i18n/config";
 import { ADMIN_SCOPES, isSuperAdmin } from "@/lib/admin";
+import ConfirmButton from "../ConfirmButton";
 import GrantForm, { type ScopeOption } from "./GrantForm";
 import { revokeAdminAction } from "./actions";
 
@@ -74,7 +75,12 @@ export default async function AdminsSection({ locale, meId }: { locale: Locale; 
                   ) : (
                     <form action={revokeAdminAction}>
                       <input type="hidden" name="id" value={a.id} />
-                      <button className="btn btn-red btn-sm">{ru ? "Снять" : "Revoke"}</button>
+                      <ConfirmButton
+                        message={ru ? `Снять права администратора у ${a.email}?` : `Revoke admin from ${a.email}?`}
+                        className="btn btn-red btn-sm"
+                      >
+                        {ru ? "Снять" : "Revoke"}
+                      </ConfirmButton>
                     </form>
                   )}
                 </td>
