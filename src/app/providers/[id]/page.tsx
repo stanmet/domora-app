@@ -105,7 +105,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   }
   const licenceState: "verified" | "onfile" | "required" =
     verifiedCount > 0 ? "verified" : docCount > 0 ? "onfile" : "required";
-  const licenceOk = licenceState !== "required";
   const licenceLabel =
     licenceState === "verified" ? t.licenceVerified : licenceState === "onfile" ? t.licenceOnFile : t.licenceRequired;
   const licenceStyle =

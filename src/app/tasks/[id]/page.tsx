@@ -6,7 +6,7 @@
 // - гость/остальные видят описание задачи и счётчик откликов.
 // Точный адрес задачи (зашифрован) не показывается никогда.
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, Calendar, CreditCard, Eye, MapPin, Star, Users, Wallet } from "lucide-react";
 import { OfferStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
