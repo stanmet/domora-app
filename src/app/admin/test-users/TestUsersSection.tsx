@@ -13,6 +13,8 @@ import {
   type CreateRole,
 } from "@/lib/test-users";
 import { getBotConfig, recentBotActivity } from "@/lib/test-users/bots";
+import { getAiUsage } from "@/lib/test-users/ai-usage";
+import ConfirmButton from "../ConfirmButton";
 import CreateForm from "./CreateForm";
 import {
   deleteAllTestUsersAction,
@@ -70,6 +72,14 @@ function tr(locale: Locale) {
     colBot: ru ? "Бот" : "Bot",
     actionLog: ru ? "Активность ботов" : "Bot activity",
     actionLogEmpty: ru ? "Активности пока нет." : "No activity yet.",
+    aiDaily: ru ? "Лимит токенов AI в день (0 = без лимита)" : "AI token limit/day (0 = none)",
+    aiMonthly: ru ? "Лимит токенов AI в месяц (0 = без лимита)" : "AI token limit/month (0 = none)",
+    aiUsage: ru ? "Расход AI" : "AI usage",
+    today: ru ? "сегодня" : "today",
+    month: ru ? "за месяц" : "month",
+    confirmDeleteAll: ru ? "Удалить ВСЕ тестовые аккаунты? Это необратимо." : "Delete ALL test accounts? This cannot be undone.",
+    confirmDeleteSel: ru ? "Удалить выбранные тестовые аккаунты?" : "Delete selected test accounts?",
+    confirmDisableAll: ru ? "Выключить всех ботов?" : "Disable all bots?",
   };
 }
 
@@ -83,13 +93,14 @@ export default async function TestUsersSection({
   const l = tr(locale);
   const t = getDict(locale);
 
-  const [stats, categoriesRaw, rows, audit, botConfig, botActivity] = await Promise.all([
+  const [stats, categoriesRaw, rows, audit, botConfig, botActivity, aiUsage] = await Promise.all([
     testStats(locale),
     prisma.category.findMany(),
     listTestUsers(filter),
     recentAudit(15),
     getBotConfig(),
     recentBotActivity(25),
+    getAiUsage(),
   ]);
   const categories = sortByCategoryOrder(categoriesRaw).map((c) => ({
     slug: c.slug,
@@ -149,6 +160,19 @@ export default async function TestUsersSection({
               <option value="local">{locale === "ru" ? "Локально (без AI)" : "Local (no AI)"}</option>
             </select>
           </label>
+          <label>
+            <span>{l.aiDaily}</span>
+            <input type="number" name="aiDailyTokenLimit" min={0} step={10000} defaultValue={botConfig.aiDailyTokenLimit} />
+          </label>
+          <label>
+            <span>{l.aiMonthly}</span>
+            <input type="number" name="aiMonthlyTokenLimit" min={0} step={100000} defaultValue={botConfig.aiMonthlyTokenLimit} />
+          </label>
+        </div>
+        <div className="tu-chips" style={{ marginTop: 10 }}>
+          <span className="tu-muted">{l.aiUsage}:</span>
+          <span className="chip">{l.today}: {aiUsage.todayTokens.toLocaleString()} ток.</span>
+          <span className="chip">{l.month}: {aiUsage.monthTokens.toLocaleString()} ток.</span>
         </div>
         <div className="tu-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn btn-green">{l.save}</button>
@@ -157,7 +181,7 @@ export default async function TestUsersSection({
       <div className="tu-botbtns">
         <form action={runBotTickAction}><button className="btn btn-ink btn-sm">{l.runNow}</button></form>
         <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="1" /><button className="btn btn-sm">{l.enableAll}</button></form>
-        <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="0" /><button className="btn btn-sm">{l.disableAll}</button></form>
+        <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="0" /><ConfirmButton message={l.confirmDisableAll} className="btn btn-sm">{l.disableAll}</ConfirmButton></form>
       </div>
 
       {/* Создание */}
@@ -168,7 +192,7 @@ export default async function TestUsersSection({
       <div className="tu-listhead">
         <h3 className="tu-h">{l.listTitle}</h3>
         <form action={deleteAllTestUsersAction}>
-          <button className="btn btn-red btn-sm">{l.deleteAll}</button>
+          <ConfirmButton message={l.confirmDeleteAll} className="btn btn-red btn-sm">{l.deleteAll}</ConfirmButton>
         </form>
       </div>
 
@@ -228,7 +252,7 @@ export default async function TestUsersSection({
             </table>
           </div>
           <div style={{ marginTop: 12 }}>
-            <button className="btn btn-red btn-sm" form="tuDelete">{l.deleteSelected}</button>
+            <ConfirmButton message={l.confirmDeleteSel} className="btn btn-red btn-sm" form="tuDelete">{l.deleteSelected}</ConfirmButton>
           </div>
         </>
       )}

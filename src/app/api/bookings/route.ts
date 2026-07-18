@@ -14,9 +14,10 @@ export async function POST(req: Request) {
 
   const listing = await prisma.listing.findUniqueOrThrow({
     where: { id: body.listingId },
-    include: { category: true, provider: true },
+    include: { category: true, provider: { include: { user: { select: { isTest: true } } } } },
   });
-  if (listing.status !== "ACTIVE" || listing.provider.status !== "ACTIVE") {
+  // Тестовую услугу нельзя забронировать даже прямым запросом к API.
+  if (listing.status !== "ACTIVE" || listing.provider.status !== "ACTIVE" || listing.provider.user.isTest) {
     return NextResponse.json({ error: "listing_unavailable" }, { status: 409 });
   }
 

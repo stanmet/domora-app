@@ -4,7 +4,22 @@
 // параметром или переменной TEST_AI_PROVIDER; ключи - в .env. Любая ошибка или
 // отсутствие ключа означает мягкий откат на встроенный генератор.
 import Anthropic from "@anthropic-ai/sdk";
+import { prisma } from "@/lib/prisma";
 import { CATEGORY_PACKS, localPersonas, type GeneratedPersona, type PersonaRole } from "./personas";
+import { checkAiBudget, recordAiUsage } from "./ai-usage";
+
+interface Usage {
+  input: number;
+  output: number;
+}
+
+async function getAiLimits() {
+  const cfg = await prisma.testBotConfig.findUnique({
+    where: { id: "singleton" },
+    select: { aiDailyTokenLimit: true, aiMonthlyTokenLimit: true },
+  });
+  return { daily: cfg?.aiDailyTokenLimit ?? 0, monthly: cfg?.aiMonthlyTokenLimit ?? 0 };
+}
 
 const AI_CHUNK = 20;
 const AI_ENRICH_CAP = 80;
@@ -87,20 +102,35 @@ export async function generatePersonas(count: number, opts: GenerateOptions): Pr
     return { personas, method: "local", note: `Ключ ${provider} не задан - использован встроенный генератор.` };
   }
 
+  // Аварийное отключение AI при достижении дневного/месячного лимита токенов.
+  const limits = await getAiLimits();
+  const budget = await checkAiBudget(limits);
+  if (!budget.allowed) {
+    return { personas, method: "local", note: `AI на паузе: ${budget.reason}. Использован встроенный генератор.` };
+  }
+
   try {
-    const limit = Math.min(count, AI_ENRICH_CAP);
+    const cap = Math.min(count, AI_ENRICH_CAP);
     let enriched = 0;
-    for (let start = 0; start < limit; start += AI_CHUNK) {
-      const slice = personas.slice(start, Math.min(start + AI_CHUNK, limit));
-      const texts = await enrichChunk(provider, slice, opts, quality);
+    let stoppedByLimit = false;
+    for (let start = 0; start < cap; start += AI_CHUNK) {
+      // Перед каждым куском проверяем бюджет заново - остановимся посреди пачки.
+      if (start > 0 && !(await checkAiBudget(limits)).allowed) {
+        stoppedByLimit = true;
+        break;
+      }
+      const slice = personas.slice(start, Math.min(start + AI_CHUNK, cap));
+      const { texts, usage } = await enrichChunk(provider, slice, opts, quality);
+      await recordAiUsage(usage.input, usage.output);
       slice.forEach((p, i) => applyText(p, texts[i], opts.role));
       enriched += slice.length;
     }
-    const note =
-      enriched < count
+    const note = stoppedByLimit
+      ? `${provider}: сгенерировано ${enriched} из ${count}, дальше сработал лимит токенов - остальные встроенным генератором.`
+      : enriched < count
         ? `${provider}: сгенерировано ${enriched} из ${count}; остальные - встроенным генератором.`
         : `Тексты: ${provider}.`;
-    return { personas, method: "ai", note };
+    return { personas, method: enriched > 0 ? "ai" : "local", note };
   } catch (e) {
     return {
       personas,
@@ -170,16 +200,20 @@ async function enrichChunk(
   slice: GeneratedPersona[],
   opts: GenerateOptions,
   quality: TextQuality,
-): Promise<PersonaText[]> {
+): Promise<{ texts: PersonaText[]; usage: Usage }> {
   const prompt = buildPrompt(slice, opts);
   const schema = schemaFor(opts.role);
   if (provider === "anthropic") return callAnthropic(prompt, schema, quality);
   if (provider === "openai") return callOpenAI(prompt, schema);
   if (provider === "gemini") return callGemini(prompt, schema);
-  return [];
+  return { texts: [], usage: { input: 0, output: 0 } };
 }
 
-async function callAnthropic(prompt: string, schema: Record<string, unknown>, quality: TextQuality): Promise<PersonaText[]> {
+async function callAnthropic(
+  prompt: string,
+  schema: Record<string, unknown>,
+  quality: TextQuality,
+): Promise<{ texts: PersonaText[]; usage: Usage }> {
   const client = new Anthropic();
   const resp = await client.messages.create({
     model: "claude-opus-4-8",
@@ -190,10 +224,13 @@ async function callAnthropic(prompt: string, schema: Record<string, unknown>, qu
   });
   const block = resp.content.find((b): b is Anthropic.TextBlock => b.type === "text");
   if (!block) throw new Error("пустой ответ");
-  return parsePersonas(block.text);
+  return {
+    texts: parsePersonas(block.text),
+    usage: { input: resp.usage?.input_tokens ?? 0, output: resp.usage?.output_tokens ?? 0 },
+  };
 }
 
-async function callOpenAI(prompt: string, schema: Record<string, unknown>): Promise<PersonaText[]> {
+async function callOpenAI(prompt: string, schema: Record<string, unknown>): Promise<{ texts: PersonaText[]; usage: Usage }> {
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -214,10 +251,13 @@ async function callOpenAI(prompt: string, schema: Record<string, unknown>): Prom
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content;
   if (typeof text !== "string") throw new Error("нет содержимого");
-  return parsePersonas(text);
+  return {
+    texts: parsePersonas(text),
+    usage: { input: data?.usage?.prompt_tokens ?? 0, output: data?.usage?.completion_tokens ?? 0 },
+  };
 }
 
-async function callGemini(prompt: string, schema: Record<string, unknown>): Promise<PersonaText[]> {
+async function callGemini(prompt: string, schema: Record<string, unknown>): Promise<{ texts: PersonaText[]; usage: Usage }> {
   const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
   const res = await fetch(url, {
@@ -232,7 +272,13 @@ async function callGemini(prompt: string, schema: Record<string, unknown>): Prom
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (typeof text !== "string") throw new Error("нет содержимого");
-  return parsePersonas(text);
+  return {
+    texts: parsePersonas(text),
+    usage: {
+      input: data?.usageMetadata?.promptTokenCount ?? 0,
+      output: data?.usageMetadata?.candidatesTokenCount ?? 0,
+    },
+  };
 }
 
 // Gemini не принимает additionalProperties - убираем рекурсивно.

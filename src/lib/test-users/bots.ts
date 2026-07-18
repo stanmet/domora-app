@@ -14,6 +14,8 @@ export interface BotConfig {
   enabled: boolean;
   activityLevel: number;
   provider: string;
+  aiDailyTokenLimit: number;
+  aiMonthlyTokenLimit: number;
 }
 
 export async function getBotConfig(): Promise<BotConfig> {
@@ -21,7 +23,7 @@ export async function getBotConfig(): Promise<BotConfig> {
     where: { id: CONFIG_ID },
     update: {},
     create: { id: CONFIG_ID },
-    select: { enabled: true, activityLevel: true, provider: true },
+    select: { enabled: true, activityLevel: true, provider: true, aiDailyTokenLimit: true, aiMonthlyTokenLimit: true },
   });
   return row;
 }
@@ -31,6 +33,8 @@ export async function setBotConfig(patch: Partial<BotConfig>): Promise<void> {
     ...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
     ...(patch.activityLevel !== undefined ? { activityLevel: Math.max(0, Math.min(100, patch.activityLevel)) } : {}),
     ...(patch.provider ? { provider: patch.provider } : {}),
+    ...(patch.aiDailyTokenLimit !== undefined ? { aiDailyTokenLimit: Math.max(0, patch.aiDailyTokenLimit) } : {}),
+    ...(patch.aiMonthlyTokenLimit !== undefined ? { aiMonthlyTokenLimit: Math.max(0, patch.aiMonthlyTokenLimit) } : {}),
   };
   await prisma.testBotConfig.upsert({ where: { id: CONFIG_ID }, update: data, create: { id: CONFIG_ID, ...data } });
 }

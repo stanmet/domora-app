@@ -134,6 +134,7 @@ model User {
   notifications Notification[]
 
   @@index([isTest])
+  @@index([isTest, botEnabled])
 }
 
 // Журнал аудита модуля тестовых пользователей: кто и когда создавал/удалял
@@ -151,11 +152,21 @@ model TestAuditLog {
 
 // Настройки автосценариев ботов (одна строка-синглтон id="singleton").
 model TestBotConfig {
-  id            String   @id @default("singleton")
-  enabled       Boolean  @default(false) // мастер-выключатель всех ботов
-  activityLevel Int      @default(30)    // 0..100 - интенсивность действий за тик
-  provider      String   @default("anthropic") // anthropic | openai | gemini | local
-  updatedAt     DateTime @updatedAt
+  id                  String   @id @default("singleton")
+  enabled             Boolean  @default(false) // мастер-выключатель всех ботов
+  activityLevel       Int      @default(30)    // 0..100 - интенсивность действий за тик
+  provider            String   @default("anthropic") // anthropic | openai | gemini | local
+  aiDailyTokenLimit   Int      @default(200000) // лимит токенов AI в день (0 = без лимита)
+  aiMonthlyTokenLimit Int      @default(3000000) // лимит токенов AI в месяц (0 = без лимита)
+  updatedAt           DateTime @updatedAt
+}
+
+// Учёт расхода токенов AI по дням (для дневного и месячного лимитов).
+model TestAiUsage {
+  day          String   @id // YYYY-MM-DD
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  updatedAt    DateTime @updatedAt
 }
 
 // История активности ботов (мониторинг действий в админке).
