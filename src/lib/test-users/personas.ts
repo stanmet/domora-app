@@ -184,7 +184,7 @@ function mulberry32(seed: number): () => number {
 // index-соль внутри — уникальными (без повторяющихся био и имён подряд).
 export function localPersonas(
   count: number,
-  opts: { role: PersonaRole; categorySlug: string; city?: string; seed?: number },
+  opts: { role: PersonaRole; categorySlug: string; city?: string; lang?: string; seed?: number },
 ): GeneratedPersona[] {
   const rnd = mulberry32(opts.seed ?? Date.now());
   const pick = <T>(arr: T[]) => arr[Math.floor(rnd() * arr.length)];
@@ -195,8 +195,9 @@ export function localPersonas(
     const firstName = pick(FIRST_NAMES);
     const lastName = pick(LAST_NAMES);
     const city = opts.city || pick(TEST_CITIES);
-    const bioLang = pick(LANG_POOL);
-    const langs = Array.from(new Set(["en", bioLang, pick(LANG_POOL)])).slice(0, 3);
+    // Язык текстов: заданный принудительно или случайный из набора интерфейса.
+    const bioLang = opts.lang && LANG_POOL.includes(opts.lang) ? opts.lang : pick(LANG_POOL);
+    const langs = Array.from(new Set([bioLang, "en", pick(LANG_POOL)])).slice(0, 3);
 
     if (opts.role === "provider") {
       const profession = pick(pack.professions);
@@ -234,6 +235,14 @@ export function localPersonas(
     }
   }
   return out;
+}
+
+// Несколько разных названий услуг для одного исполнителя (когда на профиль
+// нужно больше одной плашки). Берём из набора категории без повторов.
+export function pickListingTitles(categorySlug: string, n: number, seed?: number): string[] {
+  const pack = CATEGORY_PACKS[categorySlug] ?? CATEGORY_PACKS.other;
+  const rnd = mulberry32((seed ?? Date.now()) ^ 0x9e3779b9);
+  return shuffle(pack.titles, rnd).slice(0, Math.max(1, Math.min(n, pack.titles.length)));
 }
 
 function shuffle<T>(arr: T[], rnd: () => number): T[] {

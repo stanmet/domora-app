@@ -61,6 +61,10 @@ export async function notify(
   payload: Prisma.InputJsonValue = {},
 ): Promise<void> {
   try {
+    // Тестовые (синтетические) аккаунты не получают ни уведомлений, ни писем:
+    // им незачем, а email-адреса у них нероутируемые (@testuser.domora.local).
+    const target = await prisma.user.findUnique({ where: { id: userId }, select: { isTest: true } });
+    if (target?.isTest) return;
     await prisma.notification.create({ data: { userId, type, payload } });
   } catch (e) {
     console.error("notify failed", userId, type, e);

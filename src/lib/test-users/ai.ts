@@ -15,6 +15,17 @@ const AI_CHUNK = 20;
 const AI_ENRICH_CAP = 80;
 
 export type GenerationMethod = "ai" | "local";
+// Уровень качества текста: встроенный генератор, AI (стандарт), AI (высокое).
+export type TextQuality = "basic" | "ai" | "ai_high";
+
+const LANG_NAMES: Record<string, string> = {
+  en: "английском",
+  ru: "русском",
+  uk: "украинском",
+  pl: "польском",
+  es: "испанском",
+  pt: "португальском",
+};
 
 export interface GenerationResult {
   personas: GeneratedPersona[];
@@ -27,16 +38,32 @@ function aiEnabled(): boolean {
   return provider === "anthropic" && !!process.env.ANTHROPIC_API_KEY;
 }
 
+export interface GenerateOptions {
+  role: PersonaRole;
+  categorySlug: string;
+  city?: string;
+  categoryLabel: string;
+  lang?: string; // принудительный язык текстов ("" = разные)
+  quality?: TextQuality; // basic = только встроенный генератор
+}
+
 // Основная точка входа: строит скелеты локально и по возможности заменяет тексты
 // на сгенерированные Claude.
-export async function generatePersonas(
-  count: number,
-  opts: { role: PersonaRole; categorySlug: string; city?: string; categoryLabel: string },
-): Promise<GenerationResult> {
-  const personas = localPersonas(count, { role: opts.role, categorySlug: opts.categorySlug, city: opts.city });
+export async function generatePersonas(count: number, opts: GenerateOptions): Promise<GenerationResult> {
+  const personas = localPersonas(count, {
+    role: opts.role,
+    categorySlug: opts.categorySlug,
+    city: opts.city,
+    lang: opts.lang,
+  });
 
-  if (!aiEnabled()) {
-    return { personas, method: "local", note: "AI-ключ не задан - использован встроенный генератор." };
+  const quality: TextQuality = opts.quality ?? "ai";
+  if (quality === "basic" || !aiEnabled()) {
+    const note =
+      quality === "basic"
+        ? "Выбран встроенный генератор."
+        : "AI-ключ не задан - использован встроенный генератор.";
+    return { personas, method: "local", note };
   }
 
   try {
@@ -45,7 +72,7 @@ export async function generatePersonas(
     let enriched = 0;
     for (let start = 0; start < limit; start += AI_CHUNK) {
       const slice = personas.slice(start, Math.min(start + AI_CHUNK, limit));
-      const texts = await enrichChunk(client, slice, opts);
+      const texts = await enrichChunk(client, slice, opts, quality);
       slice.forEach((p, i) => applyText(p, texts[i], opts.role));
       enriched += slice.length;
     }
@@ -77,10 +104,12 @@ interface PersonaText {
 async function enrichChunk(
   client: Anthropic,
   slice: GeneratedPersona[],
-  opts: { role: PersonaRole; categorySlug: string; categoryLabel: string },
+  opts: GenerateOptions,
+  quality: TextQuality,
 ): Promise<PersonaText[]> {
   const pack = CATEGORY_PACKS[opts.categorySlug] ?? CATEGORY_PACKS.other;
   const roleWord = opts.role === "provider" ? "исполнителя услуг" : "клиента, размещающего задачу";
+  const langName = opts.lang && LANG_NAMES[opts.lang] ? LANG_NAMES[opts.lang] : "русском";
   const schema =
     opts.role === "provider"
       ? {
@@ -132,7 +161,7 @@ async function enrichChunk(
     `Сгенерируй ${slice.length} РАЗНЫХ синтетических профилей ${roleWord} для маркетплейса бытовых услуг в Ирландии, ` +
     `категория "${opts.categoryLabel}". Данные вымышленные, для демо и тестов. ` +
     `Требования: имена и фамилии разной культуры (ирландские, польские, украинские, испанские и др.), ` +
-    `тексты на русском языке, разные по стилю и без повторов, реалистичные и короткие. ` +
+    `тексты на ${langName} языке, разные по стилю и без повторов, реалистичные и короткие. ` +
     (opts.role === "provider"
       ? `Для каждого: profession (короткая профессия, например ${pack.professions.slice(0, 3).join(", ")}), ` +
         `bio (1-2 предложения), skills (3-5 навыков), listingTitle (название услуги-плашки). ` +
@@ -144,7 +173,7 @@ async function enrichChunk(
     model: "claude-opus-4-8",
     max_tokens: 4000,
     thinking: { type: "adaptive" },
-    output_config: { format: { type: "json_schema", schema } },
+    output_config: { format: { type: "json_schema", schema }, effort: quality === "ai_high" ? "high" : "low" },
     messages: [{ role: "user", content: prompt }],
   });
 

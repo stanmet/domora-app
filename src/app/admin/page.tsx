@@ -134,6 +134,7 @@ async function Moderation({
 
 async function UsersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
   const users = await prisma.user.findMany({
+    where: { isTest: false }, // тестовые аккаунты - в отдельной вкладке
     orderBy: { createdAt: "desc" },
     take: 200,
     select: { id: true, name: true, email: true, roles: true, status: true },
@@ -187,6 +188,7 @@ async function UsersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
 
 async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
   const providers = await prisma.providerProfile.findMany({
+    where: { user: { isTest: false } }, // тестовые аккаунты - в отдельной вкладке
     orderBy: { displayName: "asc" },
     take: 200,
     select: {

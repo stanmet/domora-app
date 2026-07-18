@@ -9,9 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import { CATEGORY_ORDER } from "@/components/categories";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
-import { generatePersonas, type GenerationMethod } from "./ai";
+import { generatePersonas, type GenerationMethod, type TextQuality } from "./ai";
 import { syntheticAvatar } from "./avatar";
-import { TEST_CITIES, type PersonaRole } from "./personas";
+import { pickListingTitles, TEST_CITIES, type PersonaRole } from "./personas";
 
 export const TEST_EMAIL_DOMAIN = "testuser.domora.local";
 export const MAX_TEST_USERS_PER_BATCH = 1000;
@@ -24,6 +24,9 @@ export interface CreateOptions {
   role: CreateRole;
   categorySlug: string; // "" = распределить по всем категориям
   city: string; // "" = случайные города
+  lang: string; // "" = разные языки
+  quality: TextQuality; // basic | ai | ai_high
+  listingsPerProvider: number; // 1..5 услуг на профиль исполнителя
   actorId: string;
 }
 
@@ -80,6 +83,8 @@ export async function createTestUsers(opts: CreateOptions): Promise<CreateResult
       categorySlug: slug,
       city: opts.city || undefined,
       categoryLabel: label,
+      lang: opts.lang || undefined,
+      quality: opts.quality,
     });
     if (gen.method === "ai") method = "ai";
     if (gen.note) notes.add(gen.note);
@@ -92,7 +97,7 @@ export async function createTestUsers(opts: CreateOptions): Promise<CreateResult
         chunk.map((p) => {
           if (role === "provider") {
             providers++;
-            return insertProvider(p, cat);
+            return insertProvider(p, cat, opts.listingsPerProvider);
           }
           clients++;
           return insertClient(p, cat.id);
@@ -107,7 +112,9 @@ export async function createTestUsers(opts: CreateOptions): Promise<CreateResult
       action: "create",
       actorId: opts.actorId,
       count: created,
-      detail: `role=${opts.role}, category=${opts.categorySlug || "all"}, city=${opts.city || "any"}, method=${method}`,
+      detail:
+        `role=${opts.role}, category=${opts.categorySlug || "all"}, city=${opts.city || "any"}, ` +
+        `lang=${opts.lang || "mixed"}, quality=${opts.quality}, listings/pro=${opts.listingsPerProvider}, method=${method}`,
     },
   });
 
@@ -127,10 +134,30 @@ function testEmail(): string {
 
 async function insertProvider(
   p: { firstName: string; lastName: string; city: string; profession?: string; bio?: string; bioLang: string; listingTitle?: string; priceCents?: number },
-  cat: { id: string; unitDefault: PriceUnit; nameRu: string; nameEn: string },
+  cat: { id: string; slug: string; unitDefault: PriceUnit; nameRu: string; nameEn: string },
+  listingsPerProvider: number,
 ): Promise<void> {
   const displayName = `${p.firstName} ${p.lastName}`;
   const avatar = syntheticAvatar(p.firstName, p.lastName);
+  const n = Math.max(1, Math.min(5, listingsPerProvider || 1));
+
+  // Первая услуга - из персоны (её текст мог сгенерировать AI); остальные - из
+  // набора категории, без повторов, с небольшой вариацией цены.
+  const base = p.priceCents ?? 0;
+  const titles = [p.listingTitle, ...pickListingTitles(cat.slug, n + 2).filter((t) => t !== p.listingTitle)]
+    .filter((t): t is string => !!t)
+    .slice(0, n);
+  const listings = titles.map((title, i) => ({
+    categoryId: cat.id,
+    professionLabel: p.profession ?? cat.nameRu,
+    title,
+    titleLang: p.bioLang,
+    priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
+    unit: cat.unitDefault,
+    photos: [avatar],
+    status: ListingStatus.ACTIVE,
+  }));
+
   await prisma.user.create({
     data: {
       email: testEmail(),
@@ -148,18 +175,7 @@ async function insertProvider(
           city: p.city,
           status: ProviderStatus.ACTIVE,
           portfolioPhotos: [avatar],
-          listings: {
-            create: {
-              categoryId: cat.id,
-              professionLabel: p.profession ?? cat.nameRu,
-              title: p.listingTitle ?? cat.nameRu,
-              titleLang: p.bioLang,
-              priceCents: p.priceCents ?? 0,
-              unit: cat.unitDefault,
-              photos: [avatar],
-              status: ListingStatus.ACTIVE,
-            },
-          },
+          listings: { create: listings },
         },
       },
     },

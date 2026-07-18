@@ -20,7 +20,7 @@ export default async function FavoritesPage() {
 
   const favs = await prisma.favorite.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } });
   const providers = await prisma.providerProfile.findMany({
-    where: { userId: { in: favs.map((f) => f.providerId) }, status: "ACTIVE" },
+    where: { userId: { in: favs.map((f) => f.providerId) }, status: "ACTIVE", user: { isTest: false } },
     include: {
       listings: { where: { status: "ACTIVE" }, orderBy: { priceCents: "asc" }, take: 1 },
     },

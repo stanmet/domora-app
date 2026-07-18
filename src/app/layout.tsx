@@ -81,8 +81,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     const cats = sortByCategoryOrder(await prisma.category.findMany());
     categoryOptions = cats.map((c) => ({ slug: c.slug, label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn) }));
     const [provCities, taskCities] = await Promise.all([
-      prisma.providerProfile.findMany({ where: { status: "ACTIVE" }, select: { city: true }, distinct: ["city"] }),
-      prisma.task.findMany({ select: { city: true }, distinct: ["city"], take: 100 }),
+      prisma.providerProfile.findMany({ where: { status: "ACTIVE", user: { isTest: false } }, select: { city: true }, distinct: ["city"] }),
+      prisma.task.findMany({ where: { client: { isTest: false } }, select: { city: true }, distinct: ["city"], take: 100 }),
     ]);
     cities = Array.from(
       new Set([...provCities.map((p) => p.city), ...taskCities.map((x) => x.city)].filter(Boolean)),
