@@ -10,6 +10,7 @@ import { getExtra } from "@/i18n/extra";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
+import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
 import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +72,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     provider: {
       status: "ACTIVE",
       user: { isTest: false }, // без синтетических исполнителей в поиске
-      ...(city ? { city } : {}),
+      // Город здесь НЕ фильтруем: подбор по радиусу выезда исполнителя делаем
+      // ниже (reachable), чтобы исполнитель находился и в соседних областях.
       ...(minRatingNum ? { ratingCached: { gte: minRatingNum } } : {}),
     },
     ...(cat ? { category: { slug: cat } } : {}),
@@ -89,23 +91,25 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       : {}),
   };
 
-  const [categories, cityRows, listings] = await Promise.all([
+  const [categories, listingsRaw] = await Promise.all([
     prisma.category.findMany(),
-    prisma.providerProfile.findMany({
-      where: { status: "ACTIVE", user: { isTest: false } },
-      select: { city: true },
-      distinct: ["city"],
-      orderBy: { city: "asc" },
-    }),
     prisma.listing.findMany({
       where,
       include: {
-        provider: { select: { userId: true, displayName: true, city: true, ratingCached: true, jobsCount: true } },
+        provider: {
+          select: { userId: true, displayName: true, city: true, travelRadiusKm: true, ratingCached: true, jobsCount: true },
+        },
         category: { select: { slug: true } },
       },
       orderBy: orderByFor(activeSort),
     }),
   ]);
+
+  // Подбор по радиусу выезда: если выбран город, оставляем исполнителей, которые
+  // достают до него из своего города (или работают по всей стране большим радиусом).
+  const listings = city
+    ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city))
+    : listingsRaw;
 
   const tabCategories = sortByCategoryOrder(categories).map((c) => ({
     slug: c.slug,
@@ -121,7 +125,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         q={q}
         cat={cat}
         city={city}
-        cities={cityRows.map((r) => r.city)}
+        cities={IRELAND_TOWN_NAMES}
         categories={tabCategories}
         sort={activeSort}
         maxPrice={maxPrice}

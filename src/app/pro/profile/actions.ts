@@ -24,7 +24,7 @@ export async function updateProviderProfile(_prev: ProfileState, formData: FormD
   const city = String(formData.get("city") ?? "").trim();
   const customProfession = String(formData.get("customProfession") ?? "").trim() || null;
   const bio = String(formData.get("bio") ?? "").trim() || null;
-  const travelRadiusKm = Math.max(1, Math.min(100, Math.floor(Number(formData.get("travelRadiusKm")) || 20)));
+  const travelRadiusKm = Math.max(1, Math.min(500, Math.floor(Number(formData.get("travelRadiusKm")) || 20)));
 
   if (!displayName || !city) return { ok: false, msg: t.ppNameCityReq };
 

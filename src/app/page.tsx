@@ -11,6 +11,7 @@ import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/cate
 import { budgetText, dateOnly, eur } from "@/lib/format";
 import { openTaskVisibilityWhere } from "@/lib/tasks";
 import { getCity } from "@/lib/city";
+import { reachable } from "@/lib/ireland";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 
@@ -22,7 +23,7 @@ export default async function Home() {
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
   const city = await getCity();
-  const [categories, openTasks, listings, prosCount, tasksCount, reviewsCount] = await Promise.all([
+  const [categories, openTasks, listingsRaw, prosCount, tasksCount, reviewsCount] = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
       where: { ...openTaskVisibilityWhere(), ...(city ? { city } : {}) },
@@ -33,12 +34,13 @@ export default async function Home() {
         _count: { select: { offers: true } },
       },
     }),
+    // Город не фильтруем в SQL: ниже отбираем исполнителей по радиусу выезда.
     prisma.listing.findMany({
-      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: { isTest: false }, ...(city ? { city } : {}) } },
+      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: { isTest: false } } },
       orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
-      take: 8,
+      take: 40,
       include: {
-        provider: { select: { userId: true, displayName: true, city: true, ratingCached: true, jobsCount: true } },
+        provider: { select: { userId: true, displayName: true, city: true, travelRadiusKm: true, ratingCached: true, jobsCount: true } },
         category: { select: { slug: true } },
       },
     }),
@@ -47,6 +49,9 @@ export default async function Home() {
     prisma.review.count({ where: { publishedAt: { not: null }, author: { isTest: false }, target: { isTest: false } } }),
   ]);
   const cats = sortByCategoryOrder(categories);
+
+  // Исполнители рядом: подбор по радиусу выезда из их города до выбранного.
+  const listings = (city ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city)) : listingsRaw).slice(0, 8);
 
   // Автоперевод пользовательских текстов (заголовки задач и услуг) на язык интерфейса.
   const tr = await translateBatch([...openTasks.map((x) => x.title), ...listings.map((l) => l.title)], locale);
