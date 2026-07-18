@@ -11,10 +11,13 @@ import {
   MIN_TEST_USERS_PER_BATCH,
   type CreateRole,
 } from "@/lib/test-users";
+import type { TextQuality } from "@/lib/test-users/ai";
 
 export type CreateState = { ok: boolean; message: string } | null;
 
 const ROLES: CreateRole[] = ["provider", "client", "mixed"];
+const QUALITIES: TextQuality[] = ["basic", "ai", "ai_high"];
+const LANGS = ["", "en", "ru", "uk", "pl", "es", "pt"];
 
 export async function createTestUsersAction(_prev: CreateState, formData: FormData): Promise<CreateState> {
   const admin = await requireAdmin();
@@ -24,13 +27,18 @@ export async function createTestUsersAction(_prev: CreateState, formData: FormDa
   const role: CreateRole = ROLES.includes(roleRaw as CreateRole) ? (roleRaw as CreateRole) : "mixed";
   const categorySlug = String(formData.get("category") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
+  const langRaw = String(formData.get("lang") ?? "").trim();
+  const lang = LANGS.includes(langRaw) ? langRaw : "";
+  const qualityRaw = String(formData.get("quality") ?? "ai");
+  const quality: TextQuality = QUALITIES.includes(qualityRaw as TextQuality) ? (qualityRaw as TextQuality) : "ai";
+  const listingsPerProvider = Math.max(1, Math.min(5, Math.floor(Number(formData.get("listings")) || 1)));
 
   if (!Number.isFinite(count) || count < MIN_TEST_USERS_PER_BATCH || count > MAX_TEST_USERS_PER_BATCH) {
     return { ok: false, message: `Количество должно быть от ${MIN_TEST_USERS_PER_BATCH} до ${MAX_TEST_USERS_PER_BATCH}.` };
   }
 
   try {
-    const res = await createTestUsers({ count, role, categorySlug, city, actorId: admin.id });
+    const res = await createTestUsers({ count, role, categorySlug, city, lang, quality, listingsPerProvider, actorId: admin.id });
     revalidatePath("/admin");
     const parts = [
       `Создано ${res.created} (исполнителей: ${res.providers}, клиентов: ${res.clients}).`,

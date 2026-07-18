@@ -37,8 +37,13 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
     return { error: t.errOfferForm };
   }
 
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.status !== TaskStatus.OPEN || task.expiresAt.getTime() < Date.now()) {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { client: { select: { isTest: true } } },
+  });
+  // Тестовые задачи скрыты от реальных исполнителей: откликнуться нельзя даже
+  // по прямой ссылке.
+  if (!task || task.client.isTest || task.status !== TaskStatus.OPEN || task.expiresAt.getTime() < Date.now()) {
     return { error: t.offerClosed };
   }
   if (task.clientId === user.id) return { error: t.offerNoListing };

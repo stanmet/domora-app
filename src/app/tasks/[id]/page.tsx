@@ -36,13 +36,15 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     include: {
       category: { select: { id: true, slug: true, nameEn: true, nameRu: true } },
       booking: { select: { id: true, status: true } },
+      client: { select: { isTest: true } },
       offers: {
         orderBy: { createdAt: "asc" },
         include: { provider: { select: { userId: true, displayName: true, ratingCached: true, jobsCount: true } } },
       },
     },
   });
-  if (!task) notFound();
+  // Тестовые задачи не видны реальным пользователям даже по прямой ссылке.
+  if (!task || task.client.isTest) notFound();
 
   const authUser = await getAuthUser();
   const user = authUser?.email ? await ensureDbUser(authUser, locale) : null;

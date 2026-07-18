@@ -60,6 +60,30 @@ export default function CreateForm({ categories, cities }: { categories: CatOpti
             ))}
           </select>
         </label>
+        <label>
+          <span>Услуг на исполнителя</span>
+          <input type="number" name="listings" min={1} max={5} defaultValue={1} />
+        </label>
+        <label>
+          <span>Язык текстов</span>
+          <select name="lang" defaultValue="">
+            <option value="">Разные</option>
+            <option value="en">English</option>
+            <option value="ru">Русский</option>
+            <option value="uk">Українська</option>
+            <option value="pl">Polski</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+          </select>
+        </label>
+        <label>
+          <span>Качество текста</span>
+          <select name="quality" defaultValue="ai">
+            <option value="ai">AI — стандарт (Claude)</option>
+            <option value="ai_high">AI — высокое качество</option>
+            <option value="basic">Встроенный (быстро, без AI)</option>
+          </select>
+        </label>
       </div>
       <div className="tu-actions">
         <SubmitButton />
