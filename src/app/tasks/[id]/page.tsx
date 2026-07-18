@@ -18,6 +18,7 @@ import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
 import { providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
+import { isDemoMode } from "@/lib/test-users/bots";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import OfferForm from "../OfferForm";
@@ -43,8 +44,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       },
     },
   });
-  // Тестовые задачи не видны реальным пользователям даже по прямой ссылке.
-  if (!task || task.client.isTest) notFound();
+  // Тестовые задачи не видны реальным пользователям даже по прямой ссылке
+  // (кроме включённого демо-режима).
+  const demo = await isDemoMode();
+  if (!task || (task.client.isTest && !demo)) notFound();
 
   const authUser = await getAuthUser();
   const user = authUser?.email ? await ensureDbUser(authUser, locale) : null;
