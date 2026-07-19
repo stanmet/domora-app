@@ -140,6 +140,7 @@ const en = {
   // Чат: фото и статус прочтения
   chatAttach: "Attach a photo",
   chatRead: "Read",
+  taskPhotos: "Photos (optional)",
 };
 
 export type ExtraDict = typeof en;
@@ -271,6 +272,7 @@ const ru: ExtraDict = {
 
   chatAttach: "Прикрепить фото",
   chatRead: "Прочитано",
+  taskPhotos: "Фото (необязательно)",
 };
 
 const uk: ExtraDict = {
@@ -400,6 +402,7 @@ const uk: ExtraDict = {
 
   chatAttach: "Прикріпити фото",
   chatRead: "Прочитано",
+  taskPhotos: "Фото (необовʼязково)",
 };
 
 const pl: ExtraDict = {
@@ -529,6 +532,7 @@ const pl: ExtraDict = {
 
   chatAttach: "Dołącz zdjęcie",
   chatRead: "Przeczytano",
+  taskPhotos: "Zdjęcia (opcjonalnie)",
 };
 
 const es: ExtraDict = {
@@ -658,6 +662,7 @@ const es: ExtraDict = {
 
   chatAttach: "Adjuntar una foto",
   chatRead: "Leído",
+  taskPhotos: "Fotos (opcional)",
 };
 
 const pt: ExtraDict = {
@@ -787,6 +792,7 @@ const pt: ExtraDict = {
 
   chatAttach: "Anexar uma foto",
   chatRead: "Lido",
+  taskPhotos: "Fotos (opcional)",
 };
 
 const extra: Record<Locale, ExtraDict> = { en, ru, uk, pl, es, pt };

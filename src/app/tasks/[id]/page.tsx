@@ -175,6 +175,25 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           />
         )}
 
+        {/* Фото к заявке */}
+        {task.photos.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            {task.photos.map((url) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt="" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10 }} />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* Автор может редактировать открытую задачу */}
+        {isOwner && isOpen && (
+          <Link href={`/tasks/${task.id}/edit`} className="btn btn-line btn-sm" style={{ marginTop: 12 }}>
+            {tx.reviewEdit}
+          </Link>
+        )}
+
         {/* Прозрачность: сколько увидели и сколько откликнулось */}
         <div className="taskstats">
           <div className="taskstat">

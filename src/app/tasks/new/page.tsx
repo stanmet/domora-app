@@ -8,8 +8,10 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { sortByCategoryOrder } from "@/components/categories";
 import NewTaskForm from "./NewTaskForm";
+import { createTask } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
 
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
 
   const categories = sortByCategoryOrder(await prisma.category.findMany());
@@ -41,7 +44,11 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
         t={t}
         categories={categoryOptions}
         defaultCity={city || user.city || ""}
-        prefill={{ cat, date, bf, bt, title: q }}
+        action={createTask}
+        initial={{ category: cat, date, budgetFrom: bf, budgetTo: bt, title: q }}
+        submitLabel={t.taskPublish}
+        pendingLabel={t.taskPublishing}
+        photosLabel={tx.taskPhotos}
       />
     </main>
   );
