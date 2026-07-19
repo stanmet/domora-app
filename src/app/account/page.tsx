@@ -11,7 +11,7 @@ import { getDict, unitLabel } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { eur } from "@/lib/format";
 import { cancelSubscription } from "@/app/subscriptions/actions";
-import { updateProfile, deleteAccount } from "./actions";
+import { updateProfile, deleteAccount, becomeProvider } from "./actions";
 import AccountForm from "./AccountForm";
 import ConfirmAction from "@/components/ConfirmAction";
 
@@ -104,9 +104,9 @@ export default async function AccountPage({
               {t.openPro} <ArrowRight size={15} />
             </Link>
           ) : (
-            <Link href="/signup?role=pro" className="btn btn-ghost">
-              {t.becomePro}
-            </Link>
+            <form action={becomeProvider}>
+              <button className="btn btn-ghost">{t.becomePro}</button>
+            </form>
           )}
           {isAdmin && (
             <Link href="/admin" className="btn btn-ink">

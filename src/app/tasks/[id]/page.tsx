@@ -25,7 +25,7 @@ import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import Avatar from "@/components/Avatar";
 import { Phone, MessageCircle, CheckCircle2, XCircle } from "lucide-react";
 import OfferForm from "../OfferForm";
-import { acceptOffer, cancelAcceptedTask, markTaskDone } from "../actions";
+import { acceptOffer, cancelAcceptedTask, markTaskDone, withdrawOffer } from "../actions";
 
 // Ссылка WhatsApp из телефона: оставляем только цифры (wa.me принимает номер
 // в международном формате без плюса и пробелов).
@@ -99,7 +99,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   let providerActiveCats: string[] = [];
   if (isProvider && user) providerActiveCats = await providerActiveCategoryIds(user.id);
   const canOfferCategory = providerActiveCats.includes(task.category.id);
-  const alreadyOffered = Boolean(user && task.offers.some((o) => o.provider.userId === user.id));
+  const myOffer = user ? task.offers.find((o) => o.provider.userId === user.id) ?? null : null;
+  const alreadyOffered = Boolean(myOffer);
   const isOpen = task.status === "OPEN" && task.expiresAt.getTime() > Date.now();
   const full = offerCount >= MAX_OFFERS_PER_TASK;
 
@@ -292,7 +293,14 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             {!isOpen ? (
               <div className="empty" style={{ textAlign: "left", padding: "8px 0" }}>{t.offerClosed}</div>
             ) : alreadyOffered ? (
-              <div className="offer-sent">{t.offerSent}</div>
+              <div>
+                <div className="offer-sent">{t.offerSent}</div>
+                {myOffer && isOpen && (
+                  <form action={withdrawOffer.bind(null, myOffer.id)} style={{ marginTop: 8 }}>
+                    <button className="btn btn-line btn-sm">{tx.reviewDelete}</button>
+                  </form>
+                )}
+              </div>
             ) : !canOfferCategory ? (
               <div className="empty" style={{ textAlign: "left", padding: "8px 0" }}>{t.offerNoListing}</div>
             ) : full ? (

@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { BookingStatus } from "@prisma/client";
+import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -65,6 +65,37 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
   revalidatePath("/account");
   redirect(phoneTaken ? "/account?err=phone" : "/account?saved=1");
+}
+
+// Стать исполнителем: добавляем роль PROVIDER текущему аккаунту и создаём
+// профиль-черновик, если его ещё нет. Один аккаунт может быть и клиентом, и
+// исполнителем; переключение между кабинетами - через меню.
+export async function becomeProvider(): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/account");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  if (!user.roles.includes(Role.PROVIDER)) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { roles: { set: [...user.roles, Role.PROVIDER] } },
+    });
+  }
+
+  const profile = await prisma.providerProfile.findUnique({ where: { userId: user.id }, select: { userId: true } });
+  if (!profile) {
+    await prisma.providerProfile.create({
+      data: {
+        userId: user.id,
+        displayName: user.name,
+        city: user.city ?? "",
+        status: "DRAFT",
+      },
+    });
+  }
+
+  revalidatePath("/account");
+  redirect("/pro");
 }
 
 // Удаление аккаунта. Блокируется при активных заказах. Иначе обезличиваем данные

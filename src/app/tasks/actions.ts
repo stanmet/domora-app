@@ -95,6 +95,27 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
   return { ok: true };
 }
 
+// Исполнитель отзывает свой отклик (пока задача открыта и отклик не принят).
+export async function withdrawOffer(offerId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/tasks");
+  const locale = await getLocale();
+  const user = await ensureDbUser(authUser, locale);
+
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: { task: { select: { id: true, status: true } } },
+  });
+  if (!offer || offer.providerId !== user.id || offer.status !== OfferStatus.PENDING || offer.task.status !== TaskStatus.OPEN) {
+    revalidatePath(`/tasks/${offer?.task.id ?? ""}`);
+    return;
+  }
+
+  await prisma.offer.delete({ where: { id: offerId } });
+  revalidatePath(`/tasks/${offer.task.id}`);
+  revalidatePath("/tasks");
+}
+
 // Клиент выбирает исполнителя (V1 без оплаты). Создаём заказ-«карточку работы»
 // сразу в статусе IN_PROGRESS (без Stripe, без комиссий), открываем чат,
 // раскрываем контакты обеим сторонам. Остальные отклики отклоняются.
