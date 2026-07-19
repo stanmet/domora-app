@@ -3,29 +3,31 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 
 export const dynamic = "force-dynamic";
 
 export default async function HowItWorksPage() {
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
 
   const clientSteps: [string, string][] = [
-    [t.s1, t.s1p],
-    [t.s2, t.s2p],
-    [t.s3, t.s3p],
-    [t.s4, t.s4p],
+    [tx.cs1, tx.cs1p],
+    [tx.cs2, tx.cs2p],
+    [tx.cs3, tx.cs3p],
+    [tx.cs4, tx.cs4p],
   ];
   const proSteps: [string, string][] = [
-    [t.hpS1, t.hpS1p],
-    [t.hpS2, t.hpS2p],
-    [t.hpS3, t.hpS3p],
+    [tx.ps1, tx.ps1p],
+    [tx.ps2, tx.ps2p],
+    [tx.ps3, tx.ps3p],
   ];
 
   return (
     <main className="wrap sec">
       <h1 className="page">{t.hiwTitle}</h1>
-      <p className="sub">{t.hiwSub}</p>
+      <p className="sub">{tx.hiwLead}</p>
 
       <h3 className="psec-h" style={{ marginTop: 18 }}>{t.hiwClients}</h3>
       <div className="steplist" style={{ marginBottom: 8 }}>
@@ -65,7 +67,7 @@ export default async function HowItWorksPage() {
       <div className="tip" style={{ marginTop: 28 }}>
         <div className="ti" />
         <p>
-          <b>{t.tipB}</b> {t.tipP}
+          <b>{tx.freeTipB}</b> {tx.freeTipP}
         </p>
       </div>
     </main>

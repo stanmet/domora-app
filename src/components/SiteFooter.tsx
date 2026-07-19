@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Clock, Mail, MapPin, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import type { Locale } from "@/i18n/config";
 import { sortByCategoryOrder } from "@/components/categories";
 
 export default async function SiteFooter({ t, locale }: { t: Dict; locale: Locale }) {
+  const tx = getExtra(locale);
   let categories: { slug: string; nameEn: string; nameRu: string }[] = [];
   try {
     categories = sortByCategoryOrder(await prisma.category.findMany({ select: { slug: true, nameEn: true, nameRu: true } }));
@@ -25,7 +27,7 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           </span>
           <p>{t.footerRights}</p>
           <Link href="/safety" className="foot-trust">
-            <ShieldCheck size={14} /> {t.footerTrust}
+            <ShieldCheck size={14} /> {tx.footerSafety}
           </Link>
         </div>
 
@@ -42,8 +44,7 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <h4>{t.footerPros}</h4>
           <Link href="/signup?role=pro">{t.becomePro}</Link>
           <Link href="/tasks">{t.taskBoard}</Link>
-          <Link href="/pro/documents">{t.navDocs}</Link>
-          <Link href="/taxes">{t.taxesTitle}</Link>
+          <Link href="/how-it-works">{t.navHowItWorks}</Link>
           <Link href="/terms">{t.navTerms}</Link>
         </div>
 
@@ -77,7 +78,7 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
         {process.env.NEXT_PUBLIC_COMPANY_LEGAL ? (
           <span>{process.env.NEXT_PUBLIC_COMPANY_LEGAL}</span>
         ) : (
-          <span>{t.footerPixels}</span>
+          <span>{tx.footerTagline}</span>
         )}
       </div>
     </footer>

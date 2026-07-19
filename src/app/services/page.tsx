@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { CATEGORY_ICONS, sortByCategoryOrder } from "@/components/categories";
 import { subcatName } from "@/lib/subcategories";
 
@@ -21,6 +22,7 @@ type Cat = {
 export default async function ServicesPage() {
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
 
   let categories: Cat[] = [];
   try {
@@ -37,7 +39,7 @@ export default async function ServicesPage() {
   return (
     <main className="wrap sec">
       <h1 className="page">{t.navServices}</h1>
-      <p className="sub">{t.hiwSub}</p>
+      <p className="sub">{tx.hiwLead}</p>
 
       <div className="tree">
         {cats.map((c) => {

@@ -1,21 +1,24 @@
-// Условия и ответственность площадки: Domora - маркетплейс-посредник, не сторона
-// сделки. Общий шаблон, не юридическая консультация (см. дисклеймер).
+// Условия и ответственность площадки: Domora - бесплатный посредник (доска
+// объявлений), не сторона сделки, не проводит платежи, ничего не проверяет и
+// не несёт ответственности. Общий шаблон, не юридическая консультация.
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 
 export const dynamic = "force-dynamic";
 
 export default async function TermsPage() {
   const locale = await getLocale();
   const t = getDict(locale);
-  const points = [t.termsB1, t.termsB2, t.termsB3, t.termsB4, t.termsB5];
+  const tx = getExtra(locale);
+  const points = [tx.tp1, tx.tp2, tx.tp3, tx.tp4, tx.tp5, tx.tp6, tx.tp7];
 
   return (
     <main className="wrap sec" style={{ maxWidth: 720 }}>
       <h1 className="page">{t.termsTitle}</h1>
-      <p className="sub">{t.termsSub}</p>
+      <p className="sub">{tx.termsLead}</p>
 
       <ul className="inclist" style={{ margin: "10px 0 20px", gap: 16 }}>
         {points.map((p, i) => (
@@ -28,23 +31,8 @@ export default async function TermsPage() {
         ))}
       </ul>
 
-      <h2 className="display" style={{ fontSize: 19, margin: "26px 0 12px" }}>{t.cancelPolicyTitle}</h2>
-      <ul className="inclist" style={{ margin: "0 0 20px", gap: 16 }}>
-        {[t.cpStandard, t.cpEvent, t.cpProvider, t.cpNoShow].map((p, i) => (
-          <li key={i} style={{ alignItems: "flex-start" }}>
-            <span className="inc-ic" style={{ background: "var(--sage)", color: "var(--green)", marginTop: 2 }}>
-              <Check size={14} strokeWidth={3} />
-            </span>
-            <span style={{ lineHeight: 1.5 }}>{p}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="err" style={{ background: "#f7f4ea", color: "var(--muted)", marginBottom: 14 }}>
-        {t.cpIntermediary}
-      </div>
       <div className="err" style={{ background: "#f7f4ea", color: "var(--muted)" }}>
-        {t.termsDisclaimer}
+        {tx.termsNote}
       </div>
 
       <div className="cta" style={{ marginTop: 20 }}>

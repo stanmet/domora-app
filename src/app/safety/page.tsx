@@ -1,27 +1,29 @@
 // Безопасность и гарантии (в духе Kabanchik): проверка, оплата, чат, отзывы
 // и программа защиты заказчика.
 import Link from "next/link";
-import { ArrowRight, CreditCard, MessageCircle, ShieldCheck, Star } from "lucide-react";
+import { ArrowRight, MessageCircle, ShieldCheck, Star, Users, Wallet } from "lucide-react";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 
 export const dynamic = "force-dynamic";
 
 export default async function SafetyPage() {
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
 
   const items: [typeof ShieldCheck, string, string][] = [
-    [ShieldCheck, t.t1, t.t1p],
-    [CreditCard, t.t2, t.t2p],
-    [MessageCircle, t.t3, t.t3p],
-    [Star, t.t4, t.t4p],
+    [Wallet, tx.tr1, tx.tr1p],
+    [Users, tx.tr2, tx.tr2p],
+    [MessageCircle, tx.tr3, tx.tr3p],
+    [Star, tx.tr4, tx.tr4p],
   ];
 
   return (
     <main className="wrap sec">
-      <h1 className="page">{t.safeTitle}</h1>
-      <p className="sub">{t.safeSub}</p>
+      <h1 className="page">{tx.footerSafety}</h1>
+      <p className="sub">{tx.safeLead}</p>
 
       <div className="trust" style={{ paddingBottom: 24 }}>
         {items.map(([Icon, h, p], i) => (
@@ -42,8 +44,8 @@ export default async function SafetyPage() {
           <ShieldCheck size={18} />
         </span>
         <div>
-          <b style={{ fontSize: 16 }}>{t.safeProtT}</b>
-          <span style={{ marginTop: 6, lineHeight: 1.55 }}>{t.safeProtP}</span>
+          <b style={{ fontSize: 16 }}>{tx.safeDiscT}</b>
+          <span style={{ marginTop: 6, lineHeight: 1.55 }}>{tx.safeDiscP}</span>
         </div>
       </div>
 

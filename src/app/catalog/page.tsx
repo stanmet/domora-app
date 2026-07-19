@@ -17,12 +17,14 @@ import CatalogFilters from "./CatalogFilters";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
-  const t = getDict(await getLocale());
+  const locale = await getLocale();
+  const t = getDict(locale);
+  const tx = getExtra(locale);
   return {
     title: t.catalogTitle,
-    description: t.heroP,
+    description: tx.homeHero,
     alternates: { canonical: "/catalog" },
-    openGraph: { title: `${t.catalogTitle} · Domora`, description: t.heroP },
+    openGraph: { title: `${t.catalogTitle} · Domora`, description: tx.homeHero },
   };
 }
 

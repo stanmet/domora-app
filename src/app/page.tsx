@@ -2,10 +2,11 @@
 // (видна всем, включая гостей), блок "Исполнители рядом" и блок доверия.
 // Разметка и стили из prototypes/Marketplace.jsx + дизайн-система globals.css.
 import Link from "next/link";
-import { ArrowRight, Calendar, CreditCard, Lightbulb, MapPin, MessageCircle, ShieldCheck, Star, Users, Wallet } from "lucide-react";
+import { ArrowRight, Calendar, Lightbulb, MapPin, MessageCircle, Star, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
@@ -21,6 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
   const city = await getCity();
@@ -63,16 +65,16 @@ export default async function Home() {
   const trOf = (s: string) => tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false };
 
   const steps: [string, string][] = [
-    [t.s1, t.s1p],
-    [t.s2, t.s2p],
-    [t.s3, t.s3p],
-    [t.s4, t.s4p],
+    [tx.cs1, tx.cs1p],
+    [tx.cs2, tx.cs2p],
+    [tx.cs3, tx.cs3p],
+    [tx.cs4, tx.cs4p],
   ];
-  const trust: [typeof ShieldCheck, string, string][] = [
-    [ShieldCheck, t.t1, t.t1p],
-    [CreditCard, t.t2, t.t2p],
-    [MessageCircle, t.t3, t.t3p],
-    [Star, t.t4, t.t4p],
+  const trust: [typeof Wallet, string, string][] = [
+    [Wallet, tx.tr1, tx.tr1p],
+    [Users, tx.tr2, tx.tr2p],
+    [MessageCircle, tx.tr3, tx.tr3p],
+    [Star, tx.tr4, tx.tr4p],
   ];
 
   return (
@@ -259,7 +261,7 @@ export default async function Home() {
             <Lightbulb size={20} />
           </div>
           <p>
-            <b>{t.tipB}</b> {t.tipP}
+            <b>{tx.freeTipB}</b> {tx.freeTipP}
           </p>
         </div>
 
