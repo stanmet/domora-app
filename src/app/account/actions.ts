@@ -46,14 +46,17 @@ export async function updateProfile(formData: FormData): Promise<void> {
     if (url) avatarUrl = url;
   }
 
+  let phoneTaken = false;
   try {
     await prisma.user.update({
       where: { id: user.id },
       data: { name, phone, locale, ...(avatarUrl ? { avatarUrl } : {}) },
     });
   } catch (e) {
-    // Телефон уникален: если занят другим аккаунтом, сохраняем без него.
+    // Телефон уникален (один номер - один аккаунт): если занят, сохраняем
+    // остальные поля без телефона и сообщаем пользователю.
     console.error("updateProfile failed", e);
+    phoneTaken = true;
     await prisma.user.update({ where: { id: user.id }, data: { name, locale, ...(avatarUrl ? { avatarUrl } : {}) } });
   }
 
@@ -61,7 +64,7 @@ export async function updateProfile(formData: FormData): Promise<void> {
   (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
 
   revalidatePath("/account");
-  redirect("/account?saved=1");
+  redirect(phoneTaken ? "/account?err=phone" : "/account?saved=1");
 }
 
 // Удаление аккаунта. Блокируется при активных заказах. Иначе обезличиваем данные

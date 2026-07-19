@@ -142,6 +142,7 @@ const en = {
   chatRead: "Read",
   taskPhotos: "Photos (optional)",
   avatarL: "Profile photo",
+  accPhoneTaken: "This phone number is already used by another account. Your other changes were saved.",
 };
 
 export type ExtraDict = typeof en;
@@ -275,6 +276,7 @@ const ru: ExtraDict = {
   chatRead: "Прочитано",
   taskPhotos: "Фото (необязательно)",
   avatarL: "Фото профиля",
+  accPhoneTaken: "Этот номер телефона уже привязан к другому аккаунту. Остальные изменения сохранены.",
 };
 
 const uk: ExtraDict = {
@@ -406,6 +408,7 @@ const uk: ExtraDict = {
   chatRead: "Прочитано",
   taskPhotos: "Фото (необовʼязково)",
   avatarL: "Фото профілю",
+  accPhoneTaken: "Цей номер телефону вже привʼязаний до іншого акаунта. Інші зміни збережено.",
 };
 
 const pl: ExtraDict = {
@@ -537,6 +540,7 @@ const pl: ExtraDict = {
   chatRead: "Przeczytano",
   taskPhotos: "Zdjęcia (opcjonalnie)",
   avatarL: "Zdjęcie profilowe",
+  accPhoneTaken: "Ten numer telefonu jest już przypisany do innego konta. Pozostałe zmiany zapisano.",
 };
 
 const es: ExtraDict = {
@@ -668,6 +672,7 @@ const es: ExtraDict = {
   chatRead: "Leído",
   taskPhotos: "Fotos (opcional)",
   avatarL: "Foto de perfil",
+  accPhoneTaken: "Este número de teléfono ya está asociado a otra cuenta. El resto de cambios se guardaron.",
 };
 
 const pt: ExtraDict = {
@@ -799,6 +804,7 @@ const pt: ExtraDict = {
   chatRead: "Lido",
   taskPhotos: "Fotos (opcional)",
   avatarL: "Foto de perfil",
+  accPhoneTaken: "Este número de telefone já está associado a outra conta. As restantes alterações foram guardadas.",
 };
 
 const extra: Record<Locale, ExtraDict> = { en, ru, uk, pl, es, pt };
