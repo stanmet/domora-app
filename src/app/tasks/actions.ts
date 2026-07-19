@@ -14,7 +14,6 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
-import { calcBooking } from "@/lib/stripe";
 import { genBookingRef } from "@/lib/booking-ref";
 import { filterContacts } from "@/lib/contact-filter";
 import { MAX_OFFERS_PER_TASK } from "@/lib/tasks";
@@ -96,7 +95,9 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
   return { ok: true };
 }
 
-// Клиент выбирает отклик. Создаём бронь по цене из отклика и ведём на оплату.
+// Клиент выбирает исполнителя (V1 без оплаты). Создаём заказ-«карточку работы»
+// сразу в статусе IN_PROGRESS (без Stripe, без комиссий), открываем чат,
+// раскрываем контакты обеим сторонам. Остальные отклики отклоняются.
 export async function acceptOffer(offerId: string): Promise<void> {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/tasks/mine");
@@ -105,7 +106,7 @@ export async function acceptOffer(offerId: string): Promise<void> {
 
   const offer = await prisma.offer.findUnique({
     where: { id: offerId },
-    include: { task: { include: { category: true } } },
+    include: { task: true },
   });
   if (!offer || offer.status !== OfferStatus.PENDING) {
     revalidatePath("/tasks/mine");
@@ -124,7 +125,7 @@ export async function acceptOffer(offerId: string): Promise<void> {
     return;
   }
 
-  // Бронь ссылается на активную услугу исполнителя в категории задачи
+  // Заказ ссылается на активную услугу исполнителя в категории задачи
   // (обязательное поле listingId). Она гарантированно есть: без неё отклик
   // не создаётся. Цена берётся из отклика, не из плашки.
   const listing = await prisma.listing.findFirst({
@@ -136,39 +137,34 @@ export async function acceptOffer(offerId: string): Promise<void> {
     return;
   }
 
-  const money = calcBooking(
-    offer.priceCents,
-    1,
-    Number(task.category.clientFeePct),
-    Number(task.category.providerFeePct),
-  );
   const dateStart = task.dateWanted ?? new Date(Date.now() + 24 * 3600 * 1000);
 
-  const booking = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const created = await tx.booking.create({
       data: {
         clientId: user.id,
         providerId: offer.providerId,
         listingId: listing.id,
         ref: genBookingRef(),
-        status: BookingStatus.DRAFT,
+        // Без оплаты: заказ сразу "В работе". Комиссии нулевые.
+        status: BookingStatus.IN_PROGRESS,
         dateStart,
         qty: 1,
         unit: PriceUnit.PER_EVENT,
         priceCentsSnapshot: offer.priceCents,
-        subtotalCents: money.subtotal,
-        clientFeeCents: money.clientFee,
-        providerFeeCents: money.providerFee,
-        totalCents: money.total,
+        subtotalCents: offer.priceCents,
+        clientFeeCents: 0,
+        providerFeeCents: 0,
+        totalCents: offer.priceCents,
         addressEncrypted: task.addressEncrypted,
         events: {
           create: {
             actorId: user.id,
             type: "status_change",
-            payload: { to: BookingStatus.DRAFT, reason: "task_offer_accepted", taskId: task.id, offerId },
+            payload: { to: BookingStatus.IN_PROGRESS, reason: "task_offer_accepted", taskId: task.id, offerId },
           },
         },
-        // Сообщение исполнителя из отклика переносим в чат брони.
+        // Сообщение исполнителя из отклика переносим в чат заказа.
         thread: {
           create: { messages: { create: { authorId: offer.providerId, textOriginal: offer.message, langOriginal: locale } } },
         },
@@ -184,12 +180,80 @@ export async function acceptOffer(offerId: string): Promise<void> {
       where: { taskId: task.id, id: { not: offer.id } },
       data: { status: OfferStatus.REJECTED },
     });
-
-    return created;
   });
 
-  // Уведомляем исполнителя, что его выбрали (после оплаты станет запросом брони).
-  await notify(offer.providerId, "offer_accepted", { taskId: task.id, bookingId: booking.id });
+  // Уведомляем исполнителя, что его выбрали: теперь открыты контакты и чат.
+  await notify(offer.providerId, "offer_accepted", { taskId: task.id });
 
-  redirect(`/bookings/${booking.id}/pay`);
+  revalidatePath("/tasks/mine");
+  redirect(`/tasks/${task.id}`);
+}
+
+// Клиент отмечает заказ выполненным. Заказ переходит в COMPLETED (без окна
+// спора - выплатной cron его не трогает), задача закрывается. После этого обе
+// стороны могут оставить отзыв.
+export async function markTaskDone(taskId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/tasks/mine");
+  const locale = await getLocale();
+  const user = await ensureDbUser(authUser, locale);
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { booking: { select: { id: true, status: true, providerId: true } } },
+  });
+  if (!task || task.clientId !== user.id || !task.booking) {
+    revalidatePath(`/tasks/${taskId}`);
+    return;
+  }
+  if (task.booking.status !== BookingStatus.IN_PROGRESS) {
+    revalidatePath(`/tasks/${taskId}`);
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.booking.update({ where: { id: task.booking.id }, data: { status: BookingStatus.COMPLETED } }),
+    prisma.bookingEvent.create({
+      data: { bookingId: task.booking.id, actorId: user.id, type: "status_change", payload: { to: BookingStatus.COMPLETED, reason: "client_marked_done" } },
+    }),
+    prisma.task.update({ where: { id: taskId }, data: { status: TaskStatus.CLOSED } }),
+  ]);
+
+  await notify(task.booking.providerId, "completed", { taskId });
+
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+// Отмена согласованного заказа (клиентом). Заказ переходит в CANCELLED_BY_CLIENT,
+// задача закрывается.
+export async function cancelAcceptedTask(taskId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/tasks/mine");
+  const locale = await getLocale();
+  const user = await ensureDbUser(authUser, locale);
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { booking: { select: { id: true, status: true, providerId: true } } },
+  });
+  if (!task || task.clientId !== user.id || !task.booking) {
+    revalidatePath(`/tasks/${taskId}`);
+    return;
+  }
+  if (task.booking.status !== BookingStatus.IN_PROGRESS) {
+    revalidatePath(`/tasks/${taskId}`);
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.booking.update({ where: { id: task.booking.id }, data: { status: BookingStatus.CANCELLED_BY_CLIENT } }),
+    prisma.bookingEvent.create({
+      data: { bookingId: task.booking.id, actorId: user.id, type: "status_change", payload: { to: BookingStatus.CANCELLED_BY_CLIENT, reason: "client_cancelled" } },
+    }),
+    prisma.task.update({ where: { id: taskId }, data: { status: TaskStatus.CLOSED } }),
+  ]);
+
+  await notify(task.booking.providerId, "client_cancelled", { taskId });
+
+  revalidatePath(`/tasks/${taskId}`);
 }

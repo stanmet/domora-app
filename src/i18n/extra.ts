@@ -71,6 +71,24 @@ const en = {
   slotTaken: "This time is no longer available. Please choose another slot.",
   tooMany: "Too many attempts. Please wait a moment and try again.",
   genericError: "Something went wrong. Please try again.",
+
+  // V1: заказ без оплаты, раскрытие контактов
+  dealTitle: "Order",
+  dealChosenPro: "Chosen professional",
+  dealClient: "Client",
+  dealContactsOpen: "Contacts are open",
+  dealContactsNote: "You chose each other. Arrange the rest directly by phone or WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Phone not provided yet.",
+  dealAddPhone: "Add your phone in settings so the other side can reach you.",
+  dealOpenChat: "Open chat",
+  dealMarkDone: "Mark as done",
+  dealCancel: "Cancel order",
+  dealDoneNote: "Order completed. You can leave a review now.",
+  dealCancelledNote: "This order was cancelled.",
+  dealStatusL: "Status",
+  dealSelfResponsibility:
+    "Domora only connects people. Agree the terms, price and safety between yourselves; you act at your own responsibility.",
 };
 
 export type ExtraDict = typeof en;
@@ -137,6 +155,23 @@ const ru: ExtraDict = {
   slotTaken: "Это время уже занято. Пожалуйста, выберите другое.",
   tooMany: "Слишком много попыток. Подождите немного и повторите.",
   genericError: "Что-то пошло не так. Попробуйте ещё раз.",
+
+  dealTitle: "Заказ",
+  dealChosenPro: "Выбранный исполнитель",
+  dealClient: "Клиент",
+  dealContactsOpen: "Контакты открыты",
+  dealContactsNote: "Вы выбрали друг друга. Обо всём остальном договаривайтесь напрямую по телефону или в WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Телефон пока не указан.",
+  dealAddPhone: "Добавьте телефон в настройках, чтобы с вами могли связаться.",
+  dealOpenChat: "Открыть чат",
+  dealMarkDone: "Отметить выполненным",
+  dealCancel: "Отменить заказ",
+  dealDoneNote: "Заказ выполнен. Теперь можно оставить отзыв.",
+  dealCancelledNote: "Этот заказ отменён.",
+  dealStatusL: "Статус",
+  dealSelfResponsibility:
+    "Domora только сводит людей. Условия, цену и безопасность вы согласуете между собой; вы действуете под свою ответственность.",
 };
 
 const uk: ExtraDict = {
@@ -201,6 +236,23 @@ const uk: ExtraDict = {
   slotTaken: "Цей час уже зайнятий. Будь ласка, оберіть інший.",
   tooMany: "Забагато спроб. Зачекайте трохи і повторіть.",
   genericError: "Щось пішло не так. Спробуйте ще раз.",
+
+  dealTitle: "Замовлення",
+  dealChosenPro: "Обраний виконавець",
+  dealClient: "Клієнт",
+  dealContactsOpen: "Контакти відкриті",
+  dealContactsNote: "Ви обрали одне одного. Про решту домовляйтеся напряму телефоном або в WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Телефон ще не вказано.",
+  dealAddPhone: "Додайте телефон у налаштуваннях, щоб з вами могли звʼязатися.",
+  dealOpenChat: "Відкрити чат",
+  dealMarkDone: "Позначити виконаним",
+  dealCancel: "Скасувати замовлення",
+  dealDoneNote: "Замовлення виконано. Тепер можна залишити відгук.",
+  dealCancelledNote: "Це замовлення скасовано.",
+  dealStatusL: "Статус",
+  dealSelfResponsibility:
+    "Domora лише зводить людей. Умови, ціну та безпеку ви узгоджуєте між собою; ви дієте на власну відповідальність.",
 };
 
 const pl: ExtraDict = {
@@ -265,6 +317,23 @@ const pl: ExtraDict = {
   slotTaken: "Ten termin jest już zajęty. Wybierz inny.",
   tooMany: "Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.",
   genericError: "Coś poszło nie tak. Spróbuj ponownie.",
+
+  dealTitle: "Zlecenie",
+  dealChosenPro: "Wybrany wykonawca",
+  dealClient: "Klient",
+  dealContactsOpen: "Kontakty są otwarte",
+  dealContactsNote: "Wybraliście się nawzajem. Resztę ustalcie bezpośrednio telefonicznie lub przez WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Telefon nie został jeszcze podany.",
+  dealAddPhone: "Dodaj swój telefon w ustawieniach, aby druga strona mogła się z Tobą skontaktować.",
+  dealOpenChat: "Otwórz czat",
+  dealMarkDone: "Oznacz jako wykonane",
+  dealCancel: "Anuluj zlecenie",
+  dealDoneNote: "Zlecenie zakończone. Możesz teraz dodać opinię.",
+  dealCancelledNote: "To zlecenie zostało anulowane.",
+  dealStatusL: "Status",
+  dealSelfResponsibility:
+    "Domora tylko łączy ludzi. Warunki, cenę i bezpieczeństwo ustalacie między sobą; działasz na własną odpowiedzialność.",
 };
 
 const es: ExtraDict = {
@@ -329,6 +398,23 @@ const es: ExtraDict = {
   slotTaken: "Esta hora ya no está disponible. Elige otra franja.",
   tooMany: "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
   genericError: "Algo salió mal. Inténtalo de nuevo.",
+
+  dealTitle: "Pedido",
+  dealChosenPro: "Profesional elegido",
+  dealClient: "Cliente",
+  dealContactsOpen: "Los contactos están abiertos",
+  dealContactsNote: "Os habéis elegido. Acordad el resto directamente por teléfono o WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Aún no se ha indicado el teléfono.",
+  dealAddPhone: "Añade tu teléfono en ajustes para que la otra parte pueda contactarte.",
+  dealOpenChat: "Abrir chat",
+  dealMarkDone: "Marcar como hecho",
+  dealCancel: "Cancelar pedido",
+  dealDoneNote: "Pedido completado. Ya puedes dejar una reseña.",
+  dealCancelledNote: "Este pedido fue cancelado.",
+  dealStatusL: "Estado",
+  dealSelfResponsibility:
+    "Domora solo pone en contacto a las personas. Acordáis las condiciones, el precio y la seguridad entre vosotros; actúas bajo tu propia responsabilidad.",
 };
 
 const pt: ExtraDict = {
@@ -393,6 +479,23 @@ const pt: ExtraDict = {
   slotTaken: "Este horário já não está disponível. Escolha outro.",
   tooMany: "Demasiadas tentativas. Aguarde um momento e tente novamente.",
   genericError: "Algo correu mal. Tente novamente.",
+
+  dealTitle: "Pedido",
+  dealChosenPro: "Profissional escolhido",
+  dealClient: "Cliente",
+  dealContactsOpen: "Os contactos estão abertos",
+  dealContactsNote: "Escolheram-se um ao outro. Combinem o resto diretamente por telefone ou WhatsApp.",
+  dealWhatsApp: "WhatsApp",
+  dealNoPhone: "Telefone ainda não indicado.",
+  dealAddPhone: "Adicione o seu telefone nas definições para que a outra parte possa contactá-lo.",
+  dealOpenChat: "Abrir chat",
+  dealMarkDone: "Marcar como concluído",
+  dealCancel: "Cancelar pedido",
+  dealDoneNote: "Pedido concluído. Já pode deixar uma avaliação.",
+  dealCancelledNote: "Este pedido foi cancelado.",
+  dealStatusL: "Estado",
+  dealSelfResponsibility:
+    "A Domora apenas liga as pessoas. As condições, o preço e a segurança combinam entre si; age sob a sua própria responsabilidade.",
 };
 
 const extra: Record<Locale, ExtraDict> = { en, ru, uk, pl, es, pt };
