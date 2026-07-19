@@ -105,9 +105,9 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
   // "Что входит": собираем из данных исполнителя.
   const included: string[] = [];
+  // V1 без оплаты: показываем только относящееся к самой услуге (материалы).
+  // Пункты про "безопасную оплату" и "чат до оплаты" убраны.
   if (provider.listings.some((l) => l.materialsIncluded)) included.push(t.incMaterials);
-  included.push(t.incSecure);
-  included.push(t.incChat);
 
   // Автоперевод текстов профиля.
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
