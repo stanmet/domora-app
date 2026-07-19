@@ -64,6 +64,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
       user: {
         select: {
           isTest: true,
+          avatarUrl: true,
           reviewsGot: {
             where: { publishedAt: { not: null } },
             orderBy: { publishedAt: "desc" },
@@ -176,7 +177,12 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
       <div className="wrap">
         <div className="pintro">
-          <div className="avatar big">{provider.displayName[0]}</div>
+          {provider.user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={provider.user.avatarUrl} alt="" className="avatar big" style={{ objectFit: "cover", padding: 0 }} />
+          ) : (
+            <div className="avatar big">{provider.displayName[0]}</div>
+          )}
           <div style={{ minWidth: 0 }}>
             <h1 className="ptitle">{provider.displayName}</h1>
             {profession && <div className="pprof">{profession}</div>}
