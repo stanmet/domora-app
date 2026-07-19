@@ -1,17 +1,16 @@
 "use client";
 
-// Регистрация: имя, email, пароль и роль (заказчик или исполнитель).
-// Основной путь: signUp с паролем. Имя и роль уезжают в user_metadata и
-// применяются при создании записи в таблице User (ensureDbUser).
-// Если проект требует подтверждения email, сессии сразу нет, показываем экран
-// "проверьте почту". Запасной путь: регистрация по ссылке на почту (signInWithOtp).
+// Регистрация только по email и паролю: имя, email, пароль и роль (заказчик
+// или исполнитель). signUp с паролем; имя и роль уезжают в user_metadata и
+// применяются при создании записи в таблице User (ensureDbUser). Если проект
+// требует подтверждения email, сессии сразу нет - показываем экран
+// "проверьте почту".
 import { useState } from "react";
 import Link from "next/link";
 import { Briefcase, MailCheck, UserRound } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 import type { Dict } from "@/i18n/dictionaries";
-import OAuthButtons from "@/components/OAuthButtons";
 
 type RoleChoice = "client" | "provider";
 
@@ -26,7 +25,7 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
 
   const target = () => next ?? (role === "provider" ? "/pro" : "/account");
 
-  // Основной путь: регистрация с паролем.
+  // Регистрация с паролем.
   const submitPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy || !name.trim() || !email.trim()) return;
@@ -62,34 +61,6 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
     }
   };
 
-  // Запасной путь: регистрация по ссылке на почту.
-  const sendLink = async () => {
-    if (busy || !name.trim() || !email.trim()) {
-      setError(t.errAuth);
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const callback = new URL("/auth/callback", window.location.origin);
-      callback.searchParams.set("next", target());
-      const { error } = await getSupabaseBrowser().auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: callback.toString(),
-          shouldCreateUser: true,
-          data: { name: name.trim(), role },
-        },
-      });
-      if (error) setError(t.errAuth);
-      else setSent(true);
-    } catch {
-      setError(t.errAuth);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   if (sent) {
     return (
       <div className="card sentcard">
@@ -111,10 +82,6 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
 
   return (
     <form className="form" onSubmit={submitPassword}>
-      <OAuthButtons
-        next={next}
-        labels={{ google: t.continueGoogle, apple: t.continueApple, error: t.errOAuth, sep: t.orSep }}
-      />
       <label>{t.roleL}</label>
       <div className="rolecards">
         {roles.map((r) => (
@@ -163,10 +130,6 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
       {error && <div className="err">{error}</div>}
       <button className="btn btn-green" style={{ width: "100%", justifyContent: "center", marginTop: 20 }} disabled={busy}>
         {busy ? t.creating : t.signup}
-      </button>
-      <div className="authsep">{t.orSep}</div>
-      <button type="button" className="btn btn-line" style={{ width: "100%", justifyContent: "center" }} onClick={sendLink} disabled={busy}>
-        {t.linkSignup}
       </button>
       <p className="authnote">
         {t.haveAccount} <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>{t.login}</Link>
