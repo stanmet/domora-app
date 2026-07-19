@@ -2,24 +2,11 @@
 // доске. Безопасно запускать повторно (upsert / проверка существования).
 import { PrismaClient, PriceUnit } from "@prisma/client";
 import { encrypt } from "../src/lib/crypto";
+import { CATEGORY_SEED } from "../src/lib/category-seed";
 
 const prisma = new PrismaClient();
 
-const categories = [
-  { slug: "chef", nameEn: "Private chef", nameRu: "Повар на дом", unitDefault: PriceUnit.PER_GUEST },
-  { slug: "clean", nameEn: "Cleaning", nameRu: "Уборка", unitDefault: PriceUnit.PER_M2 },
-  { slug: "handy", nameEn: "Handyman", nameRu: "Мастер на час", unitDefault: PriceUnit.PER_HOUR },
-  { slug: "massage", nameEn: "Massage", nameRu: "Массаж", unitDefault: PriceUnit.PER_SESSION },
-  { slug: "beauty", nameEn: "Beauty at home", nameRu: "Красота на дому", unitDefault: PriceUnit.PER_SESSION },
-  {
-    slug: "events",
-    nameEn: "Events & parties",
-    nameRu: "Праздники и события",
-    unitDefault: PriceUnit.PER_EVENT,
-    cancellationTier: "event",
-  },
-  { slug: "other", nameEn: "Other", nameRu: "Другое", unitDefault: PriceUnit.FIXED_QUOTE },
-];
+const categories = CATEGORY_SEED;
 
 const providers = [
   {

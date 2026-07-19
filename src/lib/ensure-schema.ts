@@ -5,6 +5,7 @@
 // (IF NOT EXISTS) и без ручных шагов. Выполняется один раз на процесс.
 import { prisma } from "./prisma";
 import { seedSubcategories } from "./subcategories";
+import { ensureCategories } from "./category-seed";
 
 let ensured = false;
 
@@ -178,7 +179,9 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "TimeOff_providerId_date_key" ON "TimeOff"("providerId", "date")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TimeOff_providerId_idx" ON "TimeOff"("providerId")`);
 
-    // Наполняем дерево подкатегорий данными (идемпотентно).
+    // Наполняем категории и дерево подкатегорий данными (идемпотентно).
+    // Категории - первыми: подкатегории ссылаются на них по slug.
+    await ensureCategories();
     await seedSubcategories();
   } catch (e) {
     ensured = false; // не получилось - попробуем при следующем запросе
