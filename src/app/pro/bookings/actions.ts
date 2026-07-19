@@ -12,11 +12,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { captureBookingPayment, releaseBookingHold } from "@/lib/payments";
 import { slotTaken } from "@/lib/bookings";
-import { DISPUTE_WINDOW_HOURS } from "@/lib/booking-units";
 import { notify } from "@/lib/notify";
-import { applyStrike, refundToClient, reopenTaskAndFindReplacements } from "@/lib/cancellation";
-import { issueCoupon } from "@/lib/coupons";
-import { StrikeType } from "@prisma/client";
 
 async function respondToRequest(bookingId: string, next: BookingStatus): Promise<void> {
   const authUser = await getAuthUser();
@@ -131,8 +127,8 @@ export async function startBooking(bookingId: string): Promise<void> {
 }
 
 // Исполнитель отмечает работу выполненной: ACCEPTED|IN_PROGRESS -> COMPLETED.
-// Открывается окно спора; по его истечении (или после подтверждения клиентом)
-// уходит выплата.
+// V1 без денег: окно спора не открываем (выплатной cron такие заказы не трогает),
+// после этого обе стороны могут оставить отзыв.
 export async function completeBooking(bookingId: string): Promise<void> {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro/bookings");
@@ -148,27 +144,25 @@ export async function completeBooking(bookingId: string): Promise<void> {
     return;
   }
 
-  const disputeWindowEndsAt = new Date(Date.now() + DISPUTE_WINDOW_HOURS * 3600 * 1000);
   await prisma.$transaction([
     prisma.booking.update({
       where: { id: bookingId },
-      data: { status: BookingStatus.COMPLETED, disputeWindowEndsAt },
+      data: { status: BookingStatus.COMPLETED },
     }),
     prisma.bookingEvent.create({
       data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.COMPLETED } },
     }),
   ]);
 
-  // Уведомляем клиента: работа выполнена, нужно подтвердить или открыть спор.
+  // Уведомляем клиента: работа выполнена, можно оставить отзыв.
   await notify(booking.clientId, "completed", { bookingId });
 
   revalidatePath("/pro/bookings");
   revalidatePath("/bookings");
 }
 
-// Отмена исполнителем после подтверждения (spec 4.2): заказчику полный возврат,
-// исполнителю страйк (при пороге - заморозка профиля). Заказчик не должен
-// страдать из-за того, что исполнитель передумал.
+// Отмена исполнителем (V1 без денег): просто меняем статус и уведомляем клиента.
+// Никаких возвратов, страйков и купонов - площадка деньги не держит.
 export async function cancelByProvider(bookingId: string): Promise<void> {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro/bookings");
@@ -176,7 +170,7 @@ export async function cancelByProvider(bookingId: string): Promise<void> {
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { providerId: true, clientId: true, status: true, totalCents: true },
+    select: { providerId: true, clientId: true, status: true },
   });
   const okStatus: BookingStatus[] = [BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS];
   if (!booking || booking.providerId !== user.id || !okStatus.includes(booking.status)) {
@@ -184,29 +178,15 @@ export async function cancelByProvider(bookingId: string): Promise<void> {
     return;
   }
 
-  try {
-    // Полный возврат заказчику.
-    await refundToClient(bookingId, booking.totalCents, "provider_cancel");
-    await prisma.$transaction([
-      prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.CANCELLED_BY_PROVIDER } }),
-      prisma.bookingEvent.create({
-        data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.CANCELLED_BY_PROVIDER } },
-      }),
-    ]);
-  } catch (e) {
-    console.error("cancelByProvider failed", bookingId, e);
-    revalidatePath("/pro/bookings");
-    return;
-  }
+  await prisma.$transaction([
+    prisma.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.CANCELLED_BY_PROVIDER } }),
+    prisma.bookingEvent.create({
+      data: { bookingId, actorId: user.id, type: "status_change", payload: { to: BookingStatus.CANCELLED_BY_PROVIDER } },
+    }),
+  ]);
 
-  // Последствия: страйк исполнителю, купон заказчику (10% за счёт платформы),
-  // авто-подбор замены (если бронь была из задачи).
-  await applyStrike(user.id, StrikeType.PROVIDER_CANCEL, bookingId);
-  await issueCoupon(booking.clientId, 10, "provider_cancel", bookingId);
-  await reopenTaskAndFindReplacements(bookingId, user.id);
   await notify(booking.clientId, "provider_cancelled", { bookingId });
 
   revalidatePath("/pro/bookings");
   revalidatePath("/bookings");
-  revalidatePath("/catalog");
 }

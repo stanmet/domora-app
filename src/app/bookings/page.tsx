@@ -3,7 +3,7 @@
 // экран успеха после отправки запроса из view "done".
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Check, CreditCard, FileText, MapPin, ShieldCheck, Users } from "lucide-react";
+import { Calendar, Check, MapPin, MessageCircle, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -16,12 +16,8 @@ import { expireOverdueRequests } from "@/lib/bookings";
 import { isDemoMode, progressDemoBookings } from "@/lib/test-users/bots";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
-import { refundCentsForCancel } from "@/lib/cancellation";
-import { confirmBooking, disputeBooking, cancelBooking, reportNoShow } from "./actions";
 import { submitReview, editReview, deleteReview } from "./reviews-actions";
-import DisputeForm from "./DisputeForm";
 import ReviewForm from "./ReviewForm";
-import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
 
@@ -54,9 +50,10 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
     where: { clientId: user.id },
     orderBy: { createdAt: "desc" },
     include: {
-      listing: { select: { title: true, category: { select: { cancellationTier: true } } } },
+      listing: { select: { title: true } },
       provider: { select: { displayName: true } },
-      dispute: { select: { id: true } },
+      task: { select: { id: true } },
+      thread: { select: { id: true } },
       reviews: { where: { authorId: user.id }, select: { stars: true, text: true } },
     },
   });
@@ -91,19 +88,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
         ) : (
           bookings.map((b) => {
             const address = safeDecrypt(b.addressEncrypted);
-            const cancelable = ["REQUESTED", "ACCEPTED", "IN_PROGRESS"].includes(b.status);
-            const refundCents =
-              b.status === "REQUESTED"
-                ? b.totalCents
-                : refundCentsForCancel({
-                    tier: b.listing.category.cancellationTier,
-                    totalCents: b.totalCents,
-                    clientFeeCents: b.clientFeeCents,
-                    dateStart: b.dateStart,
-                  }).refundCents;
-            const canNoShow =
-              ["ACCEPTED", "IN_PROGRESS"].includes(b.status) &&
-              Date.now() > b.dateStart.getTime() + 30 * 60 * 1000;
+            const active = ["ACCEPTED", "IN_PROGRESS"].includes(b.status);
             return (
               <div className="bk" key={b.id}>
                 <div className="bkrow">
@@ -127,7 +112,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                     <Users size={13} /> {b.qty} × {unitLabel(t, b.unit)}
                   </span>
                   <span>
-                    <CreditCard size={13} /> {eur(b.totalCents, locale)}
+                    <Wallet size={13} /> {eur(b.totalCents, locale)}
                   </span>
                   {address && (
                     <span>
@@ -135,16 +120,19 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                     </span>
                   )}
                 </div>
-                {["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"].includes(b.status) && (
-                  <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm">
-                    <FileText size={14} /> {t.invoiceGet}
-                  </Link>
-                )}
-                {b.status === "DISPUTED" && b.dispute && (
-                  <Link href={`/disputes/${b.dispute.id}`} className="btn btn-red btn-sm" style={{ marginLeft: 8 }}>
-                    <ShieldCheck size={14} /> {t.dsOpen}
-                  </Link>
-                )}
+
+                <div className="bkbtns" style={{ marginTop: 10 }}>
+                  {b.task && (
+                    <Link href={`/tasks/${b.task.id}`} className="btn btn-ink btn-sm">
+                      {tx.dealTitle} · {t.obGo}
+                    </Link>
+                  )}
+                  {b.thread && (
+                    <Link href={`/messages/${b.thread.id}`} className="btn btn-line btn-sm">
+                      <MessageCircle size={14} /> {tx.dealOpenChat}
+                    </Link>
+                  )}
+                </div>
 
                 {/* Отзыв: доступен по завершённому заказу (выполнен или закрыт) */}
                 {["COMPLETED", "CLOSED"].includes(b.status) && (
@@ -157,54 +145,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   />
                 )}
 
-                {/* Работа отмечена выполненной: клиент подтверждает или открывает спор */}
-                {b.status === "COMPLETED" && (
-                  <>
-                    <div className="hold" style={{ marginTop: 10 }}>
-                      <ShieldCheck size={15} /> {t.payoutNote}
-                    </div>
-                    <div className="bkbtns" style={{ marginTop: 8 }}>
-                      <form action={confirmBooking.bind(null, b.id)}>
-                        <button className="btn btn-green btn-sm">
-                          <Check size={14} /> {t.bConfirm}
-                        </button>
-                      </form>
-                      <DisputeForm
-                        action={disputeBooking.bind(null, b.id)}
-                        labels={{ open: t.bDispute, title: t.disputeTitle, ph: t.disputePh, send: t.disputeSend }}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Отмена заказа клиентом и отметка о неявке исполнителя */}
-                {(cancelable || canNoShow) && (
-                  <div className="bkbtns" style={{ marginTop: 10 }}>
-                    {cancelable && (
-                      <ConfirmAction
-                        action={cancelBooking.bind(null, b.id)}
-                        label={t.cancelBooking}
-                        warning={`${t.cancelWarn} ${t.cancelRefundL}: ${eur(refundCents, locale)}`}
-                        confirmLabel={t.cancelConfirm}
-                        backLabel={t.back}
-                      />
-                    )}
-                    {canNoShow && (
-                      <ConfirmAction
-                        action={reportNoShow.bind(null, b.id)}
-                        label={t.noShow}
-                        warning={t.noShowWarn}
-                        confirmLabel={t.noShowConfirm}
-                        backLabel={t.back}
-                      />
-                    )}
-                  </div>
-                )}
-                {cancelable && (
-                  <Link href="/terms" className="cancel-policy">
-                    {t.cancelPolicyLink}
-                  </Link>
-                )}
+                {active && <div className="cancel-policy">{tx.dealSelfResponsibility}</div>}
               </div>
             );
           })

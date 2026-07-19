@@ -4,7 +4,7 @@
 // Точный адрес клиента расшифровывается только после принятия заказа.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Calendar, Check, Clock, CreditCard, FileText, Lock, MapPin, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Clock, Lock, MapPin, ShieldCheck, Users, Wallet } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -18,9 +18,7 @@ import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
-import { after } from "next/server";
 import { acceptBooking, cancelByProvider, completeBooking, declineBooking, startBooking } from "./actions";
-import { processPayouts } from "@/lib/jobs";
 import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +84,7 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
           <Users size={13} /> {b.qty} × {unitLabel(t, b.unit)}
         </span>
         <span>
-          <CreditCard size={13} /> {eur(b.totalCents, locale)}
+          <Wallet size={13} /> {eur(b.totalCents, locale)}
         </span>
         {address ? (
           <span>
@@ -100,16 +98,6 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
           )
         )}
       </div>
-      {ADDRESS_VISIBLE.includes(b.status) && (
-        <Link href={`/bookings/${b.id}/invoice`} className="btn btn-line btn-sm" style={{ marginTop: 2 }}>
-          <FileText size={14} /> {t.invoiceGet}
-        </Link>
-      )}
-      {b.status === BookingStatus.DISPUTED && b.dispute && (
-        <Link href={`/disputes/${b.dispute.id}`} className="btn btn-red btn-sm" style={{ marginTop: 2, marginLeft: 8 }}>
-          <ShieldCheck size={14} /> {t.dsOpen}
-        </Link>
-      )}
       {(b.status === BookingStatus.ACCEPTED || b.status === BookingStatus.IN_PROGRESS) && (
         <div className="bkbtns" style={{ marginTop: 10 }}>
           {b.status === BookingStatus.ACCEPTED && (
@@ -178,8 +166,6 @@ export default async function ProBookingsPage({
   const { conflict } = await searchParams;
 
   await expireOverdueRequests({ providerId: user.id });
-  // Проводим созревшие выплаты в фоне после ответа (не тормозим страницу).
-  after(() => processPayouts().catch((e) => console.error("payout nudge failed", e)));
   const bookings = await loadBookings(user.id);
 
   const requests = bookings.filter((b) => b.status === BookingStatus.REQUESTED);
