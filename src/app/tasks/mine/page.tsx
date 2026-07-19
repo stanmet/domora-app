@@ -1,9 +1,9 @@
 // Мои задачи (клиент): список размещённых задач со статусами и откликами.
 // По каждому отклику: профиль исполнителя, рейтинг, цена, сообщение и кнопка
-// "Выбрать". Выбор ведёт на оплату (создаётся бронь по цене из отклика).
+// "Выбрать". Выбор открывает контакты и чат на странице задачи (без оплаты).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, ArrowRight, Calendar, CreditCard, MapPin, Star, Wallet } from "lucide-react";
+import { AlertTriangle, Calendar, MapPin, Star, Wallet } from "lucide-react";
 import { OfferStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -70,7 +70,6 @@ export default async function MyTasksPage() {
             const budgetFrom = task.budgetFromCents;
             const budgetTo = task.budgetToCents;
             const canChoose = task.status === "OPEN";
-            const draftBooking = task.booking?.status === "DRAFT" ? task.booking : null;
             return (
               <div className="bk" key={task.id}>
                 <div className="bkrow">
@@ -105,10 +104,10 @@ export default async function MyTasksPage() {
                   )}
                 </div>
 
-                {/* Бронь создана, но ещё не оплачена: ведём клиента на оплату. */}
-                {draftBooking && (
-                  <Link href={`/bookings/${draftBooking.id}/pay`} className="btn btn-green btn-sm" style={{ marginTop: 4 }}>
-                    <CreditCard size={14} /> {t.payBtn} <ArrowRight size={13} />
+                {/* Выбран исполнитель: ведём на страницу задачи (контакты, чат, статус). */}
+                {task.status === "OFFER_ACCEPTED" && (
+                  <Link href={`/tasks/${task.id}`} className="btn btn-green btn-sm" style={{ marginTop: 4 }}>
+                    {t.obGo}
                   </Link>
                 )}
 

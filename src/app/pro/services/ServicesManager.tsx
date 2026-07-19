@@ -41,7 +41,6 @@ export default function ServicesManager({
   const [sub, setSub] = useState("");
   const [state, formAction, pending] = useActionState<CreateListingState, FormData>(createListing, null);
   const subOptions = subcategories.filter((s) => s.categorySlug === cat);
-  const selectedLicence = subOptions.find((s) => s.slug === sub)?.licence ?? null;
 
   // Успешное создание закрывает форму; поля сбрасываются размонтированием.
   useEffect(() => {
@@ -84,11 +83,6 @@ export default function ServicesManager({
                     </option>
                   ))}
                 </select>
-                {selectedLicence && (
-                  <p className="fieldhint" style={{ color: "var(--orange)" }}>
-                    {t.licenceHint} (<a href="/pro/documents" style={{ color: "var(--green-dark)", fontWeight: 700 }}>{t.navDocs}</a>)
-                  </p>
-                )}
               </>
             )}
             <label htmlFor="svc-title">{t.liTitle}</label>
