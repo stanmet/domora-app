@@ -47,6 +47,14 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   const iAmClient = thread.booking.clientId === user.id;
   const counterpart = iAmClient ? thread.booking.provider.displayName : thread.booking.client.name;
 
+  // Открыл переписку - помечаем сообщения собеседника прочитанными.
+  await prisma.message
+    .updateMany({ where: { threadId: id, authorId: { not: user.id }, readAt: null }, data: { readAt: new Date() } })
+    .catch(() => 0);
+
+  // "Прочитано" показываем под последним моим сообщением, которое собеседник прочёл.
+  const lastReadMineId = [...thread.messages].reverse().find((m) => m.author.id === user.id && m.readAt)?.id ?? null;
+
   const tr = await translateBatch(thread.messages.map((m) => m.textOriginal), locale);
   const trOf = (s: string) => tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false };
 
@@ -84,6 +92,9 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
                     />
                   </a>
                 ))}
+                {m.id === lastReadMineId && (
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3, textAlign: "right" }}>{tx.chatRead}</div>
+                )}
               </div>
             );
           })}

@@ -113,6 +113,7 @@ model User {
   email         String     @unique
   phone         String?    @unique
   name          String
+  avatarUrl     String?    // аватар пользователя (Supabase Storage)
   locale        String     @default("en") // en ru uk pl es pt
   city          String?
   roles         Role[]     @default([CLIENT])
@@ -459,6 +460,7 @@ model Message {
   translations Json?    // { "en": "...", "ru": "..." } кеш переводов
   attachments  String[]
   contactFilterFlag Boolean @default(false) // телефон/ссылка до брони
+  readAt       DateTime? // когда сообщение прочитано собеседником
   createdAt    DateTime @default(now())
 
   @@index([threadId, createdAt])
@@ -550,6 +552,7 @@ model Task {
   dateWanted      DateTime?
   city            String     // город для подбора исполнителей в ленте
   addressEncrypted String    // адрес шифруется (AES-256-GCM), как в брони
+  photos          String[]   @default([]) // фото к заявке (Supabase Storage)
   budgetFromCents Int?
   budgetToCents   Int?
   status          TaskStatus @default(OPEN)

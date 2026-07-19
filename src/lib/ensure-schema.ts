@@ -179,6 +179,11 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "TimeOff_providerId_date_key" ON "TimeOff"("providerId", "date")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "TimeOff_providerId_idx" ON "TimeOff"("providerId")`);
 
+    // Новые поля V1: аватар пользователя, фото заявки, отметка прочтения чата.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "photos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS "readAt" TIMESTAMP(3)`);
+
     // Наполняем категории и дерево подкатегорий данными (идемпотентно).
     // Категории - первыми: подкатегории ссылаются на них по slug.
     await ensureCategories();
