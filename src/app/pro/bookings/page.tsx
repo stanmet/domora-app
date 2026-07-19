@@ -19,6 +19,8 @@ import { expireOverdueRequests } from "@/lib/bookings";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
 import { acceptBooking, cancelByProvider, completeBooking, declineBooking, startBooking } from "./actions";
+import { submitClientReview, editClientReview, deleteClientReview } from "@/app/bookings/reviews-actions";
+import ReviewForm, { type ReviewFormLabels } from "@/app/bookings/ReviewForm";
 import ConfirmAction from "@/components/ConfirmAction";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +53,7 @@ function loadBookings(providerId: string) {
       listing: { select: { title: true } },
       client: { select: { name: true } },
       dispute: { select: { id: true } },
+      reviews: { where: { authorId: providerId }, select: { stars: true, text: true } },
       thread: {
         select: { messages: { orderBy: { createdAt: "asc" }, take: 1, select: { textOriginal: true } } },
       },
@@ -58,8 +61,19 @@ function loadBookings(providerId: string) {
   });
 }
 
-function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Locale }) {
+function BookingCard({
+  b,
+  t,
+  locale,
+  reviewLabels,
+}: {
+  b: BookingWithRefs;
+  t: Dict;
+  locale: Locale;
+  reviewLabels: ReviewFormLabels;
+}) {
   const isRequest = b.status === BookingStatus.REQUESTED;
+  const reviewable = b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CLOSED;
   const address = ADDRESS_VISIBLE.includes(b.status) ? safeDecrypt(b.addressEncrypted) : null;
   const clientMessage = b.thread?.messages[0]?.textOriginal;
 
@@ -121,6 +135,15 @@ function BookingCard({ b, t, locale }: { b: BookingWithRefs; t: Dict; locale: Lo
           />
         </div>
       )}
+      {reviewable && (
+        <ReviewForm
+          submitAction={submitClientReview.bind(null, b.id)}
+          editAction={editClientReview.bind(null, b.id)}
+          deleteAction={deleteClientReview.bind(null, b.id)}
+          existing={b.reviews[0] ?? null}
+          labels={reviewLabels}
+        />
+      )}
       {isRequest && clientMessage && (
         <div className="bkmsg">
           <b>{t.clientMsgL}</b>
@@ -168,6 +191,18 @@ export default async function ProBookingsPage({
   await expireOverdueRequests({ providerId: user.id });
   const bookings = await loadBookings(user.id);
 
+  const reviewLabels: ReviewFormLabels = {
+    leave: tx.reviewLeave,
+    editTitle: tx.reviewYours,
+    edit: tx.reviewEdit,
+    del: tx.reviewDelete,
+    submit: tx.reviewSubmit,
+    save: tx.reviewSave,
+    placeholder: tx.reviewPlaceholder,
+    rateL: tx.reviewRateL,
+    needStars: tx.reviewNeedStars,
+  };
+
   const requests = bookings.filter((b) => b.status === BookingStatus.REQUESTED);
   const confirmed = bookings.filter(
     (b) => b.status === BookingStatus.ACCEPTED || b.status === BookingStatus.IN_PROGRESS,
@@ -199,7 +234,7 @@ export default async function ProBookingsPage({
           {t.newReq}
         </h3>
         {requests.length ? (
-          requests.map((b) => <BookingCard key={b.id} b={b} t={t} locale={locale} />)
+          requests.map((b) => <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />)
         ) : (
           <div className="empty">{t.emptyReq}</div>
         )}
@@ -209,7 +244,7 @@ export default async function ProBookingsPage({
               {t.stAccepted}
             </h3>
             {confirmed.map((b) => (
-              <BookingCard key={b.id} b={b} t={t} locale={locale} />
+              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />
             ))}
           </>
         )}
@@ -219,7 +254,7 @@ export default async function ProBookingsPage({
               {t.historyT}
             </h3>
             {history.map((b) => (
-              <BookingCard key={b.id} b={b} t={t} locale={locale} />
+              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />
             ))}
           </>
         )}

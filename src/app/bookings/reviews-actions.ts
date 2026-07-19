@@ -116,6 +116,90 @@ export async function deleteReview(bookingId: string): Promise<void> {
   revalidatePath(`/providers/${review.targetId}`);
 }
 
+// --- Отзыв исполнителя о клиенте (вторая сторона) ---
+// Исполнитель оценивает клиента по своему завершённому заказу. Автор - исполнитель,
+// цель - клиент. Уникальный ключ (bookingId, authorId) не даёт задвоить отзыв и не
+// мешает отзыву клиента (у него другой authorId).
+export async function submitClientReview(bookingId: string, formData: FormData): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { clientId: true, providerId: true, status: true },
+  });
+  if (!booking || booking.providerId !== user.id || !REVIEWABLE.includes(booking.status)) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+
+  const stars = parseStars(formData.get("stars"));
+  if (!stars) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+  const text = String(formData.get("text") ?? "").trim().slice(0, 1000) || null;
+
+  try {
+    await prisma.review.create({
+      data: {
+        bookingId,
+        authorId: user.id,
+        targetId: booking.clientId,
+        stars,
+        text,
+        textLang: await getLocale(),
+        publishedAt: new Date(),
+      },
+    });
+  } catch (e) {
+    console.error("submitClientReview failed", bookingId, e);
+  }
+  revalidatePath("/pro/bookings");
+}
+
+export async function editClientReview(bookingId: string, formData: FormData): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const stars = parseStars(formData.get("stars"));
+  if (!stars) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+  const text = String(formData.get("text") ?? "").trim().slice(0, 1000) || null;
+
+  const review = await prisma.review.findUnique({
+    where: { bookingId_authorId: { bookingId, authorId: user.id } },
+    select: { id: true },
+  });
+  if (!review) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+  await prisma.review.update({ where: { id: review.id }, data: { stars, text } });
+  revalidatePath("/pro/bookings");
+}
+
+export async function deleteClientReview(bookingId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect("/login?next=/pro/bookings");
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const review = await prisma.review.findUnique({
+    where: { bookingId_authorId: { bookingId, authorId: user.id } },
+    select: { id: true },
+  });
+  if (!review) {
+    revalidatePath("/pro/bookings");
+    return;
+  }
+  await prisma.review.delete({ where: { id: review.id } });
+  revalidatePath("/pro/bookings");
+}
+
 // Жалоба на отзыв: доступна исполнителю, о котором отзыв. Ставим флаг для
 // модерации (админ видит отмеченные отзывы и может их удалить).
 export async function flagReview(reviewId: string): Promise<void> {
