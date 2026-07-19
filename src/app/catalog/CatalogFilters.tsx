@@ -22,6 +22,7 @@ type Labels = {
   sortPopular: string;
   maxPriceL: string;
   minRatingL: string;
+  experienceL: string;
   apply: string;
   reset: string;
   any: string;
@@ -34,26 +35,28 @@ type Props = {
   sort: string;
   maxPrice: string;
   minRating: string;
+  minJobs: string;
   cities: string[];
   categories: { slug: string; label: string }[];
   labels: Labels;
 };
 
-export default function CatalogFilters({ q, cat, city, sort, maxPrice, minRating, cities, categories, labels }: Props) {
+export default function CatalogFilters({ q, cat, city, sort, maxPrice, minRating, minJobs, cities, categories, labels }: Props) {
   const router = useRouter();
   const [text, setText] = useState(q);
-  const [open, setOpen] = useState(Boolean(city || maxPrice || minRating || (sort && sort !== "recommended")));
+  const [open, setOpen] = useState(Boolean(city || maxPrice || minRating || minJobs || (sort && sort !== "recommended")));
   const [priceInput, setPriceInput] = useState(maxPrice);
 
-  const apply = (next: Partial<{ q: string; cat: string; city: string; sort: string; maxPrice: string; minRating: string }>) => {
+  const apply = (next: Partial<{ q: string; cat: string; city: string; sort: string; maxPrice: string; minRating: string; minJobs: string }>) => {
     const params = new URLSearchParams();
-    const merged = { q, cat, city, sort, maxPrice, minRating, ...next };
+    const merged = { q, cat, city, sort, maxPrice, minRating, minJobs, ...next };
     if (merged.q) params.set("q", merged.q);
     if (merged.cat) params.set("cat", merged.cat);
     if (merged.city) params.set("city", merged.city);
     if (merged.sort && merged.sort !== "recommended") params.set("sort", merged.sort);
     if (merged.maxPrice) params.set("maxPrice", merged.maxPrice);
     if (merged.minRating) params.set("minRating", merged.minRating);
+    if (merged.minJobs) params.set("minJobs", merged.minJobs);
     const s = params.toString();
     router.push(s ? `/catalog?${s}` : "/catalog");
   };
@@ -124,6 +127,19 @@ export default function CatalogFilters({ q, cat, city, sort, maxPrice, minRating
             ))}
           </div>
 
+          {/* Опыт: минимальное число завершённых заказов */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <label style={{ fontSize: 13, color: "var(--muted)" }}>{labels.experienceL}</label>
+            <button className={"chip" + (minJobs === "" ? " on" : "")} onClick={() => apply({ minJobs: "" })}>
+              {labels.any}
+            </button>
+            {["1", "5", "10"].map((n) => (
+              <button key={n} className={"chip" + (minJobs === n ? " on" : "")} onClick={() => apply({ minJobs: n })}>
+                {n}+
+              </button>
+            ))}
+          </div>
+
           {/* Цена до */}
           <form
             style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
@@ -145,13 +161,13 @@ export default function CatalogFilters({ q, cat, city, sort, maxPrice, minRating
             <button type="submit" className="btn btn-line btn-sm">
               {labels.apply}
             </button>
-            {(maxPrice || minRating || city || (sort && sort !== "recommended")) && (
+            {(maxPrice || minRating || minJobs || city || (sort && sort !== "recommended")) && (
               <button
                 type="button"
                 className="btn btn-line btn-sm"
                 onClick={() => {
                   setPriceInput("");
-                  apply({ city: "", sort: "recommended", maxPrice: "", minRating: "" });
+                  apply({ city: "", sort: "recommended", maxPrice: "", minRating: "", minJobs: "" });
                 }}
               >
                 {labels.reset}

@@ -16,19 +16,41 @@ import CatalogFilters from "./CatalogFilters";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata() {
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { cat = "", city = "" } = await searchParams;
   const locale = await getLocale();
   const t = getDict(locale);
   const tx = getExtra(locale);
+
+  // Локализованное имя категории (если выбрана) для SEO-заголовка.
+  let catName = "";
+  if (cat) {
+    try {
+      const row = await prisma.category.findUnique({ where: { slug: cat }, select: { slug: true, nameEn: true, nameRu: true } });
+      if (row) catName = categoryLabel(t, row.slug, locale === "ru" ? row.nameRu : row.nameEn);
+    } catch {
+      // База недоступна - оставляем общий заголовок.
+    }
+  }
+
+  const parts = [catName, city].filter(Boolean);
+  const title = parts.length ? `${parts.join(" · ")} · Domora` : `${t.catalogTitle} · Domora`;
+  const description = parts.length ? `${parts.join(" · ")}. ${tx.homeHero}` : tx.homeHero;
+  // Канонический адрес включает выбранные категорию и город.
+  const qs = new URLSearchParams();
+  if (cat) qs.set("cat", cat);
+  if (city) qs.set("city", city);
+  const canonical = qs.toString() ? `/catalog?${qs.toString()}` : "/catalog";
+
   return {
-    title: t.catalogTitle,
-    description: tx.homeHero,
-    alternates: { canonical: "/catalog" },
-    openGraph: { title: `${t.catalogTitle} · Domora`, description: tx.homeHero },
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description },
   };
 }
 
-type SearchParams = { q?: string; cat?: string; city?: string; sub?: string; sort?: string; maxPrice?: string; minRating?: string };
+type SearchParams = { q?: string; cat?: string; city?: string; sub?: string; sort?: string; maxPrice?: string; minRating?: string; minJobs?: string };
 
 // Варианты сортировки каталога.
 const SORTS = ["recommended", "price_asc", "price_desc", "rating", "popular"] as const;
@@ -50,7 +72,7 @@ function orderByFor(sort: Sort): Prisma.ListingOrderByWithRelationInput[] {
 }
 
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { q = "", cat = "", city = "", sub = "", sort = "", maxPrice = "", minRating = "" } = await searchParams;
+  const { q = "", cat = "", city = "", sub = "", sort = "", maxPrice = "", minRating = "", minJobs = "" } = await searchParams;
   const locale = await getLocale();
   const t = getDict(locale);
   const tx = getExtra(locale);
@@ -58,6 +80,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const activeSort: Sort = (SORTS as readonly string[]).includes(sort) ? (sort as Sort) : "recommended";
   const maxPriceCents = maxPrice && Number(maxPrice) > 0 ? Math.round(Number(maxPrice) * 100) : null;
   const minRatingNum = minRating && Number(minRating) > 0 ? Number(minRating) : null;
+  const minJobsNum = minJobs && Number(minJobs) > 0 ? Math.floor(Number(minJobs)) : null;
 
   // Название активной подкатегории (для чипа-фильтра). Таблица может отсутствовать.
   let subName: string | null = null;
@@ -81,6 +104,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       // Город здесь НЕ фильтруем: подбор по радиусу выезда исполнителя делаем
       // ниже (reachable), чтобы исполнитель находился и в соседних областях.
       ...(minRatingNum ? { ratingCached: { gte: minRatingNum } } : {}),
+      ...(minJobsNum ? { jobsCount: { gte: minJobsNum } } : {}),
     },
     ...(cat ? { category: { slug: cat } } : {}),
     ...(sub && subName ? { subcategory: { is: { slug: sub } } } : {}),
@@ -136,6 +160,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         sort={activeSort}
         maxPrice={maxPrice}
         minRating={minRating}
+        minJobs={minJobs}
         labels={{
           searchPh: t.searchPh,
           filters: t.filters,
@@ -150,6 +175,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           sortPopular: tx.catSortPopular,
           maxPriceL: tx.catMaxPrice,
           minRatingL: tx.catMinRating,
+          experienceL: tx.catExperience,
           apply: tx.catApply,
           reset: tx.catReset,
           any: tx.catAny,
