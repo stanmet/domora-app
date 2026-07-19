@@ -233,7 +233,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            {dealActive && (
+            {(dealActive || dealDone) && (
               <>
                 <p className="sub" style={{ margin: "0 0 10px" }}>{tx.dealContactsNote}</p>
                 {counterpartPhone ? (
