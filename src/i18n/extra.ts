@@ -136,6 +136,10 @@ const en = {
   tp6: "You use Domora at your own risk and responsibility. You are responsible for the content you post and for acting lawfully. Accounts that break these terms or the law may be removed at any time.",
   tp7: "Nothing here removes any statutory rights that cannot be waived under applicable law.",
   termsNote: "These terms may be updated. Continued use means you accept the current version.",
+
+  // Чат: фото и статус прочтения
+  chatAttach: "Attach a photo",
+  chatRead: "Read",
 };
 
 export type ExtraDict = typeof en;
@@ -264,6 +268,9 @@ const ru: ExtraDict = {
   tp6: "Вы пользуетесь Domora на свой риск и под свою ответственность. Вы отвечаете за размещаемый контент и за законность своих действий. Аккаунты, нарушающие условия или закон, могут быть удалены в любой момент.",
   tp7: "Ничто в этих условиях не отменяет прав, которые нельзя ограничить по применимому закону.",
   termsNote: "Условия могут обновляться. Продолжая пользоваться сервисом, вы принимаете действующую версию.",
+
+  chatAttach: "Прикрепить фото",
+  chatRead: "Прочитано",
 };
 
 const uk: ExtraDict = {
@@ -390,6 +397,9 @@ const uk: ExtraDict = {
   tp6: "Ви користуєтеся Domora на свій ризик і під свою відповідальність. Ви відповідаєте за розміщений контент і за законність своїх дій. Акаунти, що порушують умови або закон, можуть бути видалені будь-коли.",
   tp7: "Ніщо в цих умовах не скасовує прав, які не можна обмежити за застосовним законом.",
   termsNote: "Умови можуть оновлюватися. Продовжуючи користуватися сервісом, ви приймаєте чинну версію.",
+
+  chatAttach: "Прикріпити фото",
+  chatRead: "Прочитано",
 };
 
 const pl: ExtraDict = {
@@ -516,6 +526,9 @@ const pl: ExtraDict = {
   tp6: "Korzystasz z Domory na własne ryzyko i odpowiedzialność. Odpowiadasz za publikowane treści i za działanie zgodnie z prawem. Konta naruszające warunki lub prawo mogą zostać usunięte w każdej chwili.",
   tp7: "Nic tutaj nie odbiera praw ustawowych, których nie można wyłączyć na mocy obowiązującego prawa.",
   termsNote: "Warunki mogą być aktualizowane. Dalsze korzystanie oznacza akceptację bieżącej wersji.",
+
+  chatAttach: "Dołącz zdjęcie",
+  chatRead: "Przeczytano",
 };
 
 const es: ExtraDict = {
@@ -642,6 +655,9 @@ const es: ExtraDict = {
   tp6: "Usas Domora bajo tu propio riesgo y responsabilidad. Eres responsable del contenido que publicas y de actuar conforme a la ley. Las cuentas que incumplan estas condiciones o la ley pueden eliminarse en cualquier momento.",
   tp7: "Nada de lo aquí expuesto suprime los derechos legales que no pueden renunciarse según la ley aplicable.",
   termsNote: "Estas condiciones pueden actualizarse. Seguir usando el servicio implica que aceptas la versión vigente.",
+
+  chatAttach: "Adjuntar una foto",
+  chatRead: "Leído",
 };
 
 const pt: ExtraDict = {
@@ -768,6 +784,9 @@ const pt: ExtraDict = {
   tp6: "Utiliza a Domora por sua conta e risco e responsabilidade. É responsável pelo conteúdo que publica e por agir de acordo com a lei. As contas que violem estes termos ou a lei podem ser removidas a qualquer momento.",
   tp7: "Nada aqui retira direitos legais que não possam ser afastados ao abrigo da lei aplicável.",
   termsNote: "Estes termos podem ser atualizados. A utilização continuada significa que aceita a versão em vigor.",
+
+  chatAttach: "Anexar uma foto",
+  chatRead: "Lido",
 };
 
 const extra: Record<Locale, ExtraDict> = { en, ru, uk, pl, es, pt };

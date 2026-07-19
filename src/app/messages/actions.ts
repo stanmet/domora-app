@@ -12,6 +12,7 @@ import { getDict } from "@/i18n/dictionaries";
 import { filterContacts } from "@/lib/contact-filter";
 import { rateLimit } from "@/lib/rate-limit";
 import { notify } from "@/lib/notify";
+import { uploadImage } from "@/lib/storage";
 
 const CONTACTS_ALLOWED = new Set(["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"]);
 
@@ -23,7 +24,10 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
   const user = await ensureDbUser(authUser, locale);
 
   const text = String(formData.get("text") ?? "").trim();
-  if (!text) return;
+  const imageFile = formData.get("image");
+  const hasImage = imageFile instanceof File && imageFile.size > 0;
+  // Пустое сообщение без фото не отправляем.
+  if (!text && !hasImage) return;
 
   // Антиспам: не более 20 сообщений в минуту с аккаунта.
   if (!rateLimit(`msg:${user.id}`, 20, 60 * 1000)) return;
@@ -38,6 +42,14 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
 
   const filtered = CONTACTS_ALLOWED.has(status) ? { text, flagged: false } : filterContacts(text, t.contactRedacted);
 
+  // Фото: загружаем в хранилище; если не удалось - отправляем только текст.
+  const attachments: string[] = [];
+  if (hasImage) {
+    const url = await uploadImage(imageFile as File, `chat/${threadId}`);
+    if (url) attachments.push(url);
+  }
+  if (!filtered.text && attachments.length === 0) return;
+
   await prisma.message.create({
     data: {
       threadId,
@@ -45,6 +57,7 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
       textOriginal: filtered.text,
       langOriginal: locale, // язык интерфейса автора; DeepL определит язык при переводе
       contactFilterFlag: filtered.flagged,
+      attachments,
     },
   });
 

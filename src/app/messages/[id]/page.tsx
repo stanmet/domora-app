@@ -8,6 +8,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { langName } from "@/i18n/config";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
@@ -22,6 +23,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   if (!authUser?.email) redirect(`/login?next=/messages/${id}`);
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
   const user = await ensureDbUser(authUser, locale);
 
@@ -62,20 +64,37 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
             const mt = trOf(m.textOriginal);
             return (
               <div className={"msg " + (mine ? "me" : "them")} key={m.id}>
-                <TranslatableText
-                  as="div"
-                  display={mt.text}
-                  original={m.textOriginal}
-                  translated={mt.translated}
-                  sourceLangName={langName(mt.sourceLang)}
-                  labels={trLabels}
-                />
+                {m.textOriginal && (
+                  <TranslatableText
+                    as="div"
+                    display={mt.text}
+                    original={m.textOriginal}
+                    translated={mt.translated}
+                    sourceLangName={langName(mt.sourceLang)}
+                    labels={trLabels}
+                  />
+                )}
+                {m.attachments.map((url) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={url}
+                      alt=""
+                      style={{ maxWidth: "100%", borderRadius: 10, marginTop: m.textOriginal ? 6 : 0, display: "block" }}
+                    />
+                  </a>
+                ))}
               </div>
             );
           })}
         </div>
 
-        <ChatForm action={sendMessage.bind(null, thread.id)} placeholder={t.msgWritePh} sendLabel={t.msgSend} />
+        <ChatForm
+          action={sendMessage.bind(null, thread.id)}
+          placeholder={t.msgWritePh}
+          sendLabel={t.msgSend}
+          attachLabel={tx.chatAttach}
+        />
       </div>
     </main>
   );
