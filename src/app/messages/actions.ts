@@ -40,6 +40,16 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
   const { clientId, providerId, status } = thread.booking;
   if (user.id !== clientId && user.id !== providerId) return;
 
+  const recipient = user.id === clientId ? providerId : clientId;
+  // Блокировка: если одна из сторон заблокировала другую - сообщение не уходит.
+  const blocked = await prisma.chatBlock
+    .findFirst({
+      where: { OR: [{ blockerId: user.id, blockedId: recipient }, { blockerId: recipient, blockedId: user.id }] },
+      select: { id: true },
+    })
+    .catch(() => null);
+  if (blocked) return;
+
   const filtered = CONTACTS_ALLOWED.has(status) ? { text, flagged: false } : filterContacts(text, t.contactRedacted);
 
   // Фото: загружаем в хранилище; если не удалось - отправляем только текст.
@@ -62,9 +72,54 @@ export async function sendMessage(threadId: string, formData: FormData): Promise
   });
 
   // Уведомляем собеседника о новом сообщении.
-  const recipient = user.id === clientId ? providerId : clientId;
   await notify(recipient, "message", { threadId });
 
   revalidatePath(`/messages/${threadId}`);
   revalidatePath("/messages");
+}
+
+// Заблокировать собеседника в чате: он больше не сможет писать этому
+// пользователю. Направленная блокировка (снимается unblockUser).
+export async function blockUser(threadId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect(`/login?next=/messages/${threadId}`);
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const thread = await prisma.thread.findUnique({
+    where: { id: threadId },
+    include: { booking: { select: { clientId: true, providerId: true } } },
+  });
+  if (!thread?.booking) return;
+  const { clientId, providerId } = thread.booking;
+  if (user.id !== clientId && user.id !== providerId) return;
+  const other = user.id === clientId ? providerId : clientId;
+
+  await prisma.chatBlock
+    .upsert({
+      where: { blockerId_blockedId: { blockerId: user.id, blockedId: other } },
+      create: { blockerId: user.id, blockedId: other },
+      update: {},
+    })
+    .catch((e) => console.error("blockUser failed", e));
+
+  revalidatePath(`/messages/${threadId}`);
+}
+
+// Снять блокировку.
+export async function unblockUser(threadId: string): Promise<void> {
+  const authUser = await getAuthUser();
+  if (!authUser?.email) redirect(`/login?next=/messages/${threadId}`);
+  const user = await ensureDbUser(authUser, await getLocale());
+
+  const thread = await prisma.thread.findUnique({
+    where: { id: threadId },
+    include: { booking: { select: { clientId: true, providerId: true } } },
+  });
+  if (!thread?.booking) return;
+  const { clientId, providerId } = thread.booking;
+  if (user.id !== clientId && user.id !== providerId) return;
+  const other = user.id === clientId ? providerId : clientId;
+
+  await prisma.chatBlock.deleteMany({ where: { blockerId: user.id, blockedId: other } });
+  revalidatePath(`/messages/${threadId}`);
 }

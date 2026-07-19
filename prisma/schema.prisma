@@ -479,6 +479,18 @@ model Strike {
   @@index([userId, expiresAt])
 }
 
+// Блокировка собеседника в чате: заблокированный не может писать этому
+// пользователю. Направленная (blocker -> blocked).
+model ChatBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
 model Favorite {
   userId     String
   providerId String

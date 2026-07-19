@@ -183,6 +183,13 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "photos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS "readAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "ChatBlock" (
+         "id" TEXT NOT NULL, "blockerId" TEXT NOT NULL, "blockedId" TEXT NOT NULL,
+         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "ChatBlock_pkey" PRIMARY KEY ("id"))`,
+    );
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ChatBlock_blockerId_blockedId_key" ON "ChatBlock"("blockerId", "blockedId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ChatBlock_blockedId_idx" ON "ChatBlock"("blockedId")`);
 
     // Наполняем категории и дерево подкатегорий данными (идемпотентно).
     // Категории - первыми: подкатегории ссылаются на них по slug.

@@ -2,7 +2,7 @@
 // и форма отправки. Участники - клиент и исполнитель этой брони.
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Ban } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -13,7 +13,7 @@ import { langName } from "@/i18n/config";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import ChatForm from "../ChatForm";
-import { sendMessage } from "../actions";
+import { sendMessage, blockUser, unblockUser } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +55,18 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   // "Прочитано" показываем под последним моим сообщением, которое собеседник прочёл.
   const lastReadMineId = [...thread.messages].reverse().find((m) => m.author.id === user.id && m.readAt)?.id ?? null;
 
+  // Блокировка: состояние в обе стороны. Собеседник - вторая сторона брони.
+  const otherId = iAmClient ? thread.booking.providerId : thread.booking.clientId;
+  const blocks = await prisma.chatBlock
+    .findMany({
+      where: { OR: [{ blockerId: user.id, blockedId: otherId }, { blockerId: otherId, blockedId: user.id }] },
+      select: { blockerId: true },
+    })
+    .catch(() => [] as { blockerId: string }[]);
+  const iBlocked = blocks.some((b) => b.blockerId === user.id);
+  const blockedByThem = blocks.some((b) => b.blockerId === otherId);
+  const chatDisabled = iBlocked || blockedByThem;
+
   const tr = await translateBatch(thread.messages.map((m) => m.textOriginal), locale);
   const trOf = (s: string) => tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false };
 
@@ -64,7 +76,20 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         <Link href="/messages" className="back">
           <ArrowLeft size={14} /> {t.messages}
         </Link>
-        <h1 className="page" style={{ fontSize: "clamp(20px,5vw,26px)" }}>{counterpart}</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <h1 className="page" style={{ fontSize: "clamp(20px,5vw,26px)", margin: 0 }}>{counterpart}</h1>
+          {iBlocked ? (
+            <form action={unblockUser.bind(null, thread.id)}>
+              <button className="btn btn-line btn-sm">{tx.chatUnblock}</button>
+            </form>
+          ) : (
+            <form action={blockUser.bind(null, thread.id)}>
+              <button className="btn btn-line btn-sm">
+                <Ban size={14} /> {tx.chatBlock}
+              </button>
+            </form>
+          )}
+        </div>
 
         <div className="chat">
           {thread.messages.map((m) => {
@@ -100,12 +125,18 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
           })}
         </div>
 
-        <ChatForm
-          action={sendMessage.bind(null, thread.id)}
-          placeholder={t.msgWritePh}
-          sendLabel={t.msgSend}
-          attachLabel={tx.chatAttach}
-        />
+        {chatDisabled ? (
+          <div className="hold" style={{ marginTop: 12 }}>
+            <Ban size={15} /> {tx.chatBlocked}
+          </div>
+        ) : (
+          <ChatForm
+            action={sendMessage.bind(null, thread.id)}
+            placeholder={t.msgWritePh}
+            sendLabel={t.msgSend}
+            attachLabel={tx.chatAttach}
+          />
+        )}
       </div>
     </main>
   );
