@@ -53,15 +53,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Имя и роль в шапке: из таблицы User, при недоступной базе из метаданных Supabase.
   const authUser = await getAuthUser();
   let userName: string | null = null;
+  let userAvatar: string | null = null;
   let isProvider = false;
   let isAdmin = false;
   let unreadCount = 0;
   if (authUser?.email) {
     userName = (authUser.user_metadata?.name as string | undefined) || authUser.email.split("@")[0];
     try {
-      const dbUser = await prisma.user.findUnique({ where: { email: authUser.email }, select: { id: true, name: true, roles: true } });
+      const dbUser = await prisma.user.findUnique({ where: { email: authUser.email }, select: { id: true, name: true, avatarUrl: true, roles: true } });
       if (dbUser) {
         userName = dbUser.name;
+        userAvatar = dbUser.avatarUrl;
         isProvider = dbUser.roles.includes(Role.PROVIDER);
         isAdmin = dbUser.roles.includes(Role.ADMIN);
         try {
@@ -109,6 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           t={t}
           isLoggedIn={Boolean(authUser?.email)}
           userName={userName}
+          userAvatar={userAvatar}
           isProvider={isProvider}
           isAdmin={isAdmin}
           unreadCount={unreadCount}

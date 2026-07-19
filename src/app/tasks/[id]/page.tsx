@@ -22,6 +22,7 @@ import { providerActiveCategoryIds, MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import { isDemoMode } from "@/lib/test-users/bots";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
+import Avatar from "@/components/Avatar";
 import { Phone, MessageCircle, CheckCircle2, XCircle } from "lucide-react";
 import OfferForm from "../OfferForm";
 import { acceptOffer, cancelAcceptedTask, markTaskDone } from "../actions";
@@ -46,7 +47,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     include: {
       category: { select: { id: true, slug: true, nameEn: true, nameRu: true } },
       booking: { select: { id: true, status: true, thread: { select: { id: true } } } },
-      client: { select: { isTest: true, name: true, phone: true } },
+      client: { select: { isTest: true, name: true, phone: true, avatarUrl: true } },
       offers: {
         orderBy: { createdAt: "asc" },
         include: {
@@ -56,7 +57,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               displayName: true,
               ratingCached: true,
               jobsCount: true,
-              user: { select: { phone: true } },
+              user: { select: { phone: true, avatarUrl: true } },
             },
           },
         },
@@ -122,6 +123,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   // Контакт другой стороны: владельцу показываем телефон исполнителя, исполнителю - телефон клиента.
   const counterpartName = isOwner ? acceptedOffer?.provider.displayName ?? "" : task.client.name;
   const counterpartPhone = isOwner ? acceptedOffer?.provider.user.phone ?? null : task.client.phone;
+  const counterpartAvatar = isOwner ? acceptedOffer?.provider.user.avatarUrl ?? null : task.client.avatarUrl;
   const chatThreadId = task.booking?.thread?.id ?? null;
 
   return (
@@ -223,7 +225,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             <div className="offer-who" style={{ marginBottom: 12 }}>
-              <span className="avatar">{counterpartName[0]?.toUpperCase()}</span>
+              <Avatar url={counterpartAvatar} name={counterpartName} />
               <div>
                 <div className="offer-name">{counterpartName}</div>
                 <div className="offer-sub">{isOwner ? tx.dealChosenPro : tx.dealClient}</div>
@@ -322,7 +324,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                     <div className={"offer" + (rejected ? " off" : "") + (accepted ? " on" : "")} key={offer.id}>
                       <div className="offer-top">
                         <div className="offer-who">
-                          <span className="avatar">{offer.provider.displayName[0]}</span>
+                          <Avatar url={offer.provider.user.avatarUrl} name={offer.provider.displayName} />
                           <div>
                             <div className="offer-name">{offer.provider.displayName}</div>
                             <div className="offer-sub">

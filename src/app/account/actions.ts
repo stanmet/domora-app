@@ -10,6 +10,7 @@ import { getAuthUser, getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
+import { uploadImage } from "@/lib/storage";
 import { LOCALES, LOCALE_COOKIE, type Locale } from "@/i18n/config";
 
 // Заказы, при которых удаление аккаунта запрещено (деньги/обязательства в игре).
@@ -37,15 +38,23 @@ export async function updateProfile(formData: FormData): Promise<void> {
     redirect("/account?err=name");
   }
 
+  // Аватар: загружаем, если приложен файл; иначе оставляем прежний.
+  const avatarFile = formData.get("avatar");
+  let avatarUrl: string | undefined;
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    const url = await uploadImage(avatarFile, `avatar/${user.id}`);
+    if (url) avatarUrl = url;
+  }
+
   try {
     await prisma.user.update({
       where: { id: user.id },
-      data: { name, phone, locale },
+      data: { name, phone, locale, ...(avatarUrl ? { avatarUrl } : {}) },
     });
   } catch (e) {
     // Телефон уникален: если занят другим аккаунтом, сохраняем без него.
     console.error("updateProfile failed", e);
-    await prisma.user.update({ where: { id: user.id }, data: { name, locale } });
+    await prisma.user.update({ where: { id: user.id }, data: { name, locale, ...(avatarUrl ? { avatarUrl } : {}) } });
   }
 
   // Язык интерфейса храним и в cookie, чтобы страницы сразу переключились.

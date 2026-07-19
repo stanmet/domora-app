@@ -87,7 +87,7 @@ export default async function AccountPage({
 
         <AccountForm
           action={updateProfile}
-          current={{ name: user.name, phone: user.phone ?? "", locale }}
+          current={{ name: user.name, phone: user.phone ?? "", locale, avatarUrl: user.avatarUrl }}
           labels={{ ...tx, nameL: t.nameL }}
           savedFlag={saved === "1"}
         />

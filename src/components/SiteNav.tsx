@@ -32,6 +32,7 @@ export default function SiteNav({
   t,
   isLoggedIn,
   userName,
+  userAvatar,
   isProvider,
   isAdmin,
   unreadCount,
@@ -43,6 +44,7 @@ export default function SiteNav({
   t: Dict;
   isLoggedIn: boolean;
   userName: string | null;
+  userAvatar?: string | null;
   isProvider: boolean;
   isAdmin: boolean;
   unreadCount: number;
@@ -148,7 +150,12 @@ export default function SiteNav({
 
         {isLoggedIn ? (
           <Link href="/account" className="drawer-user" onClick={close}>
-            <span className="avatar">{(userName ?? "?")[0]?.toUpperCase()}</span>
+            {userAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userAvatar} alt="" className="avatar" style={{ objectFit: "cover", padding: 0 }} />
+            ) : (
+              <span className="avatar">{(userName ?? "?")[0]?.toUpperCase()}</span>
+            )}
             <span>
               <b>{userName}</b>
               <span className="drawer-role">{roleLabel}</span>

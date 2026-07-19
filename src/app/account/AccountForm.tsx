@@ -15,10 +15,11 @@ export default function AccountForm({
   savedFlag,
 }: {
   action: (formData: FormData) => Promise<void>;
-  current: { name: string; phone: string; locale: Locale };
+  current: { name: string; phone: string; locale: Locale; avatarUrl?: string | null };
   labels: ExtraDict & { nameL: string };
   savedFlag: boolean;
 }) {
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(current.avatarUrl ?? null);
   const [pw, setPw] = useState("");
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState<string | null>(null);
@@ -51,6 +52,28 @@ export default function AccountForm({
     <>
       <form className="form" action={action}>
         <h2 className="subs-title" style={{ marginTop: 4 }}>{labels.accEditTitle}</h2>
+
+        <label>{labels.avatarL}</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+          {avatarPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarPreview} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <span className="avatar" style={{ width: 56, height: 56 }}>
+              {(current.name?.[0] ?? "?").toUpperCase()}
+            </span>
+          )}
+          <input
+            name="avatar"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              setAvatarPreview(f ? URL.createObjectURL(f) : current.avatarUrl ?? null);
+            }}
+          />
+        </div>
+
         <label htmlFor="name">{labels.nameL}</label>
         <input id="name" name="name" className="f" required defaultValue={current.name} placeholder={labels.accNamePh} />
         <label htmlFor="phone">{labels.accPhoneL}</label>
