@@ -2,7 +2,7 @@
 // Дизайн из prototypes/HostDashboard.jsx (обзор с онбординг-чеклистом).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarClock, ClipboardCheck, ClipboardList, FileCheck2, Gauge, Images, Landmark, LayoutGrid, UserRound } from "lucide-react";
+import { ArrowRight, CalendarClock, ClipboardCheck, ClipboardList, Gauge, Images, LayoutGrid, UserRound } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -10,13 +10,12 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { expireOverdueRequests } from "@/lib/bookings";
-import { stripe } from "@/lib/stripe";
 import { providerHealth } from "@/lib/health";
 import ProOnboarding from "./ProOnboarding";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProPage({ searchParams }: { searchParams: Promise<{ onboarded?: string }> }) {
+export default async function ProPage() {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro");
 
@@ -26,28 +25,10 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
   if (!user.roles.includes(Role.PROVIDER)) redirect("/account");
 
   await expireOverdueRequests({ providerId: user.id });
+  // Заказы "в работе": исполнитель выбран, но заказ ещё не завершён.
   const newRequests = await prisma.booking.count({
-    where: { providerId: user.id, status: BookingStatus.REQUESTED },
+    where: { providerId: user.id, status: BookingStatus.IN_PROGRESS },
   });
-
-  const { onboarded } = await searchParams;
-  let profile = await prisma.providerProfile.findUnique({
-    where: { userId: user.id },
-    select: { stripeAccountId: true, payoutsEnabled: true },
-  });
-
-  // Возврат из онбординга Stripe: сверяем статус аккаунта сразу, не дожидаясь
-  // вебхука account.updated (он остается источником правды и придет тоже).
-  if (onboarded === "1" && profile?.stripeAccountId && !profile.payoutsEnabled) {
-    const account = await stripe.accounts.retrieve(profile.stripeAccountId).catch(() => null);
-    if (account?.payouts_enabled) {
-      profile = await prisma.providerProfile.update({
-        where: { userId: user.id },
-        data: { payoutsEnabled: true },
-        select: { stripeAccountId: true, payoutsEnabled: true },
-      });
-    }
-  }
 
   const listingsCount = await prisma.listing.count({ where: { providerId: user.id } });
   const health = await providerHealth(user.id);
@@ -59,15 +40,6 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
         <h1 className="page">{t.proDash}</h1>
         <p className="sub">{t.proWelcome}</p>
 
-        {/* Налоговая напоминалка (Ирландия): порог €5000/год */}
-        <Link href="/taxes" className="tip" style={{ margin: "0 0 14px", textDecoration: "none" }}>
-          <div className="ti" style={{ background: "var(--green)" }}>
-            <Landmark size={20} />
-          </div>
-          <p>
-            {t.taxReminder} <b style={{ color: "var(--green-dark)" }}>{t.learnMore} →</b>
-          </p>
-        </Link>
         <div className="card">
           <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
             <div className="icircle">
@@ -156,20 +128,6 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
             </Link>
           </div>
         </div>
-        <div className="card">
-          <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
-            <div className="icircle">
-              <FileCheck2 size={22} strokeWidth={1.7} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3>{t.docsTitle}</h3>
-              <p>{t.docsSub}</p>
-            </div>
-            <Link href="/pro/documents" className="btn btn-ink btn-sm">
-              {t.obGo} <ArrowRight size={13} />
-            </Link>
-          </div>
-        </div>
         {health.handled > 0 && (
           <div className="card">
             <div className="ob-head" style={{ marginBottom: 12, alignItems: "center" }}>
@@ -194,7 +152,7 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
           </div>
         )}
 
-        <ProOnboarding t={t} stripeDone={!!profile?.payoutsEnabled} listingDone={listingsCount > 0} />
+        <ProOnboarding t={t} listingDone={listingsCount > 0} />
       </div>
     </main>
   );

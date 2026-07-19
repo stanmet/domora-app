@@ -14,14 +14,11 @@ import { getExtra } from "@/i18n/extra";
 import { flagReview } from "@/app/bookings/reviews-actions";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
-import { licenceFor } from "@/lib/subcategories";
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import FavoriteButton from "@/components/FavoriteButton";
 import { toggleFavorite } from "@/app/favorites/actions";
-import SubscribeBox from "@/components/SubscribeBox";
-import { createSubscription } from "@/app/subscriptions/actions";
 import { isDemoMode } from "@/lib/test-users/bots";
 
 export const dynamic = "force-dynamic";
@@ -87,33 +84,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE" && !l.quoteFirst);
   const cheapest = priced.length ? priced.reduce((a, b) => (b.priceCents < a.priceCents ? b : a)) : null;
 
-  // Регулируемые услуги (электрика RECI, газ RGII): бейдж наличия лицензии.
-  const hasRegulated = provider.listings.some((l) => licenceFor(l.subcategory?.slug));
-  let docCount = 0;
-  let verifiedCount = 0;
-  if (hasRegulated) {
-    try {
-      const rows = await prisma.providerDocument.findMany({
-        where: { providerId: provider.userId },
-        select: { verifiedAt: true },
-      });
-      docCount = rows.length;
-      verifiedCount = rows.filter((r) => r.verifiedAt).length;
-    } catch {
-      // Таблица документов недоступна: считаем 0.
-    }
-  }
-  const licenceState: "verified" | "onfile" | "required" =
-    verifiedCount > 0 ? "verified" : docCount > 0 ? "onfile" : "required";
-  const licenceOk = licenceState !== "required";
-  const licenceLabel =
-    licenceState === "verified" ? t.licenceVerified : licenceState === "onfile" ? t.licenceOnFile : t.licenceRequired;
-  const licenceStyle =
-    licenceState === "verified"
-      ? undefined
-      : licenceState === "onfile"
-        ? { background: "#eef0ea", color: "var(--muted)" }
-        : { background: "#FDEBE0", color: "var(--orange)" };
 
   // Обложка: первое фото портфолио, иначе фото любой услуги.
   const allPhotos = [...provider.portfolioPhotos, ...provider.listings.flatMap((l) => l.photos)];
@@ -164,7 +134,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   }
 
   const profession = provider.customProfession?.trim();
-  const bookHref = cheapest ? `/providers/${provider.userId}/book` : null;
+  // V1 без прямой оплаты: заказ идёт через доску задач, а не бронирование листинга.
+  const bookHref = "/tasks/new";
 
   // Schema.org для поисковиков: тип услуги, город, агрегированный рейтинг.
   const jsonLd = {
@@ -225,16 +196,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <MapPin size={13} /> {provider.city}
               </span>
-              {provider.identityVerifiedAt && (
-                <span className="verified">
-                  <ShieldCheck size={12} /> {t.verified}
-                </span>
-              )}
-              {hasRegulated && (
-                <span className="verified" style={licenceStyle}>
-                  <ShieldCheck size={12} /> {licenceLabel}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -294,8 +255,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                 const Icon = CATEGORY_ICONS[l.category.slug] ?? CATEGORY_ICONS.other;
                 const isQuote = l.unit === "FIXED_QUOTE" || l.priceCents === 0 || l.quoteFirst;
                 const catLabel = categoryLabel(t, l.category.slug, locale === "ru" ? l.category.nameRu : l.category.nameEn);
-                const bookable = !isQuote;
-                const lic = licenceFor(l.subcategory?.slug);
                 const inner = (
                   <>
                     <div className="svc-thumb" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
@@ -308,11 +267,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     </div>
                     <div className="svc-body">
                       <span className="svc-badge">{catLabel}</span>
-                      {lic && (
-                        <span className="svc-badge" style={{ marginLeft: 6, ...licenceStyle }}>
-                          {lic} · {licenceLabel}
-                        </span>
-                      )}
                       <TranslatableText
                         as="h4"
                         className="svc-title"
@@ -344,11 +298,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     </div>
                   </>
                 );
-                return bookable ? (
-                  <Link key={l.id} href={`/providers/${provider.userId}/book?listing=${l.id}`} className="svc-card">
-                    {inner}
-                  </Link>
-                ) : (
+                return (
                   <div key={l.id} className="svc-card">
                     {inner}
                   </div>
@@ -437,15 +387,9 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               <span style={{ fontSize: 18 }}>{t.byQuote}</span>
             )}
           </div>
-          {bookHref ? (
-            <Link href={bookHref} className="btn btn-green" style={{ width: "100%", justifyContent: "center" }}>
-              {t.request}
-            </Link>
-          ) : (
-            <button className="btn btn-green" style={{ width: "100%", justifyContent: "center" }} disabled>
-              {t.request}
-            </button>
-          )}
+          <Link href={bookHref} className="btn btn-green" style={{ width: "100%", justifyContent: "center" }}>
+            {t.postTask}
+          </Link>
           <FavoriteButton
             action={toggleFavorite.bind(null, provider.userId)}
             active={isFav}
@@ -453,24 +397,8 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             removeLabel={t.favRemove}
           />
           <div className="note">
-            <ShieldCheck size={15} /> {t.sideNote}
+            <ShieldCheck size={15} /> {tx.safeLead}
           </div>
-          {cheapest && (
-            <SubscribeBox
-              action={createSubscription.bind(null, cheapest.id, provider.userId)}
-              labels={{
-                title: t.subTitle,
-                desc: t.subDesc,
-                weekly: t.subFreqWeekly,
-                biweekly: t.subFreqBiweekly,
-                monthly: t.subFreqMonthly,
-                subscribe: t.subscribe,
-                off: t.subOff,
-              }}
-              priceLine={`${eur(Math.round(cheapest.priceCents * 0.9), locale)} / ${unitLabel(t, cheapest.unit)}`}
-              discountPct={10}
-            />
-          )}
         </aside>
       </div>
 
@@ -488,15 +416,9 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             <span className="bookbar-amt">{t.byQuote}</span>
           )}
         </div>
-        {bookHref ? (
-          <Link href={bookHref} className="btn btn-green">
-            {t.request}
-          </Link>
-        ) : (
-          <button className="btn btn-green" disabled>
-            {t.request}
-          </button>
-        )}
+        <Link href={bookHref} className="btn btn-green">
+          {t.postTask}
+        </Link>
       </div>
     </main>
   );
