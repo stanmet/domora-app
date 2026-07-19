@@ -11,13 +11,17 @@ import { getLocale } from "@/i18n/server";
 // управление администраторами, доступно только суперадминам.
 export const ADMIN_SCOPES = [
   "moderation",
-  "disputes",
-  "documents",
+  "complaints",
   "users",
   "providers",
   "bookings",
+  "categories",
   "testUsers",
   "admins",
+  // Дормантные (для отключённого платёжного/докерного кода): вкладок нет,
+  // но серверные действия ещё ссылаются на эти права.
+  "documents",
+  "disputes",
 ] as const;
 export type AdminScope = (typeof ADMIN_SCOPES)[number];
 

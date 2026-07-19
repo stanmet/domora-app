@@ -7,7 +7,9 @@ import {
   BookingStatus,
   ListingStatus,
   PaymentStatus,
+  PriceUnit,
   ProviderStatus,
+  Role,
   UserStatus,
 } from "@prisma/client";
 import { DisputeStatus } from "@prisma/client";
@@ -20,6 +22,7 @@ import { getAdminDict } from "./i18n";
 import { notify } from "@/lib/notify";
 import { refundToClient } from "@/lib/cancellation";
 import { processPayouts } from "@/lib/jobs";
+import { recomputeRating } from "@/lib/reviews";
 
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
@@ -305,4 +308,141 @@ export async function resolveDispute(
   revalidatePath("/bookings");
   revalidatePath("/pro/bookings");
   return { ok: true };
+}
+
+// --- Удаление пользователя (мягкое): обезличивание + бан. ---
+// Реального удаления строки не делаем (на ней висят заказы/сообщения/отзывы) -
+// вместо этого скрываем персональные данные и закрываем доступ.
+export async function deleteUser(userId: string): Promise<void> {
+  const admin = await requireAdminScope("users");
+  if (userId === admin.id) return; // себя не удаляем
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.roles.includes(Role.ADMIN)) return; // других админов не трогаем
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: "Deleted user",
+        email: `deleted+${userId}@domora.invalid`,
+        phone: null,
+        status: UserStatus.BANNED,
+      },
+    }),
+    adminActionLog(admin.id, "user", userId, "delete"),
+  ]);
+
+  // Если это исполнитель - убираем его из каталога.
+  const provider = await prisma.providerProfile.findUnique({ where: { userId }, select: { userId: true } });
+  if (provider) {
+    await prisma.providerProfile.update({ where: { userId }, data: { status: ProviderStatus.BANNED } });
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+}
+
+// --- Удаление заказа (только без платежа: V1-модель без денег). ---
+// Каскадно чистим зависимые записи в транзакции и отвязываем задачу.
+export async function deleteBooking(bookingId: string): Promise<void> {
+  const admin = await requireAdminScope("bookings");
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, payment: { select: { id: true } }, thread: { select: { id: true } }, task: { select: { id: true } } },
+  });
+  if (!booking) return;
+  // Безопасность: заказы с платежом не удаляем (это денежная история).
+  if (booking.payment) return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.review.deleteMany({ where: { bookingId } });
+    if (booking.thread) {
+      await tx.message.deleteMany({ where: { threadId: booking.thread.id } });
+      await tx.thread.delete({ where: { id: booking.thread.id } });
+    }
+    await tx.bookingEvent.deleteMany({ where: { bookingId } });
+    if (booking.task) {
+      await tx.task.update({ where: { id: booking.task.id }, data: { bookingId: null } });
+    }
+    await tx.booking.delete({ where: { id: bookingId } });
+    await adminActionLog(admin.id, "booking", bookingId, "delete");
+  });
+
+  revalidatePath("/admin");
+}
+
+// --- Категории: создание и редактирование. ---
+function parseUnit(raw: FormDataEntryValue | null): PriceUnit | null {
+  const v = String(raw ?? "");
+  return (Object.values(PriceUnit) as string[]).includes(v) ? (v as PriceUnit) : null;
+}
+
+export async function createCategory(formData: FormData): Promise<void> {
+  const admin = await requireAdminScope("categories");
+
+  const slug = String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const nameRu = String(formData.get("nameRu") ?? "").trim();
+  const unit = parseUnit(formData.get("unitDefault"));
+  if (!slug || !nameEn || !nameRu || !unit) return;
+
+  const exists = await prisma.category.findUnique({ where: { slug }, select: { id: true } });
+  if (exists) return; // slug занят
+
+  await prisma.$transaction([
+    prisma.category.create({ data: { slug, nameEn, nameRu, unitDefault: unit } }),
+    adminActionLog(admin.id, "category", slug, "create"),
+  ]);
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+}
+
+export async function updateCategory(id: string, formData: FormData): Promise<void> {
+  const admin = await requireAdminScope("categories");
+
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const nameRu = String(formData.get("nameRu") ?? "").trim();
+  const unit = parseUnit(formData.get("unitDefault"));
+  if (!nameEn || !nameRu || !unit) return;
+
+  const cat = await prisma.category.findUnique({ where: { id }, select: { id: true } });
+  if (!cat) return;
+
+  await prisma.$transaction([
+    prisma.category.update({ where: { id }, data: { nameEn, nameRu, unitDefault: unit } }),
+    adminActionLog(admin.id, "category", id, "update"),
+  ]);
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+}
+
+// --- Жалобы: разбор помеченных (disputeFlag) отзывов. ---
+// "delete" удаляет отзыв и пересчитывает рейтинг адресата; "dismiss" снимает флаг.
+export async function resolveComplaint(reviewId: string, action: "delete" | "dismiss"): Promise<void> {
+  const admin = await requireAdminScope("complaints");
+
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true, targetId: true } });
+  if (!review) return;
+
+  if (action === "delete") {
+    await prisma.$transaction([
+      prisma.review.delete({ where: { id: reviewId } }),
+      adminActionLog(admin.id, "review", reviewId, "complaint_delete"),
+    ]);
+    await recomputeRating(review.targetId);
+  } else {
+    await prisma.$transaction([
+      prisma.review.update({ where: { id: reviewId }, data: { disputeFlag: false } }),
+      adminActionLog(admin.id, "review", reviewId, "complaint_dismiss"),
+    ]);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/providers/${review.targetId}`);
 }
