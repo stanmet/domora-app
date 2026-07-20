@@ -6,6 +6,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { Check, MessageCircle } from "lucide-react";
 import type { Dict } from "@/i18n/dictionaries";
+import { track } from "@/lib/analytics";
 import { createOffer, type OfferState } from "./actions";
 
 export default function OfferForm({ taskId, t }: { taskId: string; t: Dict }) {
@@ -14,7 +15,10 @@ export default function OfferForm({ taskId, t }: { taskId: string; t: Dict }) {
   const done = state && "ok" in state;
 
   useEffect(() => {
-    if (done) setOpen(false);
+    if (done) {
+      setOpen(false);
+      track("offer_sent");
+    }
   }, [done]);
 
   if (done) {

@@ -75,6 +75,7 @@ export default async function AccountPage({
 
         {err === "active" && <div className="err" style={{ marginBottom: 12 }}>{tx.accDeleteActive}</div>}
         {err === "phone" && <div className="err" style={{ marginBottom: 12 }}>{tx.accPhoneTaken}</div>}
+        {err === "upload" && <div className="err" style={{ marginBottom: 12 }}>{tx.genericError}</div>}
 
         <div className="form" style={{ marginBottom: 8 }}>
           <label>{t.emailL}</label>

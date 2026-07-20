@@ -14,14 +14,41 @@ import type { Dict } from "@/i18n/dictionaries";
 
 type RoleChoice = "client" | "provider";
 
-export default function SignupForm({ t, next, initialRole }: { t: Dict; next: string | null; initialRole: RoleChoice }) {
+export default function SignupForm({
+  t,
+  next,
+  initialRole,
+  resendLabel,
+  resendDoneLabel,
+}: {
+  t: Dict;
+  next: string | null;
+  initialRole: RoleChoice;
+  resendLabel: string;
+  resendDoneLabel: string;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<RoleChoice>(initialRole);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Повторная отправка письма подтверждения (Supabase).
+  const resend = async () => {
+    if (busy || !email.trim()) return;
+    setBusy(true);
+    try {
+      await getSupabaseBrowser().auth.resend({ type: "signup", email: email.trim() });
+      setResent(true);
+    } catch {
+      // тихо: кнопка остаётся доступной
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const target = () => next ?? (role === "provider" ? "/pro" : "/account");
 
@@ -71,6 +98,13 @@ export default function SignupForm({ t, next, initialRole }: { t: Dict; next: st
         <p>
           {t.linkSentP} <b>{email.trim()}</b>. {t.linkSentP2}
         </p>
+        {resent ? (
+          <p className="authnote" style={{ color: "var(--green, #1a7f37)" }}>{resendDoneLabel}</p>
+        ) : (
+          <button type="button" className="btn btn-line btn-sm" style={{ marginTop: 10 }} onClick={resend} disabled={busy}>
+            {resendLabel}
+          </button>
+        )}
       </div>
     );
   }

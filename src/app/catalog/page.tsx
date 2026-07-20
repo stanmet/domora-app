@@ -50,7 +50,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   };
 }
 
-type SearchParams = { q?: string; cat?: string; city?: string; sub?: string; sort?: string; maxPrice?: string; minRating?: string; minJobs?: string };
+type SearchParams = { q?: string; cat?: string; city?: string; sub?: string; sort?: string; maxPrice?: string; minRating?: string; minJobs?: string; page?: string };
 
 // Варианты сортировки каталога.
 const SORTS = ["recommended", "price_asc", "price_desc", "rating", "popular"] as const;
@@ -72,7 +72,9 @@ function orderByFor(sort: Sort): Prisma.ListingOrderByWithRelationInput[] {
 }
 
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { q = "", cat = "", city = "", sub = "", sort = "", maxPrice = "", minRating = "", minJobs = "" } = await searchParams;
+  const { q = "", cat = "", city = "", sub = "", sort = "", maxPrice = "", minRating = "", minJobs = "", page: pageRaw = "" } = await searchParams;
+  const PAGE_SIZE = 24;
+  const page = Math.max(1, Number.parseInt(pageRaw, 10) || 1);
   const locale = await getLocale();
   const t = getDict(locale);
   const tx = getExtra(locale);
@@ -132,14 +134,35 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         category: { select: { slug: true } },
       },
       orderBy: orderByFor(activeSort),
+      // Пагинация: берём страницу + 1 запись, чтобы знать, есть ли следующая.
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE + 1,
     }),
   ]);
 
   // Подбор по радиусу выезда: если выбран город, оставляем исполнителей, которые
   // достают до него из своего города (или работают по всей стране большим радиусом).
-  const listings = city
+  const filtered = city
     ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city))
     : listingsRaw;
+  const hasNext = filtered.length > PAGE_SIZE;
+  const listings = filtered.slice(0, PAGE_SIZE);
+
+  // Ссылка на страницу N с сохранением всех фильтров.
+  const buildPageUrl = (n: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (cat) params.set("cat", cat);
+    if (city) params.set("city", city);
+    if (sub) params.set("sub", sub);
+    if (sort && sort !== "recommended") params.set("sort", sort);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (minRating) params.set("minRating", minRating);
+    if (minJobs) params.set("minJobs", minJobs);
+    if (n > 1) params.set("page", String(n));
+    const s = params.toString();
+    return s ? `/catalog?${s}` : "/catalog";
+  };
 
   const tabCategories = sortByCategoryOrder(categories).map((c) => ({
     slug: c.slug,
@@ -246,6 +269,22 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {(page > 1 || hasNext) && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginTop: 24 }}>
+          {page > 1 ? (
+            <Link href={buildPageUrl(page - 1)} className="btn btn-line btn-sm">← {page - 1}</Link>
+          ) : (
+            <span />
+          )}
+          <span style={{ color: "var(--muted)", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{page}</span>
+          {hasNext ? (
+            <Link href={buildPageUrl(page + 1)} className="btn btn-line btn-sm">{page + 1} →</Link>
+          ) : (
+            <span />
+          )}
         </div>
       )}
     </main>

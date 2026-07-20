@@ -41,9 +41,11 @@ export async function updateProfile(formData: FormData): Promise<void> {
   // Аватар: загружаем, если приложен файл; иначе оставляем прежний.
   const avatarFile = formData.get("avatar");
   let avatarUrl: string | undefined;
+  let uploadFailed = false;
   if (avatarFile instanceof File && avatarFile.size > 0) {
     const url = await uploadImage(avatarFile, `avatar/${user.id}`);
     if (url) avatarUrl = url;
+    else uploadFailed = true; // хранилище недоступно или файл отклонён
   }
 
   let phoneTaken = false;
@@ -64,7 +66,10 @@ export async function updateProfile(formData: FormData): Promise<void> {
   (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
 
   revalidatePath("/account");
-  redirect(phoneTaken ? "/account?err=phone" : "/account?saved=1");
+  // Приоритет сообщений: занятый телефон важнее, чем сбой загрузки аватара.
+  if (phoneTaken) redirect("/account?err=phone");
+  if (uploadFailed) redirect("/account?err=upload");
+  redirect("/account?saved=1");
 }
 
 // Стать исполнителем: добавляем роль PROVIDER текущему аккаунту и создаём
