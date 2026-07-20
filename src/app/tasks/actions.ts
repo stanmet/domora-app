@@ -16,6 +16,7 @@ import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { genBookingRef } from "@/lib/booking-ref";
 import { filterContacts } from "@/lib/contact-filter";
+import { rateLimit } from "@/lib/rate-limit";
 import { MAX_OFFERS_PER_TASK } from "@/lib/tasks";
 import { notify } from "@/lib/notify";
 import { isDemoMode } from "@/lib/test-users/bots";
@@ -29,6 +30,9 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
   const t = getDict(locale);
   const user = await ensureDbUser(authUser, locale);
   if (!user.roles.includes(Role.PROVIDER)) return { error: t.tasksProvidersOnly };
+
+  // Анти-спам: не более 30 откликов в час с аккаунта.
+  if (!rateLimit(`offer:${user.id}`, 30, 60 * 60 * 1000)) return { error: t.errGeneric };
 
   const taskId = String(formData.get("taskId") ?? "");
   const message = String(formData.get("message") ?? "").trim();

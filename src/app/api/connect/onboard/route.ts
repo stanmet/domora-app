@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: "payments_disabled" }, { status: 410 });
   let user: Awaited<ReturnType<typeof requireUser>>;
   try {
     user = await requireUser(req); // Bearer-токен или cookie-сессия Supabase

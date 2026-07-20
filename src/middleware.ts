@@ -23,7 +23,24 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+
+  // Гейтинг приватных путей на edge (defense-in-depth): аноним получает жёсткий
+  // редирект на вход ещё до рендера страницы. Сами страницы тоже проверяют доступ.
+  const PRIVATE = ["/account", "/bookings", "/pro", "/admin", "/messages", "/notifications", "/favorites", "/disputes"];
+  const PRIVATE_EXACT = ["/tasks/mine", "/tasks/new"];
+  const path = request.nextUrl.pathname;
+  const isPrivate =
+    PRIVATE.some((p) => path === p || path.startsWith(p + "/")) ||
+    PRIVATE_EXACT.some((p) => path === p || path.startsWith(p + "/")) ||
+    /^\/tasks\/[^/]+\/edit$/.test(path);
+  if (isPrivate && !data.user) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/login";
+    login.search = `?next=${encodeURIComponent(path)}`;
+    return NextResponse.redirect(login);
+  }
+
   return response;
 }
 

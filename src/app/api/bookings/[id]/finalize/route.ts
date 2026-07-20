@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { finalizeBookingHold } from "@/lib/booking-create";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: "payments_disabled" }, { status: 410 });
   const { id } = await params;
   let user;
   try {

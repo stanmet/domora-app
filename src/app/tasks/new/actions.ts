@@ -12,6 +12,7 @@ import { getDict } from "@/i18n/dictionaries";
 import { encrypt } from "@/lib/crypto";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { uploadImage } from "@/lib/storage";
+import { rateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 
 export type CreateTaskState = { error: string } | null;
@@ -41,12 +42,37 @@ function toCents(value: FormDataEntryValue | null): number | null {
   return Math.round(n * 100);
 }
 
+const MAX_BUDGET_CENTS = 100_000 * 100; // €100 000 - разумный верхний предел
+
+// Серверная валидация даты (не в прошлом) и границ бюджета. Клиентские
+// ограничения (min=today) можно обойти, поэтому проверяем и на сервере.
+function validateTaskDateBudget(
+  dateRaw: string,
+  budgetFromCents: number | null,
+  budgetToCents: number | null,
+): { valid: boolean; dateWanted: Date } {
+  const dateWanted = new Date(`${dateRaw}T12:00:00`);
+  if (Number.isNaN(dateWanted.getTime())) return { valid: false, dateWanted };
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  if (dateWanted.getTime() < startOfToday.getTime()) return { valid: false, dateWanted };
+  if (budgetFromCents != null && budgetFromCents > MAX_BUDGET_CENTS) return { valid: false, dateWanted };
+  if (budgetToCents != null && budgetToCents > MAX_BUDGET_CENTS) return { valid: false, dateWanted };
+  if (budgetFromCents != null && budgetToCents != null && budgetFromCents > budgetToCents) {
+    return { valid: false, dateWanted };
+  }
+  return { valid: true, dateWanted };
+}
+
 export async function createTask(_prev: CreateTaskState, formData: FormData): Promise<CreateTaskState> {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/tasks/new");
   const locale = await getLocale();
   const t = getDict(locale);
   const user = await ensureDbUser(authUser, locale);
+
+  // Анти-спам: не более 10 задач в час с аккаунта.
+  if (!rateLimit(`task:${user.id}`, 10, 60 * 60 * 1000)) return { error: t.errTaskForm };
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -62,8 +88,8 @@ export async function createTask(_prev: CreateTaskState, formData: FormData): Pr
     return { error: t.errTaskForm };
   }
 
-  const dateWanted = new Date(`${dateRaw}T12:00:00`);
-  if (Number.isNaN(dateWanted.getTime())) return { error: t.errTaskForm };
+  const { valid, dateWanted } = validateTaskDateBudget(dateRaw, budgetFromCents, budgetToCents);
+  if (!valid) return { error: t.errTaskForm };
 
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { error: t.errTaskForm };
@@ -116,8 +142,8 @@ export async function updateTask(taskId: string, _prev: CreateTaskState, formDat
   if (!title || !categorySlug || !city || !dateRaw) {
     return { error: t.errTaskForm };
   }
-  const dateWanted = new Date(`${dateRaw}T12:00:00`);
-  if (Number.isNaN(dateWanted.getTime())) return { error: t.errTaskForm };
+  const { valid, dateWanted } = validateTaskDateBudget(dateRaw, budgetFromCents, budgetToCents);
+  if (!valid) return { error: t.errTaskForm };
 
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { error: t.errTaskForm };

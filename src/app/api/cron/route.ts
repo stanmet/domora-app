@@ -9,12 +9,15 @@ import { runBotTick } from "@/lib/test-users/bots";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  // Fail-closed: без заданного CRON_SECRET эндпоинт закрыт полностью, чтобы его
+  // нельзя было дёргать снаружи. Vercel Cron передаёт заголовок Authorization.
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!secret) {
+    return NextResponse.json({ error: "cron disabled: set CRON_SECRET" }, { status: 401 });
+  }
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   await expireStaleRequests().catch((e) => console.error("cron expire failed", e));

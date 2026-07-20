@@ -18,6 +18,7 @@ const HTTP_STATUS: Record<BookingErrorCode, number> = {
 };
 
 export async function POST(req: Request) {
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: "payments_disabled" }, { status: 410 });
   let user;
   try {
     user = await requireUser(req);

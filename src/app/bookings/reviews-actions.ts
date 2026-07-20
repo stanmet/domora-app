@@ -12,6 +12,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { recomputeRating } from "@/lib/reviews";
+import { rateLimit } from "@/lib/rate-limit";
 
 const REVIEWABLE: BookingStatus[] = [BookingStatus.COMPLETED, BookingStatus.CLOSED];
 
@@ -26,6 +27,10 @@ export async function submitReview(bookingId: string, formData: FormData): Promi
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/bookings");
   const user = await ensureDbUser(authUser, await getLocale());
+  if (!rateLimit(`review:${user.id}`, 30, 60 * 60 * 1000)) {
+    revalidatePath("/bookings");
+    return;
+  }
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },

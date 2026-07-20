@@ -8,8 +8,16 @@ import { requireUser } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Платежи в V1 отключены: денежный роут закрыт, если Stripe не настроен.
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: "payments_disabled" }, { status: 410 });
   const { id } = await params;
-  const user = await requireUser(req);
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch (e) {
+    if (e instanceof Response) return e;
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const booking = await prisma.booking.findUniqueOrThrow({
     where: { id },
     include: { payment: true },
