@@ -46,6 +46,8 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <Link href="/tasks">{t.taskBoard}</Link>
           <Link href="/how-it-works">{t.navHowItWorks}</Link>
           <Link href="/terms">{t.navTerms}</Link>
+          <Link href="/privacy">{tx.navPrivacy}</Link>
+          <Link href="/cookies">{tx.navCookies}</Link>
         </div>
 
         {categories.length > 0 && (

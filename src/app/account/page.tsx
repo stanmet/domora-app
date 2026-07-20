@@ -172,6 +172,12 @@ export default async function AccountPage({
         </section>
 
         <section className="subs-sec">
+          <a href="/api/account/export" className="btn btn-line" download>
+            {tx.accExport}
+          </a>
+        </section>
+
+        <section className="subs-sec">
           <h2 className="subs-title">{tx.accDangerZone}</h2>
           <p className="sub" style={{ marginTop: 0 }}>{tx.accDangerText}</p>
           <ConfirmAction

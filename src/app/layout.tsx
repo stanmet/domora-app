@@ -7,8 +7,11 @@ import "./globals.css";
 // Шрифты дизайн-системы раздаются самим приложением (next/font), без запросов к Google из браузера.
 const archivo = Archivo({ subsets: ["latin"], weight: ["600", "800", "900"], variable: "--font-archivo" });
 const inter = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700"], variable: "--font-inter" });
+import { cookies } from "next/headers";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
+import CookieConsent from "@/components/CookieConsent";
 import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getCity } from "@/lib/city";
@@ -94,11 +97,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Аналитика: Plausible (без cookи, приватная). Подключается только если задан
   // домен NEXT_PUBLIC_PLAUSIBLE_DOMAIN. Событийный API доступен как window.plausible.
   const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+  const tx = getExtra(locale);
+  // Аналитику подключаем только с согласия пользователя (cookie_consent=all).
+  const consent = (await cookies()).get("cookie_consent")?.value;
 
   return (
     <html lang={locale}>
       <body className={`dm ${archivo.variable} ${inter.variable}`}>
-        {plausibleDomain && (
+        {plausibleDomain && consent === "all" && (
           <>
             <Script defer data-domain={plausibleDomain} src="https://plausible.io/js/script.js" strategy="afterInteractive" />
             <Script id="plausible-init" strategy="afterInteractive">
@@ -136,6 +142,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             login: t.login,
           }}
         />
+        <CookieConsent text={tx.cookieBanner} accept={tx.cookieAccept} reject={tx.cookieReject} cookiesLabel={tx.navCookies} />
       </body>
     </html>
   );
