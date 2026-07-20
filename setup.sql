@@ -605,6 +605,61 @@ WHERE NOT EXISTS (
 );
 
 -- ============================================================
+-- 4b. ПАТЧ V1: поля и таблицы новых возможностей (идемпотентно)
+-- ============================================================
+-- Повторяет то, что код применяет сам при первом запуске (ensure-schema.ts).
+-- Держим здесь, чтобы свежая база сразу имела полную схему и первая загрузка
+-- страницы не зависела от авто-починки. Все команды безопасны для повторного
+-- запуска (IF NOT EXISTS).
+
+-- Аватар пользователя, фото заявки, отметка прочтения в чате.
+ALTER TABLE "User"    ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT;
+ALTER TABLE "Task"    ADD COLUMN IF NOT EXISTS "photos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS "readAt" TIMESTAMP(3);
+
+-- Блокировка собеседника в чате.
+CREATE TABLE IF NOT EXISTS "ChatBlock" (
+  "id" TEXT NOT NULL,
+  "blockerId" TEXT NOT NULL,
+  "blockedId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ChatBlock_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "ChatBlock_blockerId_blockedId_key" ON "ChatBlock"("blockerId", "blockedId");
+CREATE INDEX IF NOT EXISTS "ChatBlock_blockedId_idx" ON "ChatBlock"("blockedId");
+
+-- Кто из исполнителей открывал заявку (счётчик просмотров).
+CREATE TABLE IF NOT EXISTS "TaskView" (
+  "taskId" TEXT NOT NULL,
+  "providerId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "TaskView_pkey" PRIMARY KEY ("taskId","providerId")
+);
+CREATE INDEX IF NOT EXISTS "TaskView_taskId_idx" ON "TaskView"("taskId");
+
+-- Кеш автопереводов (чат и названия услуг на 6 языков).
+CREATE TABLE IF NOT EXISTS "Translation" (
+  "sourceHash" TEXT NOT NULL,
+  "targetLang" TEXT NOT NULL,
+  "sourceLang" TEXT NOT NULL,
+  "text" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Translation_pkey" PRIMARY KEY ("sourceHash","targetLang")
+);
+
+-- Уведомления пользователю (колокольчик).
+CREATE TABLE IF NOT EXISTS "Notification" (
+  "id" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "payload" JSONB NOT NULL DEFAULT '{}',
+  "readAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Notification_userId_readAt_idx" ON "Notification"("userId","readAt");
+
+-- ============================================================
 -- 5. ПРОВЕРКА
 -- ============================================================
 -- После выполнения этот запрос должен вернуть 7 категорий и 3 плашки:
