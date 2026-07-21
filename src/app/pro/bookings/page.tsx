@@ -4,7 +4,7 @@
 // Точный адрес клиента расшифровывается только после принятия заказа.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Calendar, Check, Clock, Lock, MapPin, ShieldCheck, Users, Wallet } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Clock, FileText, Lock, MapPin, ShieldCheck, Users, Wallet } from "lucide-react";
 import { BookingStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -66,11 +66,13 @@ function BookingCard({
   t,
   locale,
   reviewLabels,
+  receiptLabel,
 }: {
   b: BookingWithRefs;
   t: Dict;
   locale: Locale;
   reviewLabels: ReviewFormLabels;
+  receiptLabel: string;
 }) {
   const isRequest = b.status === BookingStatus.REQUESTED;
   const reviewable = b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CLOSED;
@@ -133,6 +135,13 @@ function BookingCard({
             confirmLabel={t.provCancelConfirm}
             backLabel={t.back}
           />
+        </div>
+      )}
+      {reviewable && (
+        <div className="bkbtns" style={{ marginTop: 10 }}>
+          <a href={`/bookings/${b.id}/invoice`} target="_blank" rel="noopener" className="btn btn-line btn-sm">
+            <FileText size={14} /> {receiptLabel}
+          </a>
         </div>
       )}
       {reviewable && (
@@ -234,7 +243,7 @@ export default async function ProBookingsPage({
           {t.newReq}
         </h3>
         {requests.length ? (
-          requests.map((b) => <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />)
+          requests.map((b) => <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} receiptLabel={t.invoiceTitle} />)
         ) : (
           <div className="empty">{t.emptyReq}</div>
         )}
@@ -244,7 +253,7 @@ export default async function ProBookingsPage({
               {t.stAccepted}
             </h3>
             {confirmed.map((b) => (
-              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />
+              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} receiptLabel={t.invoiceTitle} />
             ))}
           </>
         )}
@@ -254,7 +263,7 @@ export default async function ProBookingsPage({
               {t.historyT}
             </h3>
             {history.map((b) => (
-              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} />
+              <BookingCard key={b.id} b={b} t={t} locale={locale} reviewLabels={reviewLabels} receiptLabel={t.invoiceTitle} />
             ))}
           </>
         )}

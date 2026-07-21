@@ -3,7 +3,7 @@
 // экран успеха после отправки запроса из view "done".
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Check, MapPin, MessageCircle, Users, Wallet } from "lucide-react";
+import { Calendar, Check, FileText, MapPin, MessageCircle, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -131,6 +131,11 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                     <Link href={`/messages/${b.thread.id}`} className="btn btn-line btn-sm">
                       <MessageCircle size={14} /> {tx.dealOpenChat}
                     </Link>
+                  )}
+                  {["COMPLETED", "CLOSED"].includes(b.status) && (
+                    <a href={`/bookings/${b.id}/invoice`} target="_blank" rel="noopener" className="btn btn-line btn-sm">
+                      <FileText size={14} /> {t.invoiceTitle}
+                    </a>
                   )}
                 </div>
 

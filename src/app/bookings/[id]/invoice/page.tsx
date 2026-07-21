@@ -109,10 +109,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <span>{t.sumService}</span>
             <span>{eur(booking.subtotalCents, locale)}</span>
           </div>
-          <div className="row">
-            <span>{t.sumFee}</span>
-            <span>{eur(booking.clientFeeCents, locale)}</span>
-          </div>
+          {/* Комиссии в V1 нет: строку показываем только если сбор ненулевой. */}
+          {booking.clientFeeCents > 0 && (
+            <div className="row">
+              <span>{t.sumFee}</span>
+              <span>{eur(booking.clientFeeCents, locale)}</span>
+            </div>
+          )}
           <div className="row total">
             <span>{t.sumTotal}</span>
             <span>{eur(booking.totalCents, locale)}</span>
