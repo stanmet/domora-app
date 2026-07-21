@@ -9,7 +9,9 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import { dateOnly, eur } from "@/lib/format";
+import { decrypt } from "@/lib/crypto";
 import { bookingRef } from "@/lib/booking-ref";
 import PrintButton from "./PrintButton";
 
@@ -17,20 +19,38 @@ export const dynamic = "force-dynamic";
 
 const INVOICEABLE = new Set(["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CLOSED", "DISPUTED"]);
 
+// Расшифровка адреса услуги; при недоступном ключе не роняем страницу.
+function safeDecrypt(payload: string | null): string | null {
+  if (!payload) return null;
+  try {
+    return decrypt(payload);
+  } catch {
+    return null;
+  }
+}
+
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect(`/login?next=/bookings/${id}/invoice`);
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
 
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
       listing: { select: { title: true } },
-      provider: { select: { displayName: true, city: true } },
-      client: { select: { name: true } },
+      provider: {
+        select: {
+          displayName: true,
+          city: true,
+          customProfession: true,
+          user: { select: { email: true, phone: true } },
+        },
+      },
+      client: { select: { name: true, email: true, phone: true, city: true } },
     },
   });
   if (!booking) notFound();
@@ -50,6 +70,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   }
 
   const number = bookingRef(booking);
+  // Адрес оказания услуги (место работы) - из брони, расшифровываем.
+  const serviceAddress = safeDecrypt(booking.addressEncrypted);
 
   return (
     <main className="wrap sec" style={{ maxWidth: 720 }}>
@@ -82,11 +104,29 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           <div>
             <span className="inv-lbl">{t.invoiceFrom}</span>
             <b>{booking.provider.displayName}</b>
-            <span>{booking.provider.city}</span>
+            {booking.provider.customProfession && <span>{booking.provider.customProfession}</span>}
+            {booking.provider.city && <span>{booking.provider.city}</span>}
+            {booking.provider.user?.phone && (
+              <span>{tx.accPhoneL}: {booking.provider.user.phone}</span>
+            )}
+            {booking.provider.user?.email && (
+              <span>{t.emailL}: {booking.provider.user.email}</span>
+            )}
           </div>
           <div>
             <span className="inv-lbl">{t.invoiceTo}</span>
             <b>{booking.client.name}</b>
+            {serviceAddress ? (
+              <span>{t.addrL}: {serviceAddress}</span>
+            ) : (
+              booking.client.city && <span>{booking.client.city}</span>
+            )}
+            {booking.client.phone && (
+              <span>{tx.accPhoneL}: {booking.client.phone}</span>
+            )}
+            {booking.client.email && (
+              <span>{t.emailL}: {booking.client.email}</span>
+            )}
           </div>
         </div>
 
