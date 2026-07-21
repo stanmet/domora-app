@@ -13,6 +13,16 @@ interface Values {
   city: string;
   bio: string;
   travelRadiusKm: number;
+  legalName: string;
+  businessAddress: string;
+  vatNumber: string;
+}
+
+interface TaxLabels {
+  legalName: string;
+  businessAddress: string;
+  vatNumber: string;
+  hint: string;
 }
 
 function SaveButton({ label }: { label: string }) {
@@ -24,7 +34,7 @@ function SaveButton({ label }: { label: string }) {
   );
 }
 
-export default function ProfileForm({ t, values }: { t: Dict; values: Values }) {
+export default function ProfileForm({ t, values, tax }: { t: Dict; values: Values; tax: TaxLabels }) {
   const [state, action] = useActionState<ProfileState, FormData>(updateProviderProfile, null);
   return (
     <form action={action} className="pp-form">
@@ -54,6 +64,22 @@ export default function ProfileForm({ t, values }: { t: Dict; values: Values }) 
         <input type="number" name="travelRadiusKm" defaultValue={values.travelRadiusKm} min={1} max={500} step={5} />
         <small className="tu-muted">{t.ppRadiusHint}</small>
       </label>
+
+      {/* Необязательные реквизиты для инвойса (налоговая). */}
+      <label className="f-row">
+        <span>{tax.legalName}</span>
+        <input name="legalName" defaultValue={values.legalName} maxLength={120} />
+      </label>
+      <label className="f-row">
+        <span>{tax.businessAddress}</span>
+        <input name="businessAddress" defaultValue={values.businessAddress} maxLength={200} />
+      </label>
+      <label className="f-row">
+        <span>{tax.vatNumber}</span>
+        <input name="vatNumber" defaultValue={values.vatNumber} maxLength={40} />
+        <small className="tu-muted">{tax.hint}</small>
+      </label>
+
       <div style={{ marginTop: 14 }}>
         <SaveButton label={t.ppSave} />
       </div>

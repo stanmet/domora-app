@@ -193,6 +193,10 @@ model ProviderProfile {
   customProfession  String? // "Диджей", "Официант" и т.д., пишет сам
   bio               String?
   bioLang           String  @default("en") // язык оригинала, переводим на лету
+  // Необязательные реквизиты для инвойса (налоговая). Заполняет исполнитель.
+  legalName         String? // юридическое/торговое название
+  businessAddress   String? // адрес бизнеса
+  vatNumber         String? // VAT-номер (если зарегистрирован по НДС)
   city              String
   travelRadiusKm    Int     @default(20)
   stripeAccountId   String? @unique        // Connect Express

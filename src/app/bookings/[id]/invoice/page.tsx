@@ -47,6 +47,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           displayName: true,
           city: true,
           customProfession: true,
+          legalName: true,
+          businessAddress: true,
+          vatNumber: true,
           user: { select: { email: true, phone: true } },
         },
       },
@@ -104,13 +107,21 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           <div>
             <span className="inv-lbl">{t.invoiceFrom}</span>
             <b>{booking.provider.displayName}</b>
+            {booking.provider.legalName && <span>{booking.provider.legalName}</span>}
             {booking.provider.customProfession && <span>{booking.provider.customProfession}</span>}
-            {booking.provider.city && <span>{booking.provider.city}</span>}
+            {booking.provider.businessAddress ? (
+              <span>{t.addrL}: {booking.provider.businessAddress}</span>
+            ) : (
+              booking.provider.city && <span>{booking.provider.city}</span>
+            )}
             {booking.provider.user?.phone && (
               <span>{tx.accPhoneL}: {booking.provider.user.phone}</span>
             )}
             {booking.provider.user?.email && (
               <span>{t.emailL}: {booking.provider.user.email}</span>
+            )}
+            {booking.provider.vatNumber && (
+              <span>{tx.vatShort}: {booking.provider.vatNumber}</span>
             )}
           </div>
           <div>

@@ -9,6 +9,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
+import { getExtra } from "@/i18n/extra";
 import ProfileForm from "./ProfileForm";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +20,22 @@ export default async function ProProfilePage() {
 
   const locale = await getLocale();
   const t = getDict(locale);
+  const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
   if (!user.roles.includes(Role.PROVIDER)) redirect("/account");
 
   const profile = await prisma.providerProfile.findUnique({
     where: { userId: user.id },
-    select: { displayName: true, customProfession: true, city: true, bio: true, travelRadiusKm: true },
+    select: {
+      displayName: true,
+      customProfession: true,
+      city: true,
+      bio: true,
+      travelRadiusKm: true,
+      legalName: true,
+      businessAddress: true,
+      vatNumber: true,
+    },
   });
 
   const values = {
@@ -33,6 +44,16 @@ export default async function ProProfilePage() {
     city: profile?.city ?? user.city ?? "",
     bio: profile?.bio ?? "",
     travelRadiusKm: profile?.travelRadiusKm ?? 20,
+    legalName: profile?.legalName ?? "",
+    businessAddress: profile?.businessAddress ?? "",
+    vatNumber: profile?.vatNumber ?? "",
+  };
+
+  const taxLabels = {
+    legalName: tx.ppLegalName,
+    businessAddress: tx.ppBusinessAddress,
+    vatNumber: tx.ppVatNumber,
+    hint: tx.ppTaxHint,
   };
 
   return (
@@ -42,7 +63,7 @@ export default async function ProProfilePage() {
       </Link>
       <h1 className="page">{t.proProfile}</h1>
       <p className="sub">{t.proProfileSub}</p>
-      <ProfileForm t={t} values={values} />
+      <ProfileForm t={t} values={values} tax={taxLabels} />
     </main>
   );
 }

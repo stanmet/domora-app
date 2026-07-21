@@ -617,6 +617,11 @@ ALTER TABLE "User"    ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT;
 ALTER TABLE "Task"    ADD COLUMN IF NOT EXISTS "photos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS "readAt" TIMESTAMP(3);
 
+-- Необязательные реквизиты исполнителя для инвойса (налоговая).
+ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "legalName" TEXT;
+ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "businessAddress" TEXT;
+ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "vatNumber" TEXT;
+
 -- Блокировка собеседника в чате.
 CREATE TABLE IF NOT EXISTS "ChatBlock" (
   "id" TEXT NOT NULL,

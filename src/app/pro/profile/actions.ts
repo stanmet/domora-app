@@ -25,13 +25,17 @@ export async function updateProviderProfile(_prev: ProfileState, formData: FormD
   const customProfession = String(formData.get("customProfession") ?? "").trim() || null;
   const bio = String(formData.get("bio") ?? "").trim() || null;
   const travelRadiusKm = Math.max(1, Math.min(500, Math.floor(Number(formData.get("travelRadiusKm")) || 20)));
+  // Необязательные реквизиты для инвойса.
+  const legalName = String(formData.get("legalName") ?? "").trim().slice(0, 120) || null;
+  const businessAddress = String(formData.get("businessAddress") ?? "").trim().slice(0, 200) || null;
+  const vatNumber = String(formData.get("vatNumber") ?? "").trim().slice(0, 40) || null;
 
   if (!displayName || !city) return { ok: false, msg: t.ppNameCityReq };
 
   await prisma.providerProfile.upsert({
     where: { userId: user.id },
-    update: { displayName, city, customProfession, bio, bioLang: locale, travelRadiusKm },
-    create: { userId: user.id, displayName, city, customProfession, bio, bioLang: locale, travelRadiusKm },
+    update: { displayName, city, customProfession, bio, bioLang: locale, travelRadiusKm, legalName, businessAddress, vatNumber },
+    create: { userId: user.id, displayName, city, customProfession, bio, bioLang: locale, travelRadiusKm, legalName, businessAddress, vatNumber },
   });
 
   revalidatePath("/pro");
