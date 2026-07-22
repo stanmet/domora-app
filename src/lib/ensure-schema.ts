@@ -196,6 +196,18 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ChatBlock_blockerId_blockedId_key" ON "ChatBlock"("blockerId", "blockedId")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ChatBlock_blockedId_idx" ON "ChatBlock"("blockedId")`);
 
+    // Безопасность: включаем RLS на всех таблицах схемы public. Prisma ходит в
+    // базу под ролью-владельцем и RLS обходит, а публичный REST-API Supabase по
+    // анонимному ключу без разрешающих политик не отдаёт данные посторонним.
+    // Делаем и здесь (не только в setup.sql), чтобы таблицы, созданные этим
+    // файлом на лету, тоже были защищены. Идемпотентно.
+    await prisma.$executeRawUnsafe(
+      `DO $$ DECLARE r RECORD; BEGIN
+         FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+         LOOP EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', r.tablename); END LOOP;
+       END $$;`,
+    );
+
     // Наполняем категории и дерево подкатегорий данными (идемпотентно).
     // Категории - первыми: подкатегории ссылаются на них по slug.
     await ensureCategories();
