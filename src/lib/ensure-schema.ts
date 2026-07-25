@@ -11,6 +11,23 @@ let ensured = false;
 
 export async function ensureSchema(): Promise<void> {
   if (ensured) return;
+
+  // Быстрый путь для холодных стартов: если последняя из досоздаваемых таблиц
+  // (ChatBlock - создаётся в самом конце) уже есть, значит вся схема применена.
+  // Тогда не гоняем 50+ DDL-запросов к базе на каждый новый инстанс сервера -
+  // это заметно ускоряет открытие сайта. Один дешёвый запрос вместо полусотни.
+  try {
+    const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
+      `SELECT to_regclass('public."ChatBlock"') IS NOT NULL AS ok`,
+    );
+    if (ready?.[0]?.ok) {
+      ensured = true;
+      return;
+    }
+  } catch {
+    // Проверка не удалась - идём полным путём ниже (безопасно, всё IF NOT EXISTS).
+  }
+
   ensured = true; // отмечаем сразу, чтобы параллельные запросы не дублировали DDL
   try {
     await prisma.$executeRawUnsafe(
