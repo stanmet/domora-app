@@ -8,6 +8,48 @@ import { seedSubcategories } from "./subcategories";
 import { ensureCategories } from "./category-seed";
 
 let ensured = false;
+let rlsEnsured = false;
+
+// Все таблицы схемы public: включить RLS.
+const RLS_ON = `DO $$ DECLARE r RECORD; BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  LOOP EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', r.tablename); END LOOP;
+END $$;`;
+// Все таблицы схемы public: выключить RLS (аварийный откат).
+const RLS_OFF = `DO $$ DECLARE r RECORD; BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  LOOP EXECUTE format('ALTER TABLE public.%I DISABLE ROW LEVEL SECURITY;', r.tablename); END LOOP;
+END $$;`;
+
+// Включаем RLS (защиту строк) один раз, если он ещё выключен. Без RLS Supabase
+// отдаёт таблицы через публичный REST-API по анонимному ключу. Prisma ходит под
+// ролью-владельцем и RLS обходит, поэтому приложению данные видны как прежде.
+// Безопасность: после включения проверяем, что данные всё ещё читаются; если
+// вдруг роль НЕ обходит RLS - откатываем, чтобы сайт не остался без данных.
+export async function ensureRls(): Promise<void> {
+  if (rlsEnsured) return;
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ rowsecurity: boolean }>>(
+      `SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='User'`,
+    );
+    // Таблицы ещё нет или RLS уже включён - делать нечего.
+    if (!rows?.[0] || rows[0].rowsecurity === true) {
+      rlsEnsured = true;
+      return;
+    }
+    await prisma.$executeRawUnsafe(RLS_ON);
+    // Контроль: владелец (Prisma) должен по-прежнему видеть данные.
+    const cats = await prisma.category.count();
+    if (cats === 0) {
+      await prisma.$executeRawUnsafe(RLS_OFF);
+      console.error("ensureRls: роль не обходит RLS - откат, RLS оставлен выключенным");
+      return;
+    }
+    rlsEnsured = true;
+  } catch (e) {
+    console.error("ensureRls failed", e);
+  }
+}
 
 export async function ensureSchema(): Promise<void> {
   if (ensured) return;

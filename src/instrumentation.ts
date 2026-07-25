@@ -7,8 +7,11 @@ export async function register() {
   // Только в серверной среде Node (не в edge-рантайме middleware).
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   try {
-    const { ensureSchema } = await import("@/lib/ensure-schema");
+    const { ensureSchema, ensureRls } = await import("@/lib/ensure-schema");
     await ensureSchema();
+    // Включаем защиту строк (RLS) один раз, если ещё не включена. Безопасно и
+    // идемпотентно; закрывает предупреждение Supabase без ручных шагов.
+    await ensureRls();
   } catch (e) {
     // Не мешаем старту сервера: layout всё равно повторит ensureSchema.
     console.error("instrumentation ensureSchema failed", e);
