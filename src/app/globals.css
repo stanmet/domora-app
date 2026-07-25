@@ -463,14 +463,14 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:0 9px}
 .dm .homesec-head h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(20px,4.4vw,30px);min-width:0}
 .dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
-/* Лента открытых задач - отдельное окно с рамкой: задачи копятся и
-   прокручиваются внутри него, не растягивая всю страницу. */
-.dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;height:min(52vh,430px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px 8px;-webkit-overflow-scrolling:touch}
-.dm .scrollpanel::-webkit-scrollbar{width:8px}
+/* Лента открытых задач и исполнителей рядом - горизонтальная: карточки идут в
+   ряд, листаются вбок свайпом, не растягивая страницу вниз. */
+.dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:14px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.dm .scrollpanel::-webkit-scrollbar{height:8px}
 .dm .scrollpanel::-webkit-scrollbar-thumb{background:#c9c9c1;border-radius:99px}
 .dm .scrollpanel::-webkit-scrollbar-track{background:transparent}
-.dm .opentasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.dm .scrollpanel .grid{margin:0}
+.dm .scrollpanel .opentasks,.dm .scrollpanel .grid{display:flex;flex-wrap:nowrap;gap:12px;margin:0;align-items:stretch}
+.dm .scrollpanel .taskcard,.dm .scrollpanel .pcard2{flex:0 0 auto;width:min(74vw,260px);scroll-snap-align:start}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
 .dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
 .dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}
