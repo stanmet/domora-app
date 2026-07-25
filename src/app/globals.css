@@ -445,6 +445,8 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .drawer-link.accent svg{color:var(--green)}
 .dm .drawer-sep{height:1px;background:var(--line);margin:14px 0}
 .dm .drawer-foot{margin-top:auto;padding-top:18px;display:flex;align-items:center;gap:10px}
+/* В боковом меню кнопка языка стоит внизу: список открываем вверх, чтобы он не уходил за край экрана. */
+.dm .drawer-foot .langmenu{top:auto;bottom:calc(100% + 6px)}
 
 /* ============================================================
    Главная: горизонтальные вкладки категорий и лента открытых задач.
