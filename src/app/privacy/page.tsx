@@ -26,7 +26,7 @@ export default async function PrivacyPage() {
         <p>
           Domora (&quot;we&quot;, &quot;us&quot;) operates a free online noticeboard that connects clients and
           independent service providers in Ireland. We are the data controller for the personal data described here.
-          Contact: <a href="mailto:help@domora.ie">help@domora.ie</a>.
+          Contact: <a href="mailto:domora.irish@gmail.com">domora.irish@gmail.com</a>.
         </p>
 
         <h3>2. What data we collect</h3>
@@ -66,7 +66,7 @@ export default async function PrivacyPage() {
           <li>edit your details on your <Link href="/account">account page</Link>;</li>
           <li>download your data as a file from your account (data export);</li>
           <li>delete your account from your account page;</li>
-          <li>contact us at <a href="mailto:help@domora.ie">help@domora.ie</a> for any request.</li>
+          <li>contact us at <a href="mailto:domora.irish@gmail.com">domora.irish@gmail.com</a> for any request.</li>
         </ul>
         <p>
           You also have the right to lodge a complaint with the Irish Data Protection Commission

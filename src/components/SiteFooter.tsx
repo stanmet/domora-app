@@ -66,8 +66,8 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <span className="foot-contact">
             <MapPin size={14} /> {t.footerLeft}
           </span>
-          <a className="foot-contact" href="mailto:help@domora.ie">
-            <Mail size={14} /> help@domora.ie
+          <a className="foot-contact" href="mailto:domora.irish@gmail.com">
+            <Mail size={14} /> domora.irish@gmail.com
           </a>
           <span className="foot-contact">
             <Clock size={14} /> {t.footerHours}
