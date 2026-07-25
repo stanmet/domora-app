@@ -30,7 +30,11 @@ export default async function Home() {
   // сайте. По умолчанию выключен — реальные клиенты не видят синтетические аккаунты.
   const demo = await isDemoMode();
   const notTest = demo ? {} : { isTest: false };
-  const [categories, openTasks, listingsRaw, prosCount, tasksCount, reviewsCount] = await Promise.all([
+  // Данные главной грузим одним пакетом. Если база временно недоступна или схема
+  // ещё досоздаётся (первые секунды после деплоя), не роняем страницу белым
+  // экраном, а показываем главную с пустыми блоками - на следующем заходе всё
+  // подтянется. Возвращаем null и подставляем безопасные пустые значения.
+  const homeData = await Promise.all([
     prisma.category.findMany(),
     prisma.task.findMany({
       where: { ...openTaskVisibilityWhere(demo), ...(city ? { city } : {}) },
@@ -54,7 +58,12 @@ export default async function Home() {
     prisma.providerProfile.count({ where: { status: "ACTIVE", user: notTest } }),
     prisma.task.count({ where: { client: notTest } }),
     prisma.review.count({ where: { publishedAt: { not: null }, author: notTest, target: notTest } }),
-  ]);
+  ]).catch((e) => {
+    console.error("Home data load failed (schema not ready or DB unavailable)", e);
+    return null;
+  });
+  const [categories, openTasks, listingsRaw, prosCount, tasksCount, reviewsCount] =
+    homeData ?? ([[], [], [], 0, 0, 0] as [never[], never[], never[], number, number, number]);
   const cats = sortByCategoryOrder(categories);
 
   // Исполнители рядом: подбор по радиусу выезда из их города до выбранного.
