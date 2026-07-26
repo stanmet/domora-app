@@ -83,22 +83,22 @@ html,body{min-height:100%;overflow-x:clip}
 /* beige tip card */
 .dm .tip{background:var(--beige-bg);border-radius:16px;padding:20px 22px;display:flex;gap:14px;align-items:flex-start;margin:36px 0}
 /* Плашка-герой на главной: стильный баннер в фирменном зелёном. */
-.dm .hero{position:relative;overflow:hidden;border-radius:24px;background:radial-gradient(130% 150% at 100% 0%,#5f9350 0%,var(--green) 44%,var(--green-dark) 100%);color:#fff;padding:34px 30px;min-height:172px;display:flex;align-items:center;box-shadow:0 12px 30px rgba(61,101,51,.22)}
-.dm .hero-in{position:relative;z-index:1;max-width:74%}
-.dm .hero-pill{display:inline-flex;align-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:12px;backdrop-filter:blur(2px)}
-.dm .hero-title{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:32px;line-height:1.04;letter-spacing:-.015em;color:#fff}
-.dm .hero-sub{margin-top:10px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.92);max-width:430px}
-.dm .hero-cta{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
-.dm .hero-btn{background:#fff;color:var(--green-dark);font-weight:800}
-.dm .hero-btn:hover{background:#f1f1ec}
-.dm .hero-btn2{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.42);font-weight:700}
-.dm .hero-btn2:hover{background:rgba(255,255,255,.22)}
-.dm .hero-deco{position:absolute;top:0;right:0;height:100%;width:auto;pointer-events:none}
+.dm .hbanner{position:relative;overflow:hidden;border-radius:24px;background:radial-gradient(130% 150% at 100% 0%,#5f9350 0%,var(--green) 44%,var(--green-dark) 100%);color:#fff;padding:34px 30px;min-height:172px;display:flex;align-items:center;box-shadow:0 12px 30px rgba(61,101,51,.22)}
+.dm .hb-in{position:relative;z-index:1;max-width:74%}
+.dm .hb-pill{display:inline-flex;align-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:12px;backdrop-filter:blur(2px)}
+.dm .hb-title{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:32px;line-height:1.04;letter-spacing:-.015em;color:#fff}
+.dm .hb-sub{margin-top:10px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.92);max-width:430px}
+.dm .hb-cta{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+.dm .hb-btn{background:#fff;color:var(--green-dark);font-weight:800}
+.dm .hb-btn:hover{background:#f1f1ec}
+.dm .hb-btn2{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.42);font-weight:700}
+.dm .hb-btn2:hover{background:rgba(255,255,255,.22)}
+.dm .hb-deco{position:absolute;top:0;right:0;height:100%;width:auto;pointer-events:none}
 @media(max-width:520px){
-  .dm .hero{padding:26px 22px;border-radius:20px;min-height:0}
-  .dm .hero-title{font-size:25px}
-  .dm .hero-in{max-width:100%}
-  .dm .hero-deco{opacity:.45}
+  .dm .hbanner{padding:26px 22px;border-radius:20px;min-height:0}
+  .dm .hb-title{font-size:25px}
+  .dm .hb-in{max-width:100%}
+  .dm .hb-deco{opacity:.45}
 }
 /* Баннер «Бесплатно для всех» на главной. */
 .dm .freebanner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#eef6ee;border:1px solid #d9ebd9}

@@ -90,8 +90,8 @@ export default async function Home() {
     <main>
       {/* Плашка-герой: стильный баннер в фирменном зелёном */}
       <div className="wrap" style={{ paddingTop: 16 }}>
-        <section className="hero">
-          <svg className="hero-deco" viewBox="0 0 300 220" fill="none" aria-hidden="true">
+        <section className="hbanner">
+          <svg className="hb-deco" viewBox="0 0 300 220" fill="none" aria-hidden="true">
             <g stroke="rgba(255,255,255,.26)" strokeWidth="2">
               <line x1="230" y1="31" x2="150" y2="44" />
               <line x1="245" y1="31" x2="284" y2="74" />
@@ -112,15 +112,15 @@ export default async function Home() {
               <circle cx="252" cy="202" r="9" />
             </g>
           </svg>
-          <div className="hero-in">
-            <span className="hero-pill">{tx.freeBadge}</span>
-            <h1 className="hero-title">{tx.heroTitle}</h1>
-            <p className="hero-sub">{tx.heroSub}</p>
-            <div className="hero-cta">
-              <Link href="/tasks/new" className="btn hero-btn">
+          <div className="hb-in">
+            <span className="hb-pill">{tx.freeBadge}</span>
+            <h1 className="hb-title">{tx.heroTitle}</h1>
+            <p className="hb-sub">{tx.heroSub}</p>
+            <div className="hb-cta">
+              <Link href="/tasks/new" className="btn hb-btn">
                 {t.postTask} <ArrowRight size={16} />
               </Link>
-              <Link href="/catalog" className="btn hero-btn2">
+              <Link href="/catalog" className="btn hb-btn2">
                 {t.findPro}
               </Link>
             </div>
