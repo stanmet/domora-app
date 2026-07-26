@@ -7,6 +7,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
+import { confirmStuckAccount } from "./actions";
 import type { Dict } from "@/i18n/dictionaries";
 
 export default function LoginForm({
@@ -32,10 +33,18 @@ export default function LoginForm({
     setBusy(true);
     setError(null);
     try {
-      const { error } = await getSupabaseBrowser().auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const sb = getSupabaseBrowser();
+      let { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+      // Аккаунт мог «застрять» без подтверждения email (письма раньше не
+      // доходили). Подтверждаем его на сервере и повторяем вход с тем же паролем.
+      const notConfirmed =
+        error && (/(email).*(not).*(confirm)|not confirmed|confirm/i.test(error.message) || (error as { code?: string }).code === "email_not_confirmed");
+      if (notConfirmed) {
+        const res = await confirmStuckAccount(email.trim());
+        if (res.ok) {
+          ({ error } = await sb.auth.signInWithPassword({ email: email.trim(), password }));
+        }
+      }
       if (error) {
         setError(t.errCreds);
       } else {
