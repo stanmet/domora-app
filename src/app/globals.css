@@ -398,6 +398,7 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .pcard2 .t{font-size:13.5px}
   .dm .photo{aspect-ratio:1/1;border-radius:14px}
   .dm .tabs{gap:18px}
+  .dm .cattabs{gap:18px}
   .dm .rolecards{grid-template-columns:1fr}
   .dm .userpill{max-width:110px}
 }
@@ -452,12 +453,12 @@ html,body{min-height:100%;overflow-x:clip}
 /* ============================================================
    Главная: горизонтальные вкладки категорий и лента открытых задач.
    ============================================================ */
-.dm .cattabs{display:flex;gap:10px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.dm .cattabs{display:flex;gap:24px;overflow-x:auto;padding:4px 2px 14px;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .dm .cattabs::-webkit-scrollbar{display:none}
-.dm .cattab{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;width:86px;padding:14px 8px;border:1px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;color:var(--ink);transition:border-color .15s,transform .15s}
-.dm .cattab:hover{border-color:var(--green);transform:translateY(-2px)}
-.dm .cattab .ic{background:none;color:var(--green);display:flex;align-items:center;justify-content:center;padding:4px 0}
-.dm .cattab span{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.dm .cattab{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 2px;border:none;background:none;cursor:pointer;color:var(--ink);transition:transform .15s}
+.dm .cattab:hover{transform:translateY(-2px)}
+.dm .cattab .ic{background:none;color:var(--green);display:flex;align-items:center;justify-content:center}
+.dm .cattab span{font-size:12.5px;font-weight:600;text-align:center;line-height:1.2;white-space:nowrap;color:var(--ink)}
 
 .dm .homesec{padding-top:38px;padding-bottom:38px;border-top:1px solid var(--line)}
 .dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:0 9px}
