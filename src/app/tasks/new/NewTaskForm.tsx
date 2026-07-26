@@ -4,6 +4,7 @@
 // описание, желаемая дата, город, адрес (необязательно), бюджет, фото. Оплаты нет.
 import { useActionState } from "react";
 import { ShieldCheck } from "lucide-react";
+import FilePicker from "@/components/FilePicker";
 import type { Dict } from "@/i18n/dictionaries";
 import type { CreateTaskState } from "./actions";
 
@@ -85,7 +86,15 @@ export default function NewTaskForm({
           ))}
         </div>
       )}
-      <input id="task-photos" name="photos" className="f" type="file" accept="image/*" multiple />
+      <FilePicker
+        id="task-photos"
+        name="photos"
+        accept="image/*"
+        multiple
+        chooseLabel={t.chooseFile}
+        noneLabel={t.noFileChosen}
+        manyLabel={t.filesChosen}
+      />
 
       {state && "error" in state && <div className="err">{state.error}</div>}
 

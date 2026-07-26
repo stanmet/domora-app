@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import { ExternalLink, FileText, Loader2, Plus, X } from "lucide-react";
 import type { Dict } from "@/i18n/dictionaries";
+import FilePicker from "@/components/FilePicker";
 import { addDocument, removeDocument } from "./actions";
 
 export type DocRow = { id: string; url: string; label: string | null };
@@ -34,12 +35,13 @@ export default function DocumentsManager({ docs, t }: { docs: DocRow[]; t: Dict 
             <label htmlFor="doc-label">{t.liTitle}</label>
             <input id="doc-label" name="label" className="f" maxLength={120} placeholder="RECI, RGII, Garda vetting, diploma..." />
             <label htmlFor="doc-file">{t.navDocs}</label>
-            <input
+            <FilePicker
               id="doc-file"
               name="file"
-              type="file"
               accept="image/jpeg,image/png,image/webp,image/avif,application/pdf"
               required
+              chooseLabel={t.chooseFile}
+              noneLabel={t.noFileChosen}
             />
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button type="submit" className="btn btn-green" style={{ flex: 1, justifyContent: "center" }} disabled={busy}>

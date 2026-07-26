@@ -306,6 +306,9 @@ const en = {
   signingIn: "Signing in",
   creating: "Creating account",
   errCreds: "Wrong email or password.",
+  chooseFile: "Choose file",
+  noFileChosen: "No file chosen",
+  filesChosen: "{n} files",
   errPwShort: "Password needs at least 6 characters.",
   errEmailTaken: "This email is already registered. Try logging in instead.",
   // Доска задач (задача 2)
@@ -807,6 +810,9 @@ const ru: Dict = {
   signingIn: "Входим",
   creating: "Регистрируем",
   errCreds: "Неверный email или пароль.",
+  chooseFile: "Выбрать файл",
+  noFileChosen: "Файл не выбран",
+  filesChosen: "Файлов: {n}",
   errPwShort: "Пароль должен быть не короче 6 символов.",
   errEmailTaken: "Этот email уже зарегистрирован. Попробуйте войти.",
   // Доска задач (задача 2)
@@ -1306,6 +1312,9 @@ const uk: Dict = {
   signingIn: "Входимо",
   creating: "Реєструємо",
   errCreds: "Невірний email або пароль.",
+  chooseFile: "Вибрати файл",
+  noFileChosen: "Файл не вибрано",
+  filesChosen: "Файлів: {n}",
   errPwShort: "Пароль має бути не коротшим за 6 символів.",
   errEmailTaken: "Цей email вже зареєстровано. Спробуйте увійти.",
   // Дошка задач (задача 2)
@@ -1805,6 +1814,9 @@ const pl: Dict = {
   signingIn: "Logowanie",
   creating: "Tworzenie konta",
   errCreds: "Błędny e-mail lub hasło.",
+  chooseFile: "Wybierz plik",
+  noFileChosen: "Nie wybrano pliku",
+  filesChosen: "Plików: {n}",
   errPwShort: "Hasło musi mieć co najmniej 6 znaków.",
   errEmailTaken: "Ten e-mail jest już zarejestrowany. Spróbuj się zalogować.",
   // Tablica zleceń (zadanie 2)
@@ -2304,6 +2316,9 @@ const es: Dict = {
   signingIn: "Entrando",
   creating: "Creando cuenta",
   errCreds: "Email o contraseña incorrectos.",
+  chooseFile: "Elegir archivo",
+  noFileChosen: "Ningún archivo",
+  filesChosen: "{n} archivos",
   errPwShort: "La contraseña debe tener al menos 6 caracteres.",
   errEmailTaken: "Este email ya está registrado. Prueba a iniciar sesión.",
   // Tablón de tareas (tarea 2)
@@ -2803,6 +2818,9 @@ const pt: Dict = {
   signingIn: "A entrar",
   creating: "A criar conta",
   errCreds: "Email ou palavra-passe incorretos.",
+  chooseFile: "Escolher ficheiro",
+  noFileChosen: "Nenhum ficheiro",
+  filesChosen: "{n} ficheiros",
   errPwShort: "A palavra-passe deve ter pelo menos 6 caracteres.",
   errEmailTaken: "Este email já está registado. Tente entrar.",
   // Quadro de tarefas (tarefa 2)

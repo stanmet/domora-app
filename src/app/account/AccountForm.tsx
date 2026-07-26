@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { LANG_NAMES, LOCALES, type Locale } from "@/i18n/config";
+import FilePicker from "@/components/FilePicker";
 import type { ExtraDict } from "@/i18n/extra";
 
 export default function AccountForm({
@@ -16,7 +17,7 @@ export default function AccountForm({
 }: {
   action: (formData: FormData) => Promise<void>;
   current: { name: string; phone: string; locale: Locale; avatarUrl?: string | null };
-  labels: ExtraDict & { nameL: string };
+  labels: ExtraDict & { nameL: string; chooseFile: string; noFileChosen: string };
   savedFlag: boolean;
 }) {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(current.avatarUrl ?? null);
@@ -63,12 +64,13 @@ export default function AccountForm({
               {(current.name?.[0] ?? "?").toUpperCase()}
             </span>
           )}
-          <input
+          <FilePicker
             name="avatar"
-            type="file"
             accept="image/*"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
+            chooseLabel={labels.chooseFile}
+            noneLabel={labels.noFileChosen}
+            onFiles={(files) => {
+              const f = files?.[0];
               setAvatarPreview(f ? URL.createObjectURL(f) : current.avatarUrl ?? null);
             }}
           />
