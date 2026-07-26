@@ -3,13 +3,14 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
+import { APP_URL } from "@/lib/app-url";
 
 export const dynamic = "force-dynamic";
 
 const TOP_CITIES = ["Dublin", "Cork", "Galway", "Limerick", "Waterford"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.APP_URL ?? "";
+  const base = APP_URL;
   const now = new Date();
 
   const staticPaths = ["", "/catalog", "/services", "/tasks", "/how-it-works", "/safety", "/terms", "/privacy", "/cookies", "/top-performers"];

@@ -8,6 +8,7 @@ import { getDict, type Dict } from "@/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/i18n/config";
 import { emailEnabled, emailLayout, sendEmail } from "@/lib/email";
 import { bookingRef } from "@/lib/booking-ref";
+import { APP_URL } from "@/lib/app-url";
 
 // Достаём bookingId из payload уведомления, если он там есть.
 function bookingIdOf(payload: Prisma.InputJsonValue): string | undefined {
@@ -81,8 +82,7 @@ export async function notify(
     const t = getDict(locale);
     const meta = META[type];
     const text = t[meta.textKey] as string;
-    const base = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
-    const url = base ? `${base}${meta.path}` : undefined;
+    const url = `${APP_URL}${meta.path}`;
 
     // Номер заказа в теме и теле письма, если уведомление относится к брони.
     const bId = bookingIdOf(payload);

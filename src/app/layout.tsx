@@ -22,11 +22,12 @@ import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
 import SiteFooter from "@/components/SiteFooter";
 import FooterGate from "@/components/FooterGate";
+import { APP_URL } from "@/lib/app-url";
 
-const SITE_DESC = "Verified chefs, cleaners and handymen across Ireland. Clear prices, secure card payment, real reviews.";
+const SITE_DESC = "Find local help across Ireland: chefs, cleaners, handymen and more. Post a task for free, get offers and agree directly.";
 
 export const metadata: Metadata = {
-  metadataBase: process.env.APP_URL ? new URL(process.env.APP_URL) : undefined,
+  metadataBase: new URL(APP_URL),
   title: { default: "Domora · Home services in Ireland", template: "%s · Domora" },
   description: SITE_DESC,
   applicationName: "Domora",
