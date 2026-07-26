@@ -2,14 +2,15 @@
 
 // Регистрация только по email и паролю: имя, email, пароль и роль (заказчик
 // или исполнитель). signUp с паролем; имя и роль уезжают в user_metadata и
-// применяются при создании записи в таблице User (ensureDbUser). Если проект
-// требует подтверждения email, сессии сразу нет - показываем экран
-// "проверьте почту".
+// применяются при создании записи в таблице User (ensureDbUser). Пока не
+// настроена доставка писем, email подтверждается на сервере (autoConfirmEmail),
+// и пользователь входит сразу; экран "проверьте почту" - только запасной вариант.
 import { useState } from "react";
 import Link from "next/link";
 import { Briefcase, MailCheck, UserRound } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
+import { autoConfirmEmail } from "./actions";
 import type { Dict } from "@/i18n/dictionaries";
 
 type RoleChoice = "client" | "provider";
@@ -76,9 +77,24 @@ export default function SignupForm({
         // Подтверждение email выключено: сессия готова, идем в кабинет.
         track("signup", { role });
         window.location.assign(target());
-      } else {
-        // Подтверждение email включено: письмо отправлено, ждем подтверждения.
+      } else if (data.user) {
+        // Подтверждение email включено, но доставка писем ещё не настроена.
+        // Подтверждаем email на сервере и сразу входим - без ожидания письма.
         track("signup", { role });
+        const res = await autoConfirmEmail(data.user.id);
+        if (res.ok) {
+          const { error: signInErr } = await getSupabaseBrowser().auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+          if (!signInErr) {
+            window.location.assign(target());
+            return;
+          }
+        }
+        // Не удалось подтвердить/войти - показываем запасной экран "проверьте почту".
+        setSent(true);
+      } else {
         setSent(true);
       }
     } catch {
