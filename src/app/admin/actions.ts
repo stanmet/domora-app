@@ -343,26 +343,49 @@ export async function deleteUser(userId: string): Promise<void> {
   revalidatePath("/catalog");
 }
 
-// --- Удаление заказа (только без платежа: V1-модель без денег). ---
-// Каскадно чистим зависимые записи в транзакции и отвязываем задачу.
+// --- Удаление заказа (V1-модель без денег). ---
+// Полный каскад: чистим ВСЕ зависимые записи в транзакции и отвязываем задачу,
+// иначе внешние ключи (Quote, Transfer, Dispute, Payment из старого флоу)
+// блокируют удаление и кнопка «молча» ничего не делает.
 export async function deleteBooking(bookingId: string): Promise<void> {
   const admin = await requireAdminScope("bookings");
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { id: true, payment: { select: { id: true } }, thread: { select: { id: true } }, task: { select: { id: true } } },
+    select: {
+      id: true,
+      payment: { select: { id: true } },
+      transfer: { select: { id: true } },
+      dispute: { select: { id: true } },
+      quote: { select: { id: true } },
+      thread: { select: { id: true } },
+      task: { select: { id: true } },
+    },
   });
   if (!booking) return;
-  // Безопасность: заказы с платежом не удаляем (это денежная история).
-  if (booking.payment) return;
 
   await prisma.$transaction(async (tx) => {
+    // Отзывы, события, чат.
     await tx.review.deleteMany({ where: { bookingId } });
+    await tx.bookingEvent.deleteMany({ where: { bookingId } });
     if (booking.thread) {
       await tx.message.deleteMany({ where: { threadId: booking.thread.id } });
       await tx.thread.delete({ where: { id: booking.thread.id } });
     }
-    await tx.bookingEvent.deleteMany({ where: { bookingId } });
+    // Котировка.
+    if (booking.quote) await tx.quote.delete({ where: { bookingId } });
+    // Спор и его сообщения.
+    if (booking.dispute) {
+      await tx.disputeMessage.deleteMany({ where: { disputeId: booking.dispute.id } });
+      await tx.dispute.delete({ where: { id: booking.dispute.id } });
+    }
+    // Платёжные записи (в V1 без оплат это остатки старого флоу Stripe).
+    if (booking.transfer) await tx.transfer.delete({ where: { bookingId } });
+    if (booking.payment) {
+      await tx.refund.deleteMany({ where: { paymentId: booking.payment.id } });
+      await tx.payment.delete({ where: { bookingId } });
+    }
+    // Задача возвращается в ленту (отвязываем бронь).
     if (booking.task) {
       await tx.task.update({ where: { id: booking.task.id }, data: { bookingId: null } });
     }

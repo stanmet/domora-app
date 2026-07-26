@@ -310,9 +310,38 @@ export async function deleteTestUsers(actorId: string, ids?: string[]): Promise<
   const tasks = await prisma.task.findMany({ where: { clientId: { in: userIds } }, select: { id: true } });
   const taskIds = tasks.map((t) => t.id);
 
+  // Брони, где тестовый пользователь - клиент или исполнитель. На бронях висят
+  // события, чат, отзывы, котировки, платежи и споры: их нужно удалить раньше
+  // самих броней, иначе внешние ключи заблокируют удаление.
+  const bookings = await prisma.booking.findMany({
+    where: { OR: [{ clientId: { in: userIds } }, { providerId: { in: userIds } }] },
+    select: { id: true, thread: { select: { id: true } }, payment: { select: { id: true } }, dispute: { select: { id: true } } },
+  });
+  const bookingIds = bookings.map((b) => b.id);
+  const threadIds = bookings.map((b) => b.thread?.id).filter((v): v is string => Boolean(v));
+  const paymentIds = bookings.map((b) => b.payment?.id).filter((v): v is string => Boolean(v));
+  const disputeIds = bookings.map((b) => b.dispute?.id).filter((v): v is string => Boolean(v));
+
   await prisma.$transaction([
+    // 1) Всё, что висит на бронях тестовых пользователей.
+    prisma.disputeMessage.deleteMany({ where: { disputeId: { in: disputeIds } } }),
+    prisma.dispute.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.message.deleteMany({ where: { threadId: { in: threadIds } } }),
+    prisma.thread.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.review.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.bookingEvent.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.quote.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.transfer.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    prisma.refund.deleteMany({ where: { paymentId: { in: paymentIds } } }),
+    prisma.payment.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+    // Чужие (не тестовые) задачи отвязываем от удаляемых броней.
+    prisma.task.updateMany({ where: { bookingId: { in: bookingIds } }, data: { bookingId: null } }),
+    prisma.booking.deleteMany({ where: { id: { in: bookingIds } } }),
+    // 2) Прямые связи самих тестовых пользователей.
     prisma.offer.deleteMany({ where: { OR: [{ providerId: { in: userIds } }, { taskId: { in: taskIds } }] } }),
     prisma.taskView.deleteMany({ where: { OR: [{ providerId: { in: userIds } }, { taskId: { in: taskIds } }] } }),
+    prisma.strike.deleteMany({ where: { userId: { in: userIds } } }),
+    prisma.providerDocument.deleteMany({ where: { providerId: { in: userIds } } }),
     prisma.listing.deleteMany({ where: { providerId: { in: userIds } } }),
     prisma.task.deleteMany({ where: { clientId: { in: userIds } } }),
     prisma.favorite.deleteMany({ where: { OR: [{ userId: { in: userIds } }, { providerId: { in: userIds } }] } }),
