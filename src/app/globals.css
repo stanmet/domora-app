@@ -82,6 +82,21 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* beige tip card */
 .dm .tip{background:var(--beige-bg);border-radius:16px;padding:20px 22px;display:flex;gap:14px;align-items:flex-start;margin:36px 0}
+/* Плашка-герой на главной: зелёный баннер с вопросом, подписью и кнопкой. */
+.dm .hero{position:relative;overflow:hidden;border-radius:22px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;padding:32px 28px;min-height:150px;display:flex;align-items:center}
+.dm .hero-in{position:relative;z-index:1;max-width:72%}
+.dm .hero-title{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:30px;line-height:1.05;letter-spacing:-.01em;color:#fff}
+.dm .hero-sub{margin-top:10px;font-size:14px;line-height:1.4;color:rgba(255,255,255,.9);max-width:420px}
+.dm .hero-cta{margin-top:18px}
+.dm .hero-btn{background:#fff;color:var(--green-dark);font-weight:800}
+.dm .hero-btn:hover{background:#f1f1ec}
+.dm .hero-deco{position:absolute;top:0;right:0;height:100%;width:auto;pointer-events:none}
+@media(max-width:520px){
+  .dm .hero{padding:26px 22px;border-radius:18px}
+  .dm .hero-title{font-size:24px}
+  .dm .hero-in{max-width:100%}
+  .dm .hero-deco{opacity:.4}
+}
 /* Баннер «Бесплатно для всех» на главной. */
 .dm .freebanner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#eef6ee;border:1px solid #d9ebd9}
 .dm .freebanner .fb-ic{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center}

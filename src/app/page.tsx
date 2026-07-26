@@ -88,8 +88,34 @@ export default async function Home() {
 
   return (
     <main>
+      {/* Плашка-герой: зелёный баннер с вопросом и кнопкой */}
+      <div className="wrap" style={{ paddingTop: 16 }}>
+        <section className="hero">
+          <svg className="hero-deco" viewBox="0 0 260 200" fill="none" aria-hidden="true">
+            <g stroke="rgba(255,255,255,.42)" strokeWidth="3" fill="rgba(255,255,255,.14)">
+              <path d="M182 26 L204 8 L226 26 L226 60 L182 60 Z" />
+              <path d="M96 150 L118 132 L140 150 L140 184 L96 184 Z" />
+            </g>
+            <g stroke="rgba(255,255,255,.32)" strokeWidth="2.5">
+              <line x1="226" y1="42" x2="258" y2="92" />
+              <line x1="140" y1="168" x2="200" y2="60" />
+            </g>
+            <circle cx="258" cy="98" r="15" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.42)" strokeWidth="3" />
+          </svg>
+          <div className="hero-in">
+            <h1 className="hero-title">{tx.heroTitle}</h1>
+            <p className="hero-sub">{tx.heroSub}</p>
+            <div className="hero-cta">
+              <Link href="/tasks/new" className="btn hero-btn">
+                {t.postTask} <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+
       {/* Горизонтальные вкладки категорий (прокручиваются вбок) */}
-      <div className="wrap" style={{ paddingTop: 22 }}>
+      <div className="wrap" style={{ paddingTop: 20 }}>
         <div className="cattabs">
           {cats.map((c) => {
             const Icon = CATEGORY_ICONS[c.slug] ?? CATEGORY_ICONS.other;
