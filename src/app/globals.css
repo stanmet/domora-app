@@ -472,6 +472,9 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .scrollpanel::-webkit-scrollbar-track{background:transparent}
 .dm .scrollpanel .opentasks,.dm .scrollpanel .grid{display:flex;flex-wrap:nowrap;gap:12px;margin:0;align-items:stretch}
 .dm .scrollpanel .taskcard,.dm .scrollpanel .pcard2{flex:0 0 auto;width:min(74vw,260px);scroll-snap-align:start}
+/* В ленте на главной карточку исполнителя приводим по высоте к карточке задачи:
+   вместо большого квадратного фото - невысокое фото-баннер. */
+.dm .scrollpanel .pcard2 .photo{aspect-ratio:auto;height:132px;margin-bottom:10px}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
 .dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
 .dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}
