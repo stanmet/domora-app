@@ -11,6 +11,7 @@ import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/cate
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
+import { subcatName } from "@/lib/subcategories";
 import { isDemoMode } from "@/lib/test-users/bots";
 import CatalogFilters from "./CatalogFilters";
 
@@ -89,7 +90,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   if (sub) {
     try {
       const row = await prisma.subcategory.findUnique({ where: { slug: sub }, select: { nameEn: true, nameRu: true } });
-      if (row) subName = locale === "ru" || locale === "uk" ? row.nameRu : row.nameEn;
+      if (row) subName = subcatName({ slug: sub, nameEn: row.nameEn, nameRu: row.nameRu }, locale);
     } catch {
       // нет таблицы - фильтр по подкатегории просто не применяем
     }
