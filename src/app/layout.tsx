@@ -22,6 +22,7 @@ import SiteNav from "@/components/SiteNav";
 import BottomNav from "@/components/BottomNav";
 import SiteFooter from "@/components/SiteFooter";
 import FooterGate from "@/components/FooterGate";
+import JsonLd from "@/components/JsonLd";
 import { APP_URL } from "@/lib/app-url";
 
 const SITE_DESC = "Find local help across Ireland: chefs, cleaners, handymen and more. Post a task for free, get offers and agree directly.";
@@ -105,6 +106,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale}>
       <body className={`dm ${archivo.variable} ${inter.variable}`}>
+        {/* Общесайтовая микроразметка: организация и поле поиска сайта. */}
+        <JsonLd
+          data={[
+            {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Domora",
+              url: APP_URL,
+              email: "domora.irish@gmail.com",
+              areaServed: "IE",
+              description: SITE_DESC,
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Domora",
+              url: APP_URL,
+              inLanguage: locale,
+              potentialAction: {
+                "@type": "SearchAction",
+                target: { "@type": "EntryPoint", urlTemplate: `${APP_URL}/catalog?q={search_term_string}` },
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ]}
+        />
         {plausibleDomain && consent === "all" && (
           <>
             <Script defer data-domain={plausibleDomain} src="https://plausible.io/js/script.js" strategy="afterInteractive" />

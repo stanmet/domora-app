@@ -6,6 +6,7 @@ import { Clock, Mail, MapPin, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
+import { FAQ_TITLE } from "@/i18n/faq";
 import type { Locale } from "@/i18n/config";
 import { sortByCategoryOrder } from "@/components/categories";
 
@@ -37,6 +38,7 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           <Link href="/tasks/new">{t.postTask}</Link>
           <Link href="/top-performers">{t.topTitle}</Link>
           <Link href="/how-it-works">{t.navHowItWorks}</Link>
+          <Link href="/faq">{FAQ_TITLE[locale]}</Link>
           <Link href="/safety">{t.navSafety}</Link>
         </div>
 

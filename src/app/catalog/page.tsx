@@ -5,9 +5,11 @@ import { Star } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
-import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
+import { categoryDescription, categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
+import JsonLd from "@/components/JsonLd";
+import { APP_URL } from "@/lib/app-url";
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
@@ -173,6 +175,37 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   // Автоперевод названий услуг на язык интерфейса.
   const titleTr = await translateBatch(listings.map((l) => l.title), locale);
 
+  // SEO: выбранная категория - локализованное имя, описание и заголовок H1.
+  const selCat = cat ? categories.find((c) => c.slug === cat) : undefined;
+  const selCatName = selCat ? categoryLabel(t, selCat.slug, locale === "ru" ? selCat.nameRu : selCat.nameEn) : "";
+  const selCatDesc = selCat ? categoryDescription(t, selCat.slug) : "";
+  const heading = [selCatName, city].filter(Boolean).join(", ") || t.catalogTitle;
+
+  // Хлебные крошки и список услуг для микроразметки (schema.org).
+  const crumbs = [
+    { name: "Domora", url: APP_URL },
+    { name: t.catalogTitle, url: `${APP_URL}/catalog` },
+    ...(selCatName ? [{ name: selCatName, url: `${APP_URL}/catalog?cat=${cat}` }] : []),
+  ];
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.url })),
+  };
+  const itemListLd =
+    listings.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: listings.map((l, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            url: `${APP_URL}/providers/${l.provider.userId}`,
+            name: l.title,
+          })),
+        }
+      : null;
+
   return (
     <main className="wrap sec">
       <CatalogFilters
@@ -206,9 +239,16 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         }}
       />
 
-      <h2 className="display" style={{ fontSize: "clamp(22px,4.5vw,32px)", margin: "0 0 6px" }}>
-        {t.catalogTitle}
-      </h2>
+      <JsonLd data={itemListLd ? [breadcrumbLd, itemListLd] : [breadcrumbLd]} />
+
+      <h1 className="display" style={{ fontSize: "clamp(22px,4.5vw,32px)", margin: "0 0 6px" }}>
+        {heading}
+      </h1>
+      {selCatDesc && (
+        <p className="sub" style={{ marginTop: 0, marginBottom: 12, maxWidth: 680 }}>
+          {selCatDesc}
+        </p>
+      )}
       {subName && (
         <div className="chips" style={{ marginBottom: 10 }}>
           <Link href={cat ? `/catalog?cat=${cat}` : "/catalog"} className="chip on">
