@@ -658,6 +658,11 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .foot-contact{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .dm .foot-contact svg{color:var(--green);flex-shrink:0}
 .dm .foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:16px;padding-bottom:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+/* Короткий подвал на всех страницах, кроме главной. */
+.dm .foot-mini{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:22px 0}
+.dm .foot-mini .logo{font-size:20px;color:var(--ink)}
+.dm .foot-mini p{font-size:12.5px;color:var(--muted);line-height:1.5}
+.dm .foot-nowrap{white-space:nowrap}
 @media(max-width:760px){
   .dm .foot-grid{grid-template-columns:1fr 1fr;gap:24px 20px;padding-top:30px;padding-bottom:18px}
   .dm .foot-brand{grid-column:1 / -1}

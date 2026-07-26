@@ -127,9 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           city={city}
         />
         {children}
-        <FooterGate>
-          <SiteFooter t={t} locale={locale} />
-        </FooterGate>
+        <FooterGate full={<SiteFooter t={t} locale={locale} />} rights={t.footerRights} />
         <BottomNav
           isLoggedIn={Boolean(authUser?.email)}
           labels={{

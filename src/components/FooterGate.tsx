@@ -1,36 +1,32 @@
 "use client";
 
-// Показывает большой маркетинговый футер только на витринных и информационных
-// страницах (главная, каталог, профиль исполнителя, «как это работает» и т.п.).
-// На рабочих экранах приложения (заказы, сообщения, оплата, кабинеты, вход)
-// футер лишний и только мешает - там его прячем.
+// Подвал есть на всех страницах, но в двух видах:
+// - на главной ("/") показываем полный маркетинговый футер (колонки ссылок,
+//   категории, контакты) - его передают в проп full;
+// - на всех остальных страницах показываем короткий футер: логотип и строка
+//   копирайта, где слоган ("Сервис для дома в Ирландии") идёт одной строкой.
 import { usePathname } from "next/navigation";
 
-// Префиксы служебных/рабочих разделов, где футер не нужен.
-const HIDE_PREFIXES = [
-  "/login",
-  "/signup",
-  "/reset-password",
-  "/bookings",
-  "/messages",
-  "/favorites",
-  "/profile",
-  "/notifications",
-  "/subscriptions",
-  "/admin",
-  "/pro",
-  "/tasks/mine",
-  "/tasks/new",
-];
-
-function shouldHide(pathname: string): boolean {
-  // Экраны оформления/оплаты брони (например /providers/<id>/book).
-  if (pathname.endsWith("/book") || pathname.endsWith("/pay")) return true;
-  return HIDE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
-}
-
-export default function FooterGate({ children }: { children: React.ReactNode }) {
+export default function FooterGate({ full, rights }: { full: React.ReactNode; rights: string }) {
   const pathname = usePathname();
-  if (shouldHide(pathname)) return null;
-  return <>{children}</>;
+  if (pathname === "/") return <>{full}</>;
+
+  // Разбиваем "© 2012-2026 Domora. Сервис для дома в Ирландии." на копирайт и
+  // слоган по первому ". ", чтобы слоган держать в одной строке.
+  const sep = rights.indexOf(". ");
+  const head = sep === -1 ? rights : rights.slice(0, sep + 1);
+  const tail = sep === -1 ? "" : rights.slice(sep + 2);
+
+  return (
+    <footer className="site-footer">
+      <div className="wrap foot-mini">
+        <span className="logo">
+          DOMO<span>RA</span>
+        </span>
+        <p>
+          {head} {tail && <span className="foot-nowrap">{tail}</span>}
+        </p>
+      </div>
+    </footer>
+  );
 }
