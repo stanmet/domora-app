@@ -106,6 +106,18 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* Бесплатно для всех: без комиссий и процентов */}
+      <div className="wrap" style={{ paddingTop: 14 }}>
+        <div className="freebanner">
+          <span className="fb-ic">
+            <Wallet size={20} strokeWidth={1.8} />
+          </span>
+          <p>
+            <b>{tx.freeBadge}.</b> {tx.freeBadgeP}
+          </p>
+        </div>
+      </div>
+
       {/* Открытые задачи: видны всем, ведут на страницу задачи */}
       <div className="wrap homesec">
         <div className="postcta">

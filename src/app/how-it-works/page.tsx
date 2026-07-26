@@ -1,6 +1,6 @@
 // Как это работает: шаги для клиентов и для исполнителей (в духе Kabanchik).
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Wallet } from "lucide-react";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
@@ -28,6 +28,15 @@ export default async function HowItWorksPage() {
     <main className="wrap sec">
       <h1 className="page">{t.hiwTitle}</h1>
       <p className="sub">{tx.hiwLead}</p>
+
+      <div className="freebanner" style={{ marginTop: 14 }}>
+        <span className="fb-ic">
+          <Wallet size={20} strokeWidth={1.8} />
+        </span>
+        <p>
+          <b>{tx.freeBadge}.</b> {tx.freeBadgeP}
+        </p>
+      </div>
 
       <h3 className="psec-h" style={{ marginTop: 18 }}>{t.hiwClients}</h3>
       <div className="steplist" style={{ marginBottom: 8 }}>

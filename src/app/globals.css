@@ -82,6 +82,11 @@ html,body{min-height:100%;overflow-x:clip}
 
 /* beige tip card */
 .dm .tip{background:var(--beige-bg);border-radius:16px;padding:20px 22px;display:flex;gap:14px;align-items:flex-start;margin:36px 0}
+/* Баннер «Бесплатно для всех» на главной. */
+.dm .freebanner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#eef6ee;border:1px solid #d9ebd9}
+.dm .freebanner .fb-ic{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center}
+.dm .freebanner p{font-size:13.5px;line-height:1.4;color:var(--ink)}
+.dm .freebanner p b{font-weight:800}
 .dm .tip .ti{width:42px;height:42px;border-radius:50%;background:var(--beige);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dm .tip p{font-size:14.5px;line-height:1.55}
 .dm .tip b{font-weight:800}
@@ -472,9 +477,10 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .scrollpanel::-webkit-scrollbar-track{background:transparent}
 .dm .scrollpanel .opentasks,.dm .scrollpanel .grid{display:flex;flex-wrap:nowrap;gap:12px;margin:0;align-items:stretch}
 .dm .scrollpanel .taskcard,.dm .scrollpanel .pcard2{flex:0 0 auto;width:min(74vw,260px);scroll-snap-align:start}
-/* В ленте на главной карточку исполнителя приводим по высоте к карточке задачи:
-   вместо большого квадратного фото - невысокое фото-баннер. */
-.dm .scrollpanel .pcard2 .photo{aspect-ratio:auto;height:132px;margin-bottom:10px}
+/* В ленте на главной карточки исполнителей делаем компактными, но с квадратным
+   фото (как плитки в каталоге): уже сама карточка - меньше квадрат. */
+.dm .scrollpanel .pcard2{width:min(46vw,190px)}
+.dm .scrollpanel .pcard2 .photo{aspect-ratio:1/1;height:auto;margin-bottom:10px}
 .dm a.taskcard{display:block;color:inherit;transition:border-color .15s,transform .15s}
 .dm a.taskcard:hover{border-color:var(--green);transform:translateY(-2px)}
 .dm .taskcard .budget{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:800;font-size:15px}
