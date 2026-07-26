@@ -88,26 +88,40 @@ export default async function Home() {
 
   return (
     <main>
-      {/* Плашка-герой: зелёный баннер с вопросом и кнопкой */}
+      {/* Плашка-герой: стильный баннер в фирменном зелёном */}
       <div className="wrap" style={{ paddingTop: 16 }}>
         <section className="hero">
-          <svg className="hero-deco" viewBox="0 0 260 200" fill="none" aria-hidden="true">
-            <g stroke="rgba(255,255,255,.42)" strokeWidth="3" fill="rgba(255,255,255,.14)">
-              <path d="M182 26 L204 8 L226 26 L226 60 L182 60 Z" />
-              <path d="M96 150 L118 132 L140 150 L140 184 L96 184 Z" />
+          <svg className="hero-deco" viewBox="0 0 300 220" fill="none" aria-hidden="true">
+            <g stroke="rgba(255,255,255,.26)" strokeWidth="2">
+              <line x1="230" y1="31" x2="150" y2="44" />
+              <line x1="245" y1="31" x2="284" y2="74" />
+              <line x1="230" y1="42" x2="205" y2="104" />
+              <line x1="220" y1="121" x2="282" y2="150" />
+              <line x1="190" y1="130" x2="165" y2="180" />
+              <line x1="165" y1="190" x2="252" y2="202" />
             </g>
-            <g stroke="rgba(255,255,255,.32)" strokeWidth="2.5">
-              <line x1="226" y1="42" x2="258" y2="92" />
-              <line x1="140" y1="168" x2="200" y2="60" />
+            <g stroke="rgba(255,255,255,.5)" strokeWidth="2.6" fill="rgba(255,255,255,.15)">
+              <path d="M215 20 L230 8 L245 20 L245 42 L215 42 Z" />
+              <path d="M190 116 L205 104 L220 116 L220 138 L190 138 Z" />
+              <path d="M135 180 L150 168 L165 180 L165 202 L135 202 Z" />
             </g>
-            <circle cx="258" cy="98" r="15" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.42)" strokeWidth="3" />
+            <g fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.5)" strokeWidth="2.4">
+              <circle cx="150" cy="44" r="8" />
+              <circle cx="284" cy="74" r="13" />
+              <circle cx="282" cy="150" r="10" />
+              <circle cx="252" cy="202" r="9" />
+            </g>
           </svg>
           <div className="hero-in">
+            <span className="hero-pill">{tx.freeBadge}</span>
             <h1 className="hero-title">{tx.heroTitle}</h1>
             <p className="hero-sub">{tx.heroSub}</p>
             <div className="hero-cta">
               <Link href="/tasks/new" className="btn hero-btn">
                 {t.postTask} <ArrowRight size={16} />
+              </Link>
+              <Link href="/catalog" className="btn hero-btn2">
+                {t.findPro}
               </Link>
             </div>
           </div>
