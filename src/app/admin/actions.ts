@@ -14,6 +14,8 @@ import {
 } from "@prisma/client";
 import { DisputeStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { purgeUsers } from "@/lib/purge-user";
 import { stripe } from "@/lib/stripe";
 import { removeImage } from "@/lib/storage";
 import { requireAdminScope, adminActionLog } from "@/lib/admin";
@@ -310,34 +312,34 @@ export async function resolveDispute(
   return { ok: true };
 }
 
-// --- Удаление пользователя (мягкое): обезличивание + бан. ---
-// Реального удаления строки не делаем (на ней висят заказы/сообщения/отзывы) -
-// вместо этого скрываем персональные данные и закрываем доступ.
+// --- Удаление пользователя (жёсткое): полностью, без следов. ---
+// Удаляем аккаунт и все его данные из базы (каскад в purgeUsers) и из Supabase
+// Auth, чтобы не осталось ни записи, ни возможности входа. Заморозка (freeze) -
+// отдельное мягкое действие, см. setUserFrozen.
 export async function deleteUser(userId: string): Promise<void> {
   const admin = await requireAdminScope("users");
   if (userId === admin.id) return; // себя не удаляем
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, roles: true } });
   if (!user || user.roles.includes(Role.ADMIN)) return; // других админов не трогаем
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: "Deleted user",
-        email: `deleted+${userId}@domora.invalid`,
-        phone: null,
-        status: UserStatus.BANNED,
-      },
-    }),
-    adminActionLog(admin.id, "user", userId, "delete"),
-  ]);
+  // 1) Полное удаление из базы (брони, чат, отзывы, услуги, задачи и т.д.).
+  await purgeUsers([userId]);
 
-  // Если это исполнитель - убираем его из каталога.
-  const provider = await prisma.providerProfile.findUnique({ where: { userId }, select: { userId: true } });
-  if (provider) {
-    await prisma.providerProfile.update({ where: { userId }, data: { status: ProviderStatus.BANNED } });
+  // 2) Удаление из Supabase Auth по email (id в auth.users свой, ищем по почте).
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
+      `SELECT id::text AS id FROM auth.users WHERE lower(email) = $1 LIMIT 1`,
+      user.email.toLowerCase(),
+    );
+    const authId = rows[0]?.id;
+    if (authId) await getSupabaseAdmin().auth.admin.deleteUser(authId);
+  } catch (e) {
+    console.error("deleteUser: auth cleanup failed", userId, e);
   }
+
+  // 3) Журнал действия администратора (targetId - без внешнего ключа на User).
+  await adminActionLog(admin.id, "user", userId, "delete");
 
   revalidatePath("/admin");
   revalidatePath("/catalog");
