@@ -221,7 +221,7 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
       displayName: true,
       city: true,
       status: true,
-      user: { select: { email: true } },
+      user: { select: { email: true, roles: true } },
     },
   });
 
@@ -253,11 +253,24 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
                   </span>
                 </td>
                 <td>
-                  <form action={setProviderFrozen.bind(null, p.userId, !frozen)}>
-                    <button className={"btn btn-sm " + (frozen ? "btn-green" : "btn-red")}>
-                      {frozen ? at.unblock : at.freeze}
-                    </button>
-                  </form>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                    <form action={setProviderFrozen.bind(null, p.userId, !frozen)}>
+                      <button className={"btn btn-sm " + (frozen ? "btn-green" : "btn-red")}>
+                        {frozen ? at.unblock : at.freeze}
+                      </button>
+                    </form>
+                    {p.user.roles.includes(Role.ADMIN) ? (
+                      <span className="adm-muted">—</span>
+                    ) : (
+                      <ConfirmAction
+                        action={deleteUser.bind(null, p.userId)}
+                        label={at.userDelete}
+                        warning={at.userDeleteWarn}
+                        confirmLabel={at.userDeleteConfirm}
+                        backLabel={at.back}
+                      />
+                    )}
+                  </div>
                 </td>
               </tr>
             );
