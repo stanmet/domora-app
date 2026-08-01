@@ -59,6 +59,23 @@ export async function approveListing(listingId: string): Promise<void> {
   revalidatePath("/catalog");
 }
 
+// Полное удаление услуги (плашки). С бронями не удаляем - это история заказов;
+// для таких лучше заморозка/отклонение. В модерации броней ещё нет.
+export async function deleteListing(listingId: string): Promise<void> {
+  const admin = await requireAdminScope("moderation");
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    select: { id: true, _count: { select: { bookings: true } } },
+  });
+  if (!listing || listing._count.bookings > 0) return;
+  await prisma.$transaction([
+    prisma.listing.delete({ where: { id: listingId } }),
+    adminActionLog(admin.id, "listing", listingId, "delete"),
+  ]);
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+}
+
 // Отклонение услуги с комментарием для исполнителя.
 export async function rejectListing(listingId: string, reason: string): Promise<void> {
   const admin = await requireAdminScope("moderation");
@@ -440,6 +457,32 @@ export async function updateCategory(id: string, formData: FormData): Promise<vo
   await prisma.$transaction([
     prisma.category.update({ where: { id }, data: { nameEn, nameRu, unitDefault: unit } }),
     adminActionLog(admin.id, "category", id, "update"),
+  ]);
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+}
+
+// Удаление категории. Услуги и задачи переносим в запасную категорию «Другое»
+// (slug "other"), отвязывая подкатегории, затем удаляем подкатегории и саму
+// категорию. Саму «Другое» удалить нельзя - это запасная категория.
+export async function deleteCategory(id: string): Promise<void> {
+  const admin = await requireAdminScope("categories");
+  const cat = await prisma.category.findUnique({ where: { id }, select: { id: true, slug: true } });
+  if (!cat || cat.slug === "other") return;
+  const fallback = await prisma.category.findUnique({ where: { slug: "other" }, select: { id: true } });
+
+  await prisma.$transaction([
+    ...(fallback
+      ? [
+          prisma.listing.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id, subcategoryId: null } }),
+          prisma.task.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id, subcategoryId: null } }),
+        ]
+      : []),
+    prisma.subcategory.deleteMany({ where: { categoryId: id } }),
+    prisma.category.delete({ where: { id } }),
+    adminActionLog(admin.id, "category", id, "delete"),
   ]);
 
   revalidatePath("/admin");

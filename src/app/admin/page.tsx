@@ -17,6 +17,8 @@ import {
   approveListing,
   createCategory,
   deleteBooking,
+  deleteCategory,
+  deleteListing,
   deleteUser,
   resolveComplaint,
   setProviderFrozen,
@@ -141,6 +143,13 @@ async function Moderation({
               <button className="btn btn-green btn-sm">{at.approve}</button>
             </form>
             <RejectForm listingId={l.id} t={at} />
+            <ConfirmAction
+              action={deleteListing.bind(null, l.id)}
+              label={at.userDelete}
+              warning={at.listingDeleteWarn}
+              confirmLabel={at.listingDeleteConfirm}
+              backLabel={at.back}
+            />
           </div>
         </div>
       ))}
@@ -377,21 +386,34 @@ async function Categories({
 
       <h4 style={{ margin: "8px 0 0" }}>{at.catListTitle}</h4>
       {cats.map((c) => (
-        <form key={c.id} action={updateCategory.bind(null, c.id)} className="adm-card" style={{ display: "block" }}>
-          <div style={{ display: "grid", gap: 8, maxWidth: 420 }}>
-            <div className="adm-mono" style={{ fontSize: 12, color: "var(--muted)" }}>{c.slug}</div>
-            <input name="nameEn" className="f" defaultValue={c.nameEn} required maxLength={60} />
-            <input name="nameRu" className="f" defaultValue={c.nameRu} required maxLength={60} />
-            <select name="unitDefault" className="f" defaultValue={c.unitDefault}>
-              {units.map((u) => (
-                <option key={u} value={u}>
-                  {unitLabel(t, u)}
-                </option>
-              ))}
-            </select>
-            <button className="btn btn-line btn-sm">{at.catSave}</button>
-          </div>
-        </form>
+        <div key={c.id} className="adm-card" style={{ display: "block" }}>
+          <form action={updateCategory.bind(null, c.id)}>
+            <div style={{ display: "grid", gap: 8, maxWidth: 420 }}>
+              <div className="adm-mono" style={{ fontSize: 12, color: "var(--muted)" }}>{c.slug}</div>
+              <input name="nameEn" className="f" defaultValue={c.nameEn} required maxLength={60} />
+              <input name="nameRu" className="f" defaultValue={c.nameRu} required maxLength={60} />
+              <select name="unitDefault" className="f" defaultValue={c.unitDefault}>
+                {units.map((u) => (
+                  <option key={u} value={u}>
+                    {unitLabel(t, u)}
+                  </option>
+                ))}
+              </select>
+              <button className="btn btn-line btn-sm">{at.catSave}</button>
+            </div>
+          </form>
+          {c.slug !== "other" && (
+            <div style={{ marginTop: 10, maxWidth: 420 }}>
+              <ConfirmAction
+                action={deleteCategory.bind(null, c.id)}
+                label={at.userDelete}
+                warning={at.catDeleteWarn}
+                confirmLabel={at.catDeleteConfirm}
+                backLabel={at.back}
+              />
+            </div>
+          )}
+        </div>
       ))}
     </div>
   );
