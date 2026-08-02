@@ -10,7 +10,11 @@
 import { prisma } from "@/lib/prisma";
 
 export async function purgeUsers(userIds: string[]): Promise<void> {
-  const CHUNK = 8;
+  // Один проход по всем id сразу: список пользователей маленький, а удаление идёт
+  // через связи (без сбора тысяч id броней), поэтому дробление только замедляло бы
+  // (каждая порция заново сканирует таблицы). Порции оставляем лишь как страховку
+  // на экстремально большое число пользователей.
+  const CHUNK = 300;
   for (let i = 0; i < userIds.length; i += CHUNK) {
     await purgeChunk(userIds.slice(i, i + CHUNK));
   }

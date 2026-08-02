@@ -63,9 +63,11 @@ export async function fillTestUsersMediaAction(): Promise<void> {
   revalidatePath("/");
 }
 
-// Удалить все тестовые аккаунты.
+// Удалить все тестовые аккаунты. Сначала выключаем ботов, чтобы они не создавали
+// новые данные прямо во время чистки.
 export async function deleteAllTestUsersAction(): Promise<void> {
   const admin = await requireAdminScope("testUsers");
+  await setAllBotsEnabled(false).catch(() => {});
   await deleteTestUsers(admin.id);
   revalidatePath("/admin");
 }
