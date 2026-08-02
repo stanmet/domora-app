@@ -79,7 +79,7 @@ export const CATEGORY_PACKS: Record<string, CategoryPack> = {
     tasks: ["Need a chef for a birthday", "Dinner for two at home", "Cook meals for the week ahead"],
   },
   clean: {
-    professions: ["Cleaner", "House cleaner", "Domestic cleaning"],
+    professions: ["Cleaner", "House cleaner", "Domestic cleaner"],
     titles: [
       "Deep clean of the apartment",
       "Weekly regular cleaning",
@@ -149,7 +149,7 @@ export const CATEGORY_PACKS: Record<string, CategoryPack> = {
     tasks: ["Mow the lawn", "Clear leaves in the garden", "Trim the hedges"],
   },
   beauty: {
-    professions: ["Nail technician", "Makeup artist", "Beauty at home", "Hairdresser"],
+    professions: ["Nail technician", "Makeup artist", "Beauty specialist", "Hairdresser"],
     titles: [
       "Manicure and gel polish",
       "Evening makeup at home",
@@ -175,7 +175,7 @@ export const CATEGORY_PACKS: Record<string, CategoryPack> = {
     tasks: ["Walk the dog", "Mind the cat over the weekend", "Wash and trim the dog"],
   },
   moving: {
-    professions: ["Mover", "Removals service", "Van driver"],
+    professions: ["Mover", "Removals specialist", "Van driver"],
     titles: [
       "House move help",
       "Furniture transport",

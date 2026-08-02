@@ -1,7 +1,8 @@
 "use client";
 
-// Форма создания тестовых аккаунтов. Показывает результат генерации (в т.ч.
-// какой метод сработал - AI или встроенный) через useActionState.
+// Форма создания демо-ботов. Проста: количество, роль, категория, город и число
+// услуг. Тексты всегда генерируются на английском встроенным генератором
+// (быстро, без AI-затрат). Результат показывается через useActionState.
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createTestUsersAction, type CreateState } from "./actions";
@@ -11,82 +12,61 @@ interface CatOption {
   label: string;
 }
 
-function SubmitButton() {
+function SubmitButton({ ru }: { ru: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button className="btn btn-green" disabled={pending}>
-      {pending ? "Создаём…" : "Создать аккаунты"}
+      {pending ? (ru ? "Создаём…" : "Creating…") : ru ? "Создать" : "Create"}
     </button>
   );
 }
 
-export default function CreateForm({ categories, cities }: { categories: CatOption[]; cities: string[] }) {
+export default function CreateForm({ categories, cities, ru }: { categories: CatOption[]; cities: string[]; ru: boolean }) {
   const [state, action] = useActionState<CreateState, FormData>(createTestUsersAction, null);
 
   return (
     <form action={action} className="tu-form">
+      {/* Тексты - встроенный генератор на английском (без AI). */}
+      <input type="hidden" name="quality" value="basic" />
+      <input type="hidden" name="lang" value="en" />
       <div className="tu-grid">
         <label>
-          <span>Количество (10–1000)</span>
-          <input type="number" name="count" min={10} max={1000} defaultValue={20} required />
+          <span>{ru ? "Количество (10–1000)" : "How many (10–1000)"}</span>
+          <input type="number" name="count" min={10} max={1000} defaultValue={30} required />
         </label>
         <label>
-          <span>Роль</span>
+          <span>{ru ? "Кто" : "Who"}</span>
           <select name="role" defaultValue="mixed">
-            <option value="mixed">Смешанно (исполнители + клиенты)</option>
-            <option value="provider">Только исполнители</option>
-            <option value="client">Только клиенты (задачи)</option>
+            <option value="mixed">{ru ? "Смешанно (исполнители + клиенты)" : "Mixed (providers + clients)"}</option>
+            <option value="provider">{ru ? "Только исполнители" : "Providers only"}</option>
+            <option value="client">{ru ? "Только клиенты (задачи)" : "Clients only (tasks)"}</option>
           </select>
         </label>
         <label>
-          <span>Категория</span>
+          <span>{ru ? "Категория" : "Category"}</span>
           <select name="category" defaultValue="">
-            <option value="">Все категории</option>
+            <option value="">{ru ? "Все категории" : "All categories"}</option>
             {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.label}
-              </option>
+              <option key={c.slug} value={c.slug}>{c.label}</option>
             ))}
           </select>
         </label>
         <label>
-          <span>Город</span>
+          <span>{ru ? "Город" : "City"}</span>
           <select name="city" defaultValue="">
-            <option value="">Случайные города</option>
+            <option value="">{ru ? "Случайные города" : "Random cities"}</option>
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </label>
         <label>
-          <span>Услуг на исполнителя</span>
-          <input type="number" name="listings" min={1} max={5} defaultValue={1} />
-        </label>
-        <label>
-          <span>Язык текстов</span>
-          <select name="lang" defaultValue="">
-            <option value="">Разные</option>
-            <option value="en">English</option>
-            <option value="ru">Русский</option>
-            <option value="uk">Українська</option>
-            <option value="pl">Polski</option>
-            <option value="es">Español</option>
-            <option value="pt">Português</option>
-          </select>
-        </label>
-        <label>
-          <span>Качество текста</span>
-          <select name="quality" defaultValue="ai">
-            <option value="ai">AI: стандарт (Claude)</option>
-            <option value="ai_high">AI: высокое качество</option>
-            <option value="basic">Встроенный (быстро, без AI)</option>
-          </select>
+          <span>{ru ? "Услуг на исполнителя" : "Listings per provider"}</span>
+          <input type="number" name="listings" min={1} max={5} defaultValue={2} />
         </label>
       </div>
       <div className="tu-actions">
-        <SubmitButton />
+        <SubmitButton ru={ru} />
       </div>
       {state && <div className={"tu-note " + (state.ok ? "ok" : "err")}>{state.message}</div>}
     </form>

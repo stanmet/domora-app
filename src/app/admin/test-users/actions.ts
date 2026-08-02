@@ -15,6 +15,16 @@ import {
 import type { TextQuality } from "@/lib/test-users/ai";
 import { runBotTick, setAllBotsEnabled, setBotConfig, setBotEnabled } from "@/lib/test-users/bots";
 
+// Показать/скрыть тестовых пользователей на публичном сайте (демо-режим).
+export async function setDemoModeAction(on: boolean): Promise<void> {
+  await requireAdminScope("testUsers");
+  await setBotConfig({ demoMode: on });
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/catalog");
+  revalidatePath("/tasks");
+}
+
 export type CreateState = { ok: boolean; message: string } | null;
 
 const ROLES: CreateRole[] = ["provider", "client", "mixed"];
