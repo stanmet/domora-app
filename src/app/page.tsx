@@ -55,15 +55,12 @@ export default async function Home() {
         category: { select: { slug: true } },
       },
     }),
-    prisma.providerProfile.count({ where: { status: "ACTIVE", user: notTest } }),
-    prisma.task.count({ where: { client: notTest } }),
-    prisma.review.count({ where: { publishedAt: { not: null }, author: notTest, target: notTest } }),
   ]).catch((e) => {
     console.error("Home data load failed (schema not ready or DB unavailable)", e);
     return null;
   });
-  const [categories, openTasks, listingsRaw, prosCount, tasksCount, reviewsCount] =
-    homeData ?? ([[], [], [], 0, 0, 0] as [never[], never[], never[], number, number, number]);
+  const [categories, openTasks, listingsRaw] =
+    homeData ?? ([[], [], []] as [never[], never[], never[]]);
   const cats = sortByCategoryOrder(categories);
 
   // Исполнители рядом: подбор по радиусу выезда из их города до выбранного.
@@ -281,24 +278,6 @@ export default async function Home() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Статистика (в духе Kabanchik) */}
-      <div className="wrap" style={{ paddingTop: 8 }}>
-        <div className="stats">
-          <div className="statbox">
-            <b>{prosCount}</b>
-            <span>{t.statPros}</span>
-          </div>
-          <div className="statbox">
-            <b>{tasksCount}</b>
-            <span>{t.statTasks}</span>
-          </div>
-          <div className="statbox">
-            <b>{reviewsCount}</b>
-            <span>{t.statReviews}</span>
-          </div>
-        </div>
       </div>
 
       {/* Как это работает + доверие (из утверждённого прототипа) */}
