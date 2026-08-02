@@ -78,6 +78,13 @@ export async function deleteSelectedTestUsersAction(formData: FormData): Promise
   revalidatePath("/admin");
 }
 
+// Удалить одного бота по кнопке в строке.
+export async function deleteOneTestUserAction(id: string): Promise<void> {
+  const admin = await requireAdminScope("testUsers");
+  if (id) await deleteTestUsers(admin.id, [id]);
+  revalidatePath("/admin");
+}
+
 // Настройки ботов: мастер-переключатель, интенсивность, провайдер.
 export async function saveBotConfigAction(formData: FormData): Promise<void> {
   await requireAdminScope("testUsers");

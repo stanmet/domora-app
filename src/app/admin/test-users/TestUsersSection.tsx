@@ -18,6 +18,7 @@ import ConfirmButton from "../ConfirmButton";
 import CreateForm from "./CreateForm";
 import {
   deleteAllTestUsersAction,
+  deleteOneTestUserAction,
   deleteSelectedTestUsersAction,
   fillTestUsersMediaAction,
   runBotTickAction,
@@ -52,6 +53,7 @@ function tr(locale: Locale) {
     provider: ru ? "исполнитель" : "provider",
     client: ru ? "клиент" : "client",
     deleteSelected: ru ? "Удалить выбранные" : "Delete selected",
+    deleteOne: ru ? "Удалить" : "Delete",
     deleteAll: ru ? "Удалить все тестовые" : "Delete all test users",
     empty: ru ? "Тестовых аккаунтов пока нет." : "No test accounts yet.",
     auditTitle: ru ? "Журнал действий" : "Audit log",
@@ -85,6 +87,7 @@ function tr(locale: Locale) {
     month: ru ? "за месяц" : "month",
     confirmDeleteAll: ru ? "Удалить ВСЕ тестовые аккаунты? Это необратимо." : "Delete ALL test accounts? This cannot be undone.",
     confirmDeleteSel: ru ? "Удалить выбранные тестовые аккаунты?" : "Delete selected test accounts?",
+    confirmDeleteOne: ru ? "Удалить этот тестовый аккаунт?" : "Delete this test account?",
     confirmDisableAll: ru ? "Выключить всех ботов?" : "Disable all bots?",
   };
 }
@@ -238,6 +241,7 @@ export default async function TestUsersSection({
                   <th>{l.colCity}</th>
                   <th>{l.colCategory}</th>
                   <th>{l.colBot}</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -255,6 +259,11 @@ export default async function TestUsersSection({
                         <button className={"btn btn-sm " + (r.botEnabled ? "btn-green" : "btn-red")}>
                           {r.botEnabled ? l.botOn : l.botOff}
                         </button>
+                      </form>
+                    </td>
+                    <td>
+                      <form action={deleteOneTestUserAction.bind(null, r.id)}>
+                        <ConfirmButton message={l.confirmDeleteOne} className="btn btn-line btn-sm">{l.deleteOne}</ConfirmButton>
                       </form>
                     </td>
                   </tr>

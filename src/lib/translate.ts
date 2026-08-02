@@ -73,22 +73,28 @@ export async function translateBatch(
   //    страницы (навигация должна быть мгновенной).
   for (const t of missing) result.set(t, original(t, targetLang));
 
-  // 3. Сам перевод через DeepL выполняем в фоне, после ответа. При следующем
-  //    открытии эти тексты уже возьмутся из кеша переведёнными. Так тап по любой
-  //    кнопке/ссылке откликается сразу, не дожидаясь сети до DeepL.
-  if (process.env.DEEPL_API_KEY) {
-    try {
-      after(() => translateAndCache(missing, targetLang));
-    } catch {
-      // after доступен только в контексте запроса: вне его просто пропускаем.
-    }
+  // 3. Сам перевод выполняем в фоне, после ответа. При следующем открытии эти
+  //    тексты уже возьмутся из кеша переведёнными. Так тап по любой кнопке/ссылке
+  //    откликается сразу, не дожидаясь сети. Если задан DEEPL_API_KEY - переводим
+  //    через DeepL (точнее и надёжнее); иначе - бесплатным запасным переводчиком.
+  try {
+    after(() => translateAndCache(missing, targetLang));
+  } catch {
+    // after доступен только в контексте запроса: вне его просто пропускаем.
   }
 
   return result;
 }
 
-// Фоновый перевод недостающих строк и запись в кеш (не блокирует рендер).
+// Диспетчер фонового перевода: DeepL при наличии ключа, иначе бесплатный запасной.
 async function translateAndCache(missing: string[], targetLang: Locale): Promise<void> {
+  if (missing.length === 0) return;
+  if (process.env.DEEPL_API_KEY) return deeplTranslateAndCache(missing, targetLang);
+  return freeTranslateAndCache(missing, targetLang);
+}
+
+// Фоновый перевод недостающих строк через DeepL и запись в кеш.
+async function deeplTranslateAndCache(missing: string[], targetLang: Locale): Promise<void> {
   const key = process.env.DEEPL_API_KEY;
   if (!key || missing.length === 0) return;
   try {
@@ -117,6 +123,49 @@ async function translateAndCache(missing: string[], targetLang: Locale): Promise
     if (toCache.length) await prisma.translation.createMany({ data: toCache, skipDuplicates: true });
   } catch (e) {
     console.error("DeepL translate failed", e);
+  }
+}
+
+// Бесплатный запасной переводчик (без ключа). Используется, когда DEEPL_API_KEY
+// не задан: тексты переводятся в фоне и кешируются, поэтому со второго открытия
+// страницы показываются уже на языке интерфейса. Лучшее качество - у DeepL.
+const FREE_TARGET: Record<Locale, string> = { en: "en", ru: "ru", uk: "uk", pl: "pl", es: "es", pt: "pt" };
+
+async function freeTranslateAndCache(missing: string[], targetLang: Locale): Promise<void> {
+  const tl = FREE_TARGET[targetLang];
+  // Ограничиваем число запросов за один проход, чтобы не упереться в лимиты.
+  const batch = missing.slice(0, 40);
+  const toCache: { sourceHash: string; targetLang: string; sourceLang: string; text: string }[] = [];
+
+  await Promise.all(
+    batch.map(async (src) => {
+      try {
+        const url =
+          "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" +
+          tl +
+          "&dt=t&q=" +
+          encodeURIComponent(src);
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = (await res.json()) as [Array<[string, string]>, unknown, string];
+        const segments = data?.[0];
+        if (!Array.isArray(segments)) return;
+        const text = segments.map((s) => s?.[0] ?? "").join("");
+        if (!text) return;
+        const sourceLang = String(data?.[2] || targetLang).toLowerCase().split("-")[0];
+        toCache.push({ sourceHash: hashOf(src, targetLang), targetLang, sourceLang, text });
+      } catch {
+        // Сеть/лимит: тихо пропускаем, покажется оригинал.
+      }
+    }),
+  );
+
+  if (toCache.length) {
+    try {
+      await prisma.translation.createMany({ data: toCache, skipDuplicates: true });
+    } catch {
+      // База недоступна: пропускаем кеширование.
+    }
   }
 }
 
