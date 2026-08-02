@@ -2,7 +2,7 @@
 // заказы с возвратами. Доступ только роли ADMIN. Дизайн в стиле проекта
 // (globals.css), тексты на английском и русском (см. i18n.ts).
 import Link from "next/link";
-import { ClipboardCheck, Flag, FlaskConical, LayoutGrid, ShieldCheck, Star, Tags, UserCog, Users } from "lucide-react";
+import { ClipboardCheck, Flag, FlaskConical, LayoutGrid, Megaphone, ShieldCheck, Star, Tags, UserCog, Users } from "lucide-react";
 import { ListingStatus, PriceUnit, ProviderStatus, UserStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
@@ -26,6 +26,7 @@ import {
   setUserFrozen,
   updateCategory,
 } from "./actions";
+import BroadcastSection from "./BroadcastSection";
 import RejectForm from "./RejectForm";
 import ConfirmAction from "@/components/ConfirmAction";
 import TestUsersSection, { type TestFilter } from "./test-users/TestUsersSection";
@@ -37,8 +38,8 @@ export const dynamic = "force-dynamic";
 // идти дольше обычного - даём серверному действию больше времени.
 export const maxDuration = 60;
 
-type Tab = "moderation" | "complaints" | "users" | "providers" | "bookings" | "categories" | "testUsers" | "admins";
-const TABS: Tab[] = ["moderation", "complaints", "users", "providers", "bookings", "categories", "testUsers", "admins"];
+type Tab = "moderation" | "complaints" | "users" | "providers" | "bookings" | "categories" | "broadcast" | "testUsers" | "admins";
+const TABS: Tab[] = ["moderation", "complaints", "users", "providers", "bookings", "categories", "broadcast", "testUsers", "admins"];
 
 export default async function AdminPage({
   searchParams,
@@ -69,6 +70,7 @@ export default async function AdminPage({
     providers: { label: at.tabProviders, icon: LayoutGrid },
     bookings: { label: at.tabBookings, icon: ClipboardCheck },
     categories: { label: at.tabCategories, icon: Tags },
+    broadcast: { label: at.tabBroadcast, icon: Megaphone },
     testUsers: { label: locale === "ru" ? "Тестовые" : "Test users", icon: FlaskConical },
     admins: { label: locale === "ru" ? "Администраторы" : "Administrators", icon: UserCog },
   };
@@ -96,6 +98,7 @@ export default async function AdminPage({
         {tab === "providers" && <ProvidersList at={at} />}
         {tab === "bookings" && <BookingsList locale={locale} at={at} />}
         {tab === "categories" && <Categories locale={locale} at={at} />}
+        {tab === "broadcast" && <Broadcast at={at} />}
         {tab === "testUsers" && <TestUsersSection locale={locale} filter={testFilter} />}
         {tab === "admins" && <AdminsSection locale={locale} meId={me.id} />}
       </div>
@@ -452,6 +455,37 @@ async function Categories({
         </div>
       ))}
     </div>
+  );
+}
+
+// Рассылка: выбор получателей (все/по роли/вручную) и отправка сообщения,
+// которое приходит уведомлением. Список для ручного выбора - живые пользователи
+// (без тестовых и самоудалённых).
+async function Broadcast({ at }: { at: ReturnType<typeof getAdminDict> }) {
+  let users: { id: string; name: string; email: string; roles: string[] }[] = [];
+  try {
+    const rows = await prisma.user.findMany({
+      where: { isTest: false, deletedAt: null },
+      orderBy: { name: "asc" },
+      take: 500,
+      select: { id: true, name: true, email: true, roles: true },
+    });
+    users = rows.map((u) => ({ id: u.id, name: u.name, email: u.email, roles: u.roles as unknown as string[] }));
+  } catch {
+    // База недоступна: покажем форму с пустым списком (режимы «всем/по роли» всё равно работают).
+  }
+
+  return (
+    <BroadcastSection
+      users={users}
+      labels={{
+        title: at.bcTitle, sub: at.bcSub,
+        modeAll: at.bcModeAll, modeClients: at.bcModeClients, modeProviders: at.bcModeProviders, modeSelected: at.bcModeSelected,
+        search: at.bcSearch, text: at.bcText, placeholder: at.bcPlaceholder, send: at.bcSend, sending: at.bcSending,
+        sent: at.bcSent, errEmpty: at.bcErrEmpty, errNoRecipients: at.bcErrNoRecipients, recipients: at.bcRecipients,
+        selectedCount: at.bcSelectedCount, confirmAll: at.bcConfirmAll,
+      }}
+    />
   );
 }
 
