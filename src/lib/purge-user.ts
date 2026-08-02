@@ -6,7 +6,16 @@
 // (см. src/app/admin/actions.ts), т.к. это внешняя система.
 import { prisma } from "@/lib/prisma";
 
+// Удаляем порциями: одна огромная транзакция на десятки пользователей упирается
+// в таймаут/лимиты базы (через пул Supabase). Небольшие порции надёжнее.
 export async function purgeUsers(userIds: string[]): Promise<void> {
+  const CHUNK = 10;
+  for (let i = 0; i < userIds.length; i += CHUNK) {
+    await purgeChunk(userIds.slice(i, i + CHUNK));
+  }
+}
+
+async function purgeChunk(userIds: string[]): Promise<void> {
   if (userIds.length === 0) return;
 
   // Задачи пользователей: нужны, чтобы почистить их отклики и просмотры
