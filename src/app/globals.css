@@ -17,8 +17,11 @@
 html,body{min-height:100%;overflow-x:clip}
 .dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:clip}
 /* Прилипающий подвал: основной блок растягивается и толкает футер вниз, поэтому
-   на коротких страницах подвал всегда внизу экрана, а не посередине. */
-.dm>main{flex:1 0 auto}
+   на коротких страницах подвал всегда внизу экрана, а не посередине.
+   width:100% + min-width:0 обязательны: без них main как flex-элемент раздувается
+   до ширины содержимого (сетки карточек) и вылезает за экран - на телефоне это
+   давало одну гигантскую карточку вместо ряда. */
+.dm>main{flex:1 0 auto;width:100%;min-width:0}
 .dm a{color:inherit;text-decoration:none}
 .dm img{max-width:100%}
 /* Мгновенный отклик на тап: без 300ms-задержки и серого блика на iOS. */
@@ -160,7 +163,9 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:5px;justify-content:center}
 .dm .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55)}
 .dm .dots i:first-child{background:#fff}
-.dm .pcard2{cursor:pointer;display:block}
+/* min-width:0 - чтобы карточка в сетке могла сжиматься до ширины колонки, а не
+   растягивать её под длинное название (иначе колонки шире экрана). */
+.dm .pcard2{cursor:pointer;display:block;min-width:0}
 .dm .pcard2 .t{font-weight:700;font-size:15px;line-height:1.3}
 .dm .pcard2 .m{font-size:12.5px;color:var(--muted);margin:5px 0 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .dm .pcard2 .pr{font-size:13.5px}
