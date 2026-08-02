@@ -143,7 +143,7 @@ async function insertProvider(
   const displayName = `${p.firstName} ${p.lastName}`;
   // Стабильный seed бота: одинаковый набор фото для аватара, портфолио и услуг.
   const seed = randomUUID();
-  const profession = p.profession ?? cat.nameRu;
+  const profession = p.profession ?? cat.nameEn;
   const n = Math.max(1, Math.min(5, listingsPerProvider || 1));
   const stats = richStats(seed);
 
@@ -163,7 +163,7 @@ async function insertProvider(
         categoryId: cat.id,
         professionLabel: profession,
         title,
-        titleLang: "ru",
+        titleLang: "en",
         description: richListingDesc({ title, city: p.city, seed, index: i }),
         priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
         unit: cat.unitDefault,
@@ -189,7 +189,7 @@ async function insertProvider(
           displayName,
           customProfession: profession,
           bio: richBio({ profession, city: p.city, years: stats.years, categorySlug: cat.slug, seed }),
-          bioLang: "ru",
+          bioLang: "en",
           city: p.city,
           status: ProviderStatus.ACTIVE,
           travelRadiusKm: stats.travelRadiusKm,
@@ -329,13 +329,24 @@ export async function deleteTestUsers(actorId: string, ids?: string[]): Promise<
   const userIds = users.map((u) => u.id);
   if (userIds.length === 0) return 0;
 
-  // Полный каскад удаления (общий с админским удалением реальных пользователей).
-  await purgeUsers(userIds);
-
-  await prisma.testAuditLog.create({
-    data: { action: "delete", actorId, count: userIds.length, detail: ids ? "selected" : "all" },
-  });
-  return userIds.length;
+  try {
+    // Полный каскад удаления (общий с админским удалением реальных пользователей).
+    await purgeUsers(userIds);
+    await prisma.testAuditLog.create({
+      data: { action: "delete", actorId, count: userIds.length, detail: ids ? "selected" : "all" },
+    });
+    return userIds.length;
+  } catch (e) {
+    // Не роняем страницу: пишем текст ошибки в журнал (виден в админке), чтобы
+    // можно было точно понять причину. Часть данных могла удалиться - повторный
+    // запуск продолжит с оставшихся.
+    const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    await prisma.testAuditLog
+      .create({ data: { action: "delete_error", actorId, count: 0, detail: msg.slice(0, 800) } })
+      .catch(() => {});
+    console.error("deleteTestUsers failed", e);
+    return 0;
+  }
 }
 
 // Заполнить уже созданных ботов реалистичными фото и описаниями: аватары людей,
@@ -360,7 +371,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
     },
   });
 
-  const cats = await prisma.category.findMany({ select: { id: true, slug: true, nameRu: true } });
+  const cats = await prisma.category.findMany({ select: { id: true, slug: true, nameRu: true, nameEn: true } });
   const catById = new Map(cats.map((c) => [c.id, c]));
 
   // Заранее прогреваем пулы настоящих фото Pexels по всем нужным темам (если задан
@@ -386,7 +397,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
     if (pp) {
       const firstCat = pp.listings[0] ? catById.get(pp.listings[0].categoryId) : undefined;
       const slug = firstCat?.slug ?? "other";
-      const profession = pp.customProfession ?? firstCat?.nameRu ?? "Мастер";
+      const profession = pp.customProfession ?? firstCat?.nameEn ?? "Specialist";
       const city = pp.city ?? u.city ?? "Ireland";
       const stats = richStats(seed);
       const primaryKeyword = serviceKeyword(pp.listings[0]?.title ?? profession, slug);
@@ -397,7 +408,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
           where: { userId: pp.userId },
           data: {
             bio: richBio({ profession, city, years: stats.years, categorySlug: slug, seed }),
-            bioLang: "ru",
+            bioLang: "en",
             travelRadiusKm: stats.travelRadiusKm,
             ratingCached: stats.rating,
             jobsCount: stats.jobsCount,
@@ -417,7 +428,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
             data: {
               photos,
               description: richListingDesc({ title: l.title, city, seed, index: i }),
-              titleLang: "ru",
+              titleLang: "en",
             },
           }),
         );
