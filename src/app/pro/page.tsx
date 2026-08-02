@@ -31,6 +31,13 @@ export default async function ProPage() {
   });
 
   const listingsCount = await prisma.listing.count({ where: { providerId: user.id } });
+  // Доступность считается настроенной, когда исполнитель сам сохранил расписание
+  // или добавил выходной (availabilitySetAt проставляется в этих действиях).
+  const profile = await prisma.providerProfile.findUnique({
+    where: { userId: user.id },
+    select: { availabilitySetAt: true },
+  });
+  const availDone = profile?.availabilitySetAt != null;
   const health = await providerHealth(user.id);
   const pctText = (v: number | null) => (v === null ? "—" : Math.round(v * 100) + "%");
 
@@ -152,7 +159,7 @@ export default async function ProPage() {
           </div>
         )}
 
-        <ProOnboarding t={t} listingDone={listingsCount > 0} />
+        <ProOnboarding t={t} listingDone={listingsCount > 0} availDone={availDone} />
       </div>
     </main>
   );

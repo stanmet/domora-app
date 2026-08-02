@@ -3,7 +3,6 @@
 // Онбординг-чеклист исполнителя (V1 без оплаты): первая услуга и доступность.
 // Шаг услуги закрывается, когда у исполнителя реально есть плашка в БД; кнопка
 // ведёт в раздел "Мои услуги". Шаг календаря ведёт на страницу расписания.
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Calendar as CalIcon, Check, Home, Lightbulb, Rocket } from "lucide-react";
 import type { Dict } from "@/i18n/dictionaries";
@@ -13,12 +12,15 @@ type StepKey = "listing" | "avail";
 export default function ProOnboarding({
   t,
   listingDone,
+  availDone,
 }: {
   t: Dict;
   listingDone: boolean;
+  // Готовность шагов приходит с сервера (из БД), а не хранится в браузере: иначе
+  // отметка сбрасывалась при каждой перезагрузке страницы.
+  availDone: boolean;
 }) {
   const router = useRouter();
-  const [availDone, setAvailDone] = useState(false);
 
   const steps: Record<StepKey, boolean> = {
     listing: listingDone,
@@ -31,8 +33,8 @@ export default function ProOnboarding({
 
   function stepAction(key: StepKey) {
     if (key === "listing") return router.push("/pro/services");
-    // Шаг доступности ведёт на реальную страницу расписания.
-    setAvailDone(true);
+    // Шаг доступности ведёт на реальную страницу расписания; отметка «выполнено»
+    // проставится по факту сохранения расписания (availabilitySetAt в БД).
     router.push("/pro/availability");
   }
 
