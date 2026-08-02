@@ -136,7 +136,9 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
 .dm .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-inter),'Inter',sans-serif;color:var(--ink)}
 .dm .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.dm .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+/* Сетка карточек: ширина колонки сжимается вместе с экраном (clamp), поэтому на
+   телефоне всегда 2 аккуратные колонки, а не одна колонка с огромным фото. */
+.dm .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(160px,44vw,240px),1fr));gap:16px}
 .dm .rate{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600}
 .dm .rate svg{color:var(--orange)}
 .dm .tag{background:var(--sage);color:var(--green-dark);font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 10px}
@@ -432,9 +434,10 @@ html,body{min-height:100%;overflow-x:clip}
   .dm .sec{padding-top:24px;padding-bottom:48px}
   .dm .side{position:static}
   .dm .tip{padding:16px}
-  .dm .grid{grid-template-columns:repeat(2,1fr);gap:12px}
-  .dm .pcard2 .t{font-size:13.5px}
-  .dm .photo{aspect-ratio:1/1;border-radius:14px}
+  .dm .grid{grid-template-columns:repeat(2,1fr);gap:12px 10px}
+  .dm .pcard2 .t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dm .pcard2 .m{font-size:12px;gap:5px}
+  .dm .photo{aspect-ratio:1/1;border-radius:14px;margin-bottom:9px}
   .dm .tabs{gap:18px}
   .dm .cattabs{gap:18px}
   .dm .rolecards{grid-template-columns:1fr}
