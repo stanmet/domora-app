@@ -32,6 +32,9 @@ import AdminsSection from "./admins/AdminsSection";
 import type { CreateRole } from "@/lib/test-users";
 
 export const dynamic = "force-dynamic";
+// Заполнение ботов фото (загрузка из Pexels + обновление многих записей) может
+// идти дольше обычного - даём серверному действию больше времени.
+export const maxDuration = 60;
 
 type Tab = "moderation" | "complaints" | "users" | "providers" | "bookings" | "categories" | "testUsers" | "admins";
 const TABS: Tab[] = ["moderation", "complaints", "users", "providers", "bookings", "categories", "testUsers", "admins"];

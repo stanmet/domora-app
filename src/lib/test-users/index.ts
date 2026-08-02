@@ -12,6 +12,7 @@ import { CATEGORY_ORDER } from "@/components/categories";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { generatePersonas, type GenerationMethod, type TextQuality } from "./ai";
 import { portraitUrl, serviceKeyword, servicePhotos } from "./photos";
+import { prefetchPools, realPhotos } from "./photoPool";
 import { richBio, richListingDesc, richStats } from "./richProfile";
 import { pickListingTitles, TEST_CITIES, type PersonaRole } from "./personas";
 
@@ -152,18 +153,27 @@ async function insertProvider(
   const titles = [p.listingTitle, ...pickListingTitles(cat.slug, n + 2).filter((t) => t !== p.listingTitle)]
     .filter((t): t is string => !!t)
     .slice(0, n);
-  const listings = titles.map((title, i) => ({
-    categoryId: cat.id,
-    professionLabel: profession,
-    title,
-    titleLang: "ru",
-    description: richListingDesc({ title, city: p.city, seed, index: i }),
-    priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
-    unit: cat.unitDefault,
-    photos: servicePhotos(serviceKeyword(title, cat.slug), `${seed}:${i}`, 3),
-    status: ListingStatus.ACTIVE,
-  }));
+  // Прогреваем пулы фото по темам этого исполнителя, затем собираем услуги.
+  await prefetchPools(titles.map((tt) => serviceKeyword(tt, cat.slug)));
+  const listings = await Promise.all(
+    titles.map(async (title, i) => {
+      const kw = serviceKeyword(title, cat.slug);
+      const photos = (await realPhotos(kw, `${seed}:${i}`, 3)) ?? servicePhotos(kw, `${seed}:${i}`, 3);
+      return {
+        categoryId: cat.id,
+        professionLabel: profession,
+        title,
+        titleLang: "ru",
+        description: richListingDesc({ title, city: p.city, seed, index: i }),
+        priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
+        unit: cat.unitDefault,
+        photos,
+        status: ListingStatus.ACTIVE,
+      };
+    }),
+  );
   const primaryKeyword = serviceKeyword(titles[0] ?? profession, cat.slug);
+  const portfolioPhotos = (await realPhotos(primaryKeyword, seed, 4)) ?? servicePhotos(primaryKeyword, seed, 4);
 
   await prisma.user.create({
     data: {
@@ -187,7 +197,7 @@ async function insertProvider(
           jobsCount: stats.jobsCount,
           responseMinutes: stats.responseMinutes,
           acceptanceRate: stats.acceptanceRate,
-          portfolioPhotos: servicePhotos(primaryKeyword, seed, 4),
+          portfolioPhotos,
           listings: { create: listings },
         },
       },
@@ -353,6 +363,18 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
   const cats = await prisma.category.findMany({ select: { id: true, slug: true, nameRu: true } });
   const catById = new Map(cats.map((c) => [c.id, c]));
 
+  // Заранее прогреваем пулы настоящих фото Pexels по всем нужным темам (если задан
+  // ключ). Без ключа пулы пустые - тогда ниже используются тематические плитки.
+  const allKeywords: string[] = [];
+  for (const u of users) {
+    const pp = u.providerProfile;
+    if (!pp) continue;
+    const slug = (pp.listings[0] ? catById.get(pp.listings[0].categoryId)?.slug : undefined) ?? "other";
+    allKeywords.push(serviceKeyword(pp.listings[0]?.title ?? pp.customProfession ?? "", slug));
+    for (const l of pp.listings) allKeywords.push(serviceKeyword(l.title, catById.get(l.categoryId)?.slug ?? slug));
+  }
+  await prefetchPools(allKeywords);
+
   let updated = 0;
   for (const u of users) {
     const seed = u.id;
@@ -368,6 +390,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
       const city = pp.city ?? u.city ?? "Ireland";
       const stats = richStats(seed);
       const primaryKeyword = serviceKeyword(pp.listings[0]?.title ?? profession, slug);
+      const portfolio = (await realPhotos(primaryKeyword, seed, 4)) ?? servicePhotos(primaryKeyword, seed, 4);
 
       ops.push(
         prisma.providerProfile.update({
@@ -380,23 +403,25 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
             jobsCount: stats.jobsCount,
             responseMinutes: stats.responseMinutes,
             acceptanceRate: stats.acceptanceRate,
-            portfolioPhotos: servicePhotos(primaryKeyword, seed, 4),
+            portfolioPhotos: portfolio,
           },
         }),
       );
-      pp.listings.forEach((l, i) => {
-        const lslug = catById.get(l.categoryId)?.slug ?? slug;
+      for (let i = 0; i < pp.listings.length; i++) {
+        const l = pp.listings[i];
+        const kw = serviceKeyword(l.title, catById.get(l.categoryId)?.slug ?? slug);
+        const photos = (await realPhotos(kw, `${seed}:${i}`, 3)) ?? servicePhotos(kw, `${seed}:${i}`, 3);
         ops.push(
           prisma.listing.update({
             where: { id: l.id },
             data: {
-              photos: servicePhotos(serviceKeyword(l.title, lslug), `${seed}:${i}`, 3),
+              photos,
               description: richListingDesc({ title: l.title, city, seed, index: i }),
               titleLang: "ru",
             },
           }),
         );
-      });
+      }
     }
 
     await prisma.$transaction(ops);
