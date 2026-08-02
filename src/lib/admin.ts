@@ -16,6 +16,7 @@ export const ADMIN_SCOPES = [
   "providers",
   "bookings",
   "categories",
+  "broadcast",
   "testUsers",
   "admins",
   // Дормантные (для отключённого платёжного/докерного кода): вкладок нет,

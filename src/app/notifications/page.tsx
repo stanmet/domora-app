@@ -48,9 +48,21 @@ function notifMeta(type: string): { textKey: keyof Dict; href: string } {
       return { textKey: "ntfRejected", href: "/pro/services" };
     case "chargeback":
       return { textKey: "ntfChargeback", href: "/admin?tab=disputes" };
+    case "admin_message":
+      return { textKey: "notifTitle", href: "/" };
     default:
       return { textKey: "notifTitle", href: "/" };
   }
+}
+
+// Текст уведомления: у рассылки от админа (admin_message) он произвольный и лежит
+// в payload.text; у остальных типов берётся из словаря по ключу.
+function notifText(type: string, payload: unknown, t: Dict): string {
+  if (type === "admin_message" && payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const v = (payload as Record<string, unknown>).text;
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return t[notifMeta(type).textKey] as string;
 }
 
 export default async function NotificationsPage() {
@@ -122,8 +134,8 @@ export default async function NotificationsPage() {
                   <Bell size={16} />
                 </span>
                 <span className="notif-main">
-                  <span className="notif-text">
-                    {t[meta.textKey] as string}
+                  <span className="notif-text" style={n.type === "admin_message" ? { whiteSpace: "pre-line" } : undefined}>
+                    {notifText(n.type, n.payload, t)}
                     {ref && <span style={{ color: "var(--muted)" }}> · #{ref}</span>}
                   </span>
                   <span className="notif-time">{dateTime(n.createdAt, locale)}</span>

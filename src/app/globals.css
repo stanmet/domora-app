@@ -818,6 +818,11 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .tu-note{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.45}
 .dm .tu-note.ok{background:#E9F2E2;color:#375a2b}
 .dm .tu-note.err{background:#F6E3E0;color:#7a3128}
+/* Рассылка: строка получателя со чекбоксом */
+.dm .bc-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.dm .bc-row:last-child{border-bottom:none}
+.dm .bc-row:hover{background:var(--beige-bg)}
+.dm .bc-row input{width:16px;height:16px;flex:0 0 auto}
 .dm .tu-audit{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:8px}
 .dm .tu-audit li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .dm .tu-audit-count{font-weight:700}

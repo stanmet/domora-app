@@ -138,6 +138,44 @@ export async function setProviderFrozen(userId: string, frozen: boolean): Promis
   revalidatePath("/catalog");
 }
 
+// Рассылка сообщения от администратора. Доставляется как уведомление (колокольчик
+// + страница /notifications) каждому получателю. Режимы: всем, только клиентам,
+// только исполнителям или конкретным выбранным пользователям. Тестовые и
+// самоудалённые аккаунты исключаются.
+export type BroadcastResult = { ok: true; count: number } | { error: string };
+
+export async function broadcastMessage(formData: FormData): Promise<BroadcastResult> {
+  const admin = await requireAdminScope("broadcast");
+  const t = getAdminDict(await getLocale());
+
+  const text = String(formData.get("text") ?? "").trim().slice(0, 2000);
+  if (!text) return { error: t.bcErrEmpty };
+
+  const mode = String(formData.get("mode") ?? "selected");
+  const ids = formData.getAll("userIds").map((v) => String(v)).filter(Boolean);
+
+  const where: Prisma.UserWhereInput = { isTest: false, deletedAt: null };
+  if (mode === "clients") where.roles = { has: Role.CLIENT };
+  else if (mode === "providers") where.roles = { has: Role.PROVIDER };
+  else if (mode === "selected") {
+    if (ids.length === 0) return { error: t.bcErrNoRecipients };
+    where.id = { in: ids };
+  } else if (mode !== "all") {
+    return { error: t.bcErrNoRecipients };
+  }
+
+  const recipients = await prisma.user.findMany({ where, select: { id: true } });
+  if (recipients.length === 0) return { error: t.bcErrNoRecipients };
+
+  await prisma.notification.createMany({
+    data: recipients.map((r) => ({ userId: r.id, type: "admin_message", payload: { text } })),
+  });
+  await adminActionLog(admin.id, "broadcast", mode, "send", `${recipients.length} recipients`);
+
+  revalidatePath("/admin");
+  return { ok: true, count: recipients.length };
+}
+
 // Ручной рейтинг исполнителя. Пустое значение - вернуть автоматический подсчёт по
 // отзывам; число 0..5 - зафиксировать рейтинг вручную (не перетирается пересчётом).
 export async function setProviderRating(userId: string, formData: FormData): Promise<void> {
