@@ -18,7 +18,11 @@ const DEEPL_TARGET: Record<Locale, string> = {
   pt: "PT-PT",
 };
 
-const DEEPL_ENDPOINT = "https://api-free.deepl.com/v2/translate";
+// Бесплатные ключи DeepL оканчиваются на ":fx" и работают на api-free; платные -
+// на api. Выбираем адрес по ключу, чтобы подошёл любой.
+function deeplEndpoint(key: string): string {
+  return key.endsWith(":fx") ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+}
 
 export type Translated = {
   text: string; // текст на языке читателя (или оригинал, если перевод недоступен)
@@ -101,7 +105,7 @@ async function deeplTranslateAndCache(missing: string[], targetLang: Locale): Pr
     const params = new URLSearchParams();
     for (const t of missing) params.append("text", t);
     params.append("target_lang", DEEPL_TARGET[targetLang]);
-    const res = await fetch(DEEPL_ENDPOINT, {
+    const res = await fetch(deeplEndpoint(key), {
       method: "POST",
       headers: {
         Authorization: `DeepL-Auth-Key ${key}`,
