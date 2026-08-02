@@ -5,6 +5,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminScope } from "@/lib/admin";
 import {
+  backfillTestUserMedia,
   createTestUsers,
   deleteTestUsers,
   MAX_TEST_USERS_PER_BATCH,
@@ -50,6 +51,16 @@ export async function createTestUsersAction(_prev: CreateState, formData: FormDa
   } catch (e) {
     return { ok: false, message: "Ошибка: " + (e instanceof Error ? e.message : "не удалось создать") };
   }
+}
+
+// Заполнить всех ботов реалистичными фото и описаниями (аватары, фото услуг,
+// портфолио, описания услуг). Идемпотентно - можно жать повторно.
+export async function fillTestUsersMediaAction(): Promise<void> {
+  await requireAdminScope("testUsers");
+  await backfillTestUserMedia();
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
 }
 
 // Удалить все тестовые аккаунты.

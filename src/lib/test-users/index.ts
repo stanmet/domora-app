@@ -4,14 +4,14 @@
 // поэтому исключаются из поиска, рейтингов и статистики (см. src/lib/test-visibility.ts).
 // Тестовые аккаунты не участвуют в платежах: у них нет Stripe-данных и броней.
 import { randomUUID } from "crypto";
-import { ListingStatus, ProviderStatus, Role, TaskStatus, type PriceUnit } from "@prisma/client";
+import { ListingStatus, ProviderStatus, Role, TaskStatus, type PriceUnit, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { purgeUsers } from "@/lib/purge-user";
 import { encrypt } from "@/lib/crypto";
 import { CATEGORY_ORDER } from "@/components/categories";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { generatePersonas, type GenerationMethod, type TextQuality } from "./ai";
-import { syntheticAvatar } from "./avatar";
+import { categoryPhotos, listingBlurb, portraitUrl } from "./photos";
 import { pickListingTitles, TEST_CITIES, type PersonaRole } from "./personas";
 
 export const TEST_EMAIL_DOMAIN = "testuser.domora.local";
@@ -139,7 +139,9 @@ async function insertProvider(
   listingsPerProvider: number,
 ): Promise<void> {
   const displayName = `${p.firstName} ${p.lastName}`;
-  const avatar = syntheticAvatar(p.firstName, p.lastName);
+  // Стабильный seed бота: одинаковый набор фото для аватара, портфолио и услуг.
+  const seed = randomUUID();
+  const profession = p.profession ?? cat.nameRu;
   const n = Math.max(1, Math.min(5, listingsPerProvider || 1));
 
   // Первая услуга - из персоны (её текст мог сгенерировать AI); остальные - из
@@ -150,12 +152,13 @@ async function insertProvider(
     .slice(0, n);
   const listings = titles.map((title, i) => ({
     categoryId: cat.id,
-    professionLabel: p.profession ?? cat.nameRu,
+    professionLabel: profession,
     title,
     titleLang: p.bioLang,
+    description: listingBlurb(profession, title, p.city, p.bioLang),
     priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
     unit: cat.unitDefault,
-    photos: [avatar],
+    photos: categoryPhotos(cat.slug, `${seed}:${i}`, 3),
     status: ListingStatus.ACTIVE,
   }));
 
@@ -165,17 +168,18 @@ async function insertProvider(
       name: displayName,
       locale: p.bioLang,
       city: p.city,
+      avatarUrl: portraitUrl(seed),
       roles: [Role.CLIENT, Role.PROVIDER],
       isTest: true,
       providerProfile: {
         create: {
           displayName,
-          customProfession: p.profession ?? cat.nameRu,
+          customProfession: profession,
           bio: p.bio ?? null,
           bioLang: p.bioLang,
           city: p.city,
           status: ProviderStatus.ACTIVE,
-          portfolioPhotos: [avatar],
+          portfolioPhotos: categoryPhotos(cat.slug, seed, 4),
           listings: { create: listings },
         },
       },
@@ -195,6 +199,7 @@ async function insertClient(
       name: displayName,
       locale: p.bioLang,
       city: p.city,
+      avatarUrl: portraitUrl(randomUUID()),
       roles: [Role.CLIENT],
       isTest: true,
       tasks: {
@@ -313,6 +318,72 @@ export async function deleteTestUsers(actorId: string, ids?: string[]): Promise<
     data: { action: "delete", actorId, count: userIds.length, detail: ids ? "selected" : "all" },
   });
   return userIds.length;
+}
+
+// Заполнить уже созданных ботов реалистичными фото и описаниями: аватары людей,
+// тематические фото услуг и портфолио, описания услуг (где пусто). Детерминировано
+// по id, поэтому можно запускать повторно - результат стабильный.
+export async function backfillTestUserMedia(): Promise<{ updated: number }> {
+  const users = await prisma.user.findMany({
+    where: { isTest: true },
+    select: {
+      id: true,
+      city: true,
+      locale: true,
+      providerProfile: {
+        select: {
+          userId: true,
+          customProfession: true,
+          city: true,
+          bioLang: true,
+          listings: { select: { id: true, title: true, categoryId: true, description: true } },
+        },
+      },
+    },
+  });
+
+  const cats = await prisma.category.findMany({ select: { id: true, slug: true, nameRu: true } });
+  const catById = new Map(cats.map((c) => [c.id, c]));
+
+  let updated = 0;
+  for (const u of users) {
+    const seed = u.id;
+    const ops: Prisma.PrismaPromise<unknown>[] = [
+      prisma.user.update({ where: { id: u.id }, data: { avatarUrl: portraitUrl(seed) } }),
+    ];
+
+    const pp = u.providerProfile;
+    if (pp) {
+      const firstCat = pp.listings[0] ? catById.get(pp.listings[0].categoryId) : undefined;
+      const slug = firstCat?.slug ?? "other";
+      const profession = pp.customProfession ?? firstCat?.nameRu ?? "Master";
+      const lang = pp.bioLang ?? u.locale ?? "en";
+      const city = pp.city ?? u.city ?? "Ireland";
+
+      ops.push(
+        prisma.providerProfile.update({
+          where: { userId: pp.userId },
+          data: { portfolioPhotos: categoryPhotos(slug, seed, 4) },
+        }),
+      );
+      pp.listings.forEach((l, i) => {
+        const lslug = catById.get(l.categoryId)?.slug ?? slug;
+        ops.push(
+          prisma.listing.update({
+            where: { id: l.id },
+            data: {
+              photos: categoryPhotos(lslug, `${seed}:${i}`, 3),
+              description: l.description || listingBlurb(profession, l.title, city, lang),
+            },
+          }),
+        );
+      });
+    }
+
+    await prisma.$transaction(ops);
+    updated++;
+  }
+  return { updated };
 }
 
 export interface AuditRow {

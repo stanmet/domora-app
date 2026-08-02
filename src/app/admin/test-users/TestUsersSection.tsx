@@ -19,6 +19,7 @@ import CreateForm from "./CreateForm";
 import {
   deleteAllTestUsersAction,
   deleteSelectedTestUsersAction,
+  fillTestUsersMediaAction,
   runBotTickAction,
   saveBotConfigAction,
   toggleAllBotsAction,
@@ -69,6 +70,7 @@ function tr(locale: Locale) {
     providerL: ru ? "AI-провайдер" : "AI provider",
     save: ru ? "Сохранить" : "Save",
     runNow: ru ? "Прогнать сценарий сейчас" : "Run tick now",
+    fillMedia: ru ? "Заполнить фото и описания" : "Fill photos and descriptions",
     enableAll: ru ? "Включить всех" : "Enable all",
     disableAll: ru ? "Выключить всех" : "Disable all",
     botOn: ru ? "вкл" : "on",
@@ -187,6 +189,7 @@ export default async function TestUsersSection({
         </div>
       </form>
       <div className="tu-botbtns">
+        <form action={fillTestUsersMediaAction}><button className="btn btn-green btn-sm">{l.fillMedia}</button></form>
         <form action={runBotTickAction}><button className="btn btn-ink btn-sm">{l.runNow}</button></form>
         <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="1" /><button className="btn btn-sm">{l.enableAll}</button></form>
         <form action={toggleAllBotsAction}><input type="hidden" name="enabled" value="0" /><ConfirmButton message={l.confirmDisableAll} className="btn btn-sm">{l.disableAll}</ConfirmButton></form>
