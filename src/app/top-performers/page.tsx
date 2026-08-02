@@ -44,7 +44,7 @@ export default async function TopPerformersPage() {
                 <div className="photo" style={{ background: "var(--sage)" }}>
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cover} alt={p.displayName} />
+                    <img src={cover} alt={p.displayName} loading="lazy" decoding="async" />
                   ) : (
                     <div className="avatar big" style={{ background: "transparent" }}>
                       {p.displayName[0]}

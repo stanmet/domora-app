@@ -184,7 +184,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             {task.photos.map((url) => (
               // eslint-disable-next-line @next/next/no-img-element
               <a key={url} href={url} target="_blank" rel="noopener noreferrer">
-                <img src={url} alt="" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10 }} />
+                <img src={url} alt="" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 10 }} loading="lazy" decoding="async" />
               </a>
             ))}
           </div>

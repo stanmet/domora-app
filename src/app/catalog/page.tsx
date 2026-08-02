@@ -14,6 +14,7 @@ import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
 import { subcatName } from "@/lib/subcategories";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
 import CatalogFilters from "./CatalogFilters";
 
@@ -127,7 +128,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   };
 
   const [categories, listingsRaw] = await Promise.all([
-    prisma.category.findMany(),
+    getCachedCategories(),
     prisma.listing.findMany({
       where,
       include: {
@@ -273,7 +274,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                 <div className="photo" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
                   {l.photos[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={l.photos[0]} alt={l.title} />
+                    <img src={l.photos[0]} alt={l.title} loading="lazy" decoding="async" />
                   ) : (
                     <>
                       <Icon size={56} strokeWidth={1.1} />

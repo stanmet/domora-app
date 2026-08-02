@@ -2,7 +2,7 @@
 
 // Действия админки. Каждое проверяет роль ADMIN и пишет запись в AdminAction
 // в той же транзакции, что и само изменение (docs/domora-spec.md: аудит админа).
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import {
   BookingStatus,
   ListingStatus,
@@ -26,6 +26,7 @@ import { notify } from "@/lib/notify";
 import { refundToClient } from "@/lib/cancellation";
 import { processPayouts } from "@/lib/jobs";
 import { recomputeRating } from "@/lib/reviews";
+import { CATEGORIES_TAG } from "@/lib/categories-cache";
 
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
@@ -469,6 +470,7 @@ export async function createCategory(formData: FormData): Promise<void> {
     adminActionLog(admin.id, "category", slug, "create"),
   ]);
 
+  revalidateTag(CATEGORIES_TAG); // сбросить кэш списка категорий
   revalidatePath("/admin");
   revalidatePath("/catalog");
   revalidatePath("/");
@@ -490,6 +492,7 @@ export async function updateCategory(id: string, formData: FormData): Promise<vo
     adminActionLog(admin.id, "category", id, "update"),
   ]);
 
+  revalidateTag(CATEGORIES_TAG); // сбросить кэш списка категорий
   revalidatePath("/admin");
   revalidatePath("/catalog");
   revalidatePath("/");
@@ -516,6 +519,7 @@ export async function deleteCategory(id: string): Promise<void> {
     adminActionLog(admin.id, "category", id, "delete"),
   ]);
 
+  revalidateTag(CATEGORIES_TAG); // сбросить кэш списка категорий
   revalidatePath("/admin");
   revalidatePath("/catalog");
   revalidatePath("/");

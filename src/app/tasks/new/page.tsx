@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
@@ -27,7 +27,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
 
-  const categories = sortByCategoryOrder(await prisma.category.findMany());
+  const categories = sortByCategoryOrder(await getCachedCategories());
   const categoryOptions = categories.map((c) => ({
     slug: c.slug,
     label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn),

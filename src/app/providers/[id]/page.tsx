@@ -178,7 +178,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
         <div className="pintro">
           {provider.user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={provider.user.avatarUrl} alt="" className="avatar big" style={{ objectFit: "cover", padding: 0 }} />
+            <img src={provider.user.avatarUrl} alt="" className="avatar big" style={{ objectFit: "cover", padding: 0 }} loading="lazy" decoding="async" />
           ) : (
             <div className="avatar big">{provider.displayName[0]}</div>
           )}
@@ -244,7 +244,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
               <div className="gallery lg">
                 {provider.portfolioPhotos.map((url) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={url} src={url} alt={provider.displayName} />
+                  <img key={url} src={url} alt={provider.displayName} loading="lazy" decoding="async" />
                 ))}
               </div>
             </section>
@@ -265,7 +265,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                     <div className="svc-thumb" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
                       {l.photos[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={l.photos[0]} alt={l.title} />
+                        <img src={l.photos[0]} alt={l.title} loading="lazy" decoding="async" />
                       ) : (
                         <Icon size={30} strokeWidth={1.2} />
                       )}

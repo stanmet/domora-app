@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { sortByCategoryOrder } from "@/components/categories";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { licenceFor, subcatName } from "@/lib/subcategories";
 import ServicesManager from "./ServicesManager";
 
@@ -25,7 +26,7 @@ export default async function ProServicesPage() {
   if (!user.roles.includes(Role.PROVIDER)) redirect("/account");
 
   const [categories, listings] = await Promise.all([
-    prisma.category.findMany(),
+    getCachedCategories(),
     prisma.listing.findMany({
       where: { providerId: user.id },
       orderBy: { createdAt: "asc" },
