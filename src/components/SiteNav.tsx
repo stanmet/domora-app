@@ -88,8 +88,11 @@ export default function SiteNav({
     <>
       <header>
         <div className="wrap hd">
-          <Link href="/" className="logo" onClick={close}>
-            DOMO<span>RA</span>
+          <Link href="/" className="brand" onClick={close}>
+            <span className="logo">
+              DOMO<span>RA</span>
+            </span>
+            <span className="brand-tag">{t.navTagline}</span>
           </Link>
 
           <button type="button" className="topsearch" onClick={() => setSearchOpen(true)} aria-label={t.searchTop}>

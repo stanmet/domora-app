@@ -309,6 +309,7 @@ const en = {
   chooseFile: "Choose file",
   noFileChosen: "No file chosen",
   filesChosen: "{n} files",
+  navTagline: "Home services in Ireland",
   errPwShort: "Password needs at least 6 characters.",
   errEmailTaken: "This email is already registered. Try logging in instead.",
   // Доска задач (задача 2)
@@ -813,6 +814,7 @@ const ru: Dict = {
   chooseFile: "Выбрать файл",
   noFileChosen: "Файл не выбран",
   filesChosen: "Файлов: {n}",
+  navTagline: "Услуги для дома в Ирландии",
   errPwShort: "Пароль должен быть не короче 6 символов.",
   errEmailTaken: "Этот email уже зарегистрирован. Попробуйте войти.",
   // Доска задач (задача 2)
@@ -1315,6 +1317,7 @@ const uk: Dict = {
   chooseFile: "Вибрати файл",
   noFileChosen: "Файл не вибрано",
   filesChosen: "Файлів: {n}",
+  navTagline: "Послуги для дому в Ірландії",
   errPwShort: "Пароль має бути не коротшим за 6 символів.",
   errEmailTaken: "Цей email вже зареєстровано. Спробуйте увійти.",
   // Дошка задач (задача 2)
@@ -1817,6 +1820,7 @@ const pl: Dict = {
   chooseFile: "Wybierz plik",
   noFileChosen: "Nie wybrano pliku",
   filesChosen: "Plików: {n}",
+  navTagline: "Usługi domowe w Irlandii",
   errPwShort: "Hasło musi mieć co najmniej 6 znaków.",
   errEmailTaken: "Ten e-mail jest już zarejestrowany. Spróbuj się zalogować.",
   // Tablica zleceń (zadanie 2)
@@ -2319,6 +2323,7 @@ const es: Dict = {
   chooseFile: "Elegir archivo",
   noFileChosen: "Ningún archivo",
   filesChosen: "{n} archivos",
+  navTagline: "Servicios para el hogar en Irlanda",
   errPwShort: "La contraseña debe tener al menos 6 caracteres.",
   errEmailTaken: "Este email ya está registrado. Prueba a iniciar sesión.",
   // Tablón de tareas (tarea 2)
@@ -2821,6 +2826,7 @@ const pt: Dict = {
   chooseFile: "Escolher ficheiro",
   noFileChosen: "Nenhum ficheiro",
   filesChosen: "{n} ficheiros",
+  navTagline: "Serviços para casa na Irlanda",
   errPwShort: "A palavra-passe deve ter pelo menos 6 caracteres.",
   errEmailTaken: "Este email já está registado. Tente entrar.",
   // Quadro de tarefas (tarefa 2)

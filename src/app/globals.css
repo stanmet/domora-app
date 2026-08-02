@@ -36,6 +36,11 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .hd{display:flex;align-items:center;justify-content:space-between;height:60px}
 .dm .logo{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;font-size:19px;letter-spacing:.02em;cursor:pointer;text-transform:uppercase}
 .dm .logo span{color:var(--green)}
+/* Логотип с короткой подписью о сайте под ним. */
+.dm .brand{display:flex;flex-direction:column;justify-content:center;gap:1px;flex-shrink:0;text-decoration:none;color:var(--ink)}
+.dm .brand-tag{font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;line-height:1;letter-spacing:.01em}
+@media(max-width:380px){.dm .brand-tag{font-size:9px}}
+@media(max-width:340px){.dm .brand-tag{display:none}}
 .dm .hd-right{display:flex;gap:10px;align-items:center}
 .dm .lang{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;font-family:var(--font-inter),'Inter',sans-serif;color:var(--ink)}
 .dm .lang:hover{border-color:var(--ink)}
