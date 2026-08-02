@@ -623,7 +623,17 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .phero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dm .phero-icon{color:#fff;opacity:.55}
 .dm .phero-back{position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);z-index:2}
-.dm .phero-count{position:absolute;bottom:14px;right:14px;background:rgba(20,20,20,.72);color:#fff;font-size:12px;font-weight:600;border-radius:999px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;z-index:2}
+.dm .phero-count{position:absolute;bottom:14px;right:14px;background:rgba(20,20,20,.72);color:#fff;font-size:12px;font-weight:600;border-radius:999px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;z-index:2;border:none;cursor:pointer;font-family:inherit}
+.dm .phero-count:hover{background:rgba(20,20,20,.85)}
+/* Полноэкранная галерея фото (лайтбокс) */
+.dm .lightbox{position:fixed;inset:0;z-index:120;background:rgba(10,10,10,.92);display:flex;align-items:center;justify-content:center;padding:24px;overscroll-behavior:contain}
+.dm .lb-img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:8px;user-select:none}
+.dm .lb-btn{position:absolute;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;transition:background .15s}
+.dm .lb-btn:hover{background:rgba(255,255,255,.28)}
+.dm .lb-close{top:16px;right:16px}
+.dm .lb-prev{left:12px;top:50%;transform:translateY(-50%)}
+.dm .lb-next{right:12px;top:50%;transform:translateY(-50%)}
+.dm .lb-count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(20,20,20,.6);border-radius:999px;padding:5px 12px;font-variant-numeric:tabular-nums}
 
 .dm .pintro{display:flex;gap:16px;align-items:flex-start;padding:20px 0 10px}
 .dm .pintro .avatar.big{width:64px;height:64px;font-size:24px;flex-shrink:0}

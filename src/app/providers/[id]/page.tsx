@@ -4,7 +4,7 @@
 // и залипающая панель заказа снизу на телефоне. Дизайн-система из globals.css.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, Images, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, Check, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -18,6 +18,7 @@ import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 import FavoriteButton from "@/components/FavoriteButton";
+import PhotoGallery from "./PhotoGallery";
 import { toggleFavorite } from "@/app/favorites/actions";
 import { isDemoMode } from "@/lib/test-users/bots";
 
@@ -169,9 +170,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           <ArrowLeft size={18} />
         </Link>
         {allPhotos.length > 1 && (
-          <span className="phero-count">
-            <Images size={13} /> {allPhotos.length} · {t.viewAllPhotos}
-          </span>
+          <PhotoGallery photos={allPhotos} label={t.viewAllPhotos} alt={provider.displayName} />
         )}
       </div>
 
