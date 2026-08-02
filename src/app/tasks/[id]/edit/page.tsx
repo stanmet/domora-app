@@ -9,6 +9,7 @@ import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { sortByCategoryOrder } from "@/components/categories";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { decrypt } from "@/lib/crypto";
 import NewTaskForm from "../../new/NewTaskForm";
 import { updateTask } from "../../new/actions";
@@ -42,7 +43,7 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
   // Редактировать может только автор и только открытую задачу.
   if (task.clientId !== user.id || task.status !== "OPEN") redirect(`/tasks/${id}`);
 
-  const categories = sortByCategoryOrder(await prisma.category.findMany());
+  const categories = sortByCategoryOrder(await getCachedCategories());
   const categoryOptions = categories.map((c) => ({
     slug: c.slug,
     label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn),

@@ -16,6 +16,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getCity } from "@/lib/city";
 import { sortByCategoryOrder } from "@/components/categories";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
 import { ensureSchema } from "@/lib/ensure-schema";
 import SiteNav from "@/components/SiteNav";
@@ -87,7 +88,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let categoryOptions: { slug: string; label: string }[] = [];
   let cities: string[] = [];
   try {
-    const cats = sortByCategoryOrder(await prisma.category.findMany());
+    const cats = sortByCategoryOrder(await getCachedCategories());
     categoryOptions = cats.map((c) => ({ slug: c.slug, label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn) }));
     // Клиент выбирает свой город из главных городов Ирландии; подбор исполнителей
     // идёт по их радиусу выезда до этого города (см. src/lib/ireland.ts).

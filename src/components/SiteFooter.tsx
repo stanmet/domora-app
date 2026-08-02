@@ -14,18 +14,18 @@ function InstagramIcon({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
-import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { FAQ_TITLE } from "@/i18n/faq";
 import type { Locale } from "@/i18n/config";
 import { sortByCategoryOrder } from "@/components/categories";
+import { getCachedCategories } from "@/lib/categories-cache";
 
 export default async function SiteFooter({ t, locale }: { t: Dict; locale: Locale }) {
   const tx = getExtra(locale);
   let categories: { slug: string; nameEn: string; nameRu: string }[] = [];
   try {
-    categories = sortByCategoryOrder(await prisma.category.findMany({ select: { slug: true, nameEn: true, nameRu: true } }));
+    categories = sortByCategoryOrder(await getCachedCategories());
   } catch {
     // База недоступна: колонку категорий скрываем.
   }

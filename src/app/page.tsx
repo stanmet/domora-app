@@ -11,6 +11,7 @@ import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
 import { budgetText, dateOnly, eur } from "@/lib/format";
 import { openTaskVisibilityWhere } from "@/lib/tasks";
+import { getCachedCategories } from "@/lib/categories-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
 import { getCity } from "@/lib/city";
 import { reachable } from "@/lib/ireland";
@@ -35,7 +36,7 @@ export default async function Home() {
   // экраном, а показываем главную с пустыми блоками - на следующем заходе всё
   // подтянется. Возвращаем null и подставляем безопасные пустые значения.
   const homeData = await Promise.all([
-    prisma.category.findMany(),
+    getCachedCategories(),
     prisma.task.findMany({
       where: { ...openTaskVisibilityWhere(demo), ...(city ? { city } : {}) },
       orderBy: { createdAt: "desc" },
@@ -238,7 +239,7 @@ export default async function Home() {
                   <div className="photo" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
                     {cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={cover} alt={l.title} />
+                      <img src={cover} alt={l.title} loading="lazy" decoding="async" />
                     ) : (
                       <>
                         <Icon size={56} strokeWidth={1.1} />
