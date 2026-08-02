@@ -92,7 +92,7 @@ export default async function AdminPage({
 
         {tab === "moderation" && <Moderation locale={locale} t={t} at={at} />}
         {tab === "complaints" && <Complaints at={at} />}
-        {tab === "users" && <UsersList at={at} />}
+        {tab === "users" && <UsersList at={at} locale={locale} />}
         {tab === "providers" && <ProvidersList at={at} />}
         {tab === "bookings" && <BookingsList locale={locale} at={at} />}
         {tab === "categories" && <Categories locale={locale} at={at} />}
@@ -161,13 +161,14 @@ async function Moderation({
   );
 }
 
-async function UsersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
+async function UsersList({ at, locale }: { at: ReturnType<typeof getAdminDict>; locale: Awaited<ReturnType<typeof getLocale>> }) {
   const users = await prisma.user.findMany({
     where: { isTest: false }, // тестовые аккаунты - в отдельной вкладке
     orderBy: { createdAt: "desc" },
     take: 200,
-    select: { id: true, name: true, email: true, roles: true, status: true },
+    select: { id: true, name: true, email: true, roles: true, status: true, deletedAt: true },
   });
+  const dateFmt = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" });
 
   if (users.length === 0) return <div className="empty">{at.usersEmpty}</div>;
 
@@ -193,7 +194,13 @@ async function UsersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
                 <td className="adm-mono">{u.email}</td>
                 <td>{u.roles.join(", ")}</td>
                 <td>
-                  <span className={"pill " + (frozen ? "dec" : "ok")}>{adminStatus(at, u.status)}</span>
+                  {u.deletedAt ? (
+                    <span className="pill dec" title={u.deletedAt.toISOString()}>
+                      {at.selfDeleted} · {dateFmt.format(u.deletedAt)}
+                    </span>
+                  ) : (
+                    <span className={"pill " + (frozen ? "dec" : "ok")}>{adminStatus(at, u.status)}</span>
+                  )}
                 </td>
                 <td>
                   {isAdmin ? (

@@ -127,6 +127,9 @@ model User {
   adminScopes   String[]   @default([])    // точечные права администратора; пусто или "all" = полный доступ
   stripeCustomerId String? @unique
   createdAt     DateTime   @default(now())
+  // Момент, когда пользователь сам удалил свой аккаунт (self-service). Нужен, чтобы
+  // в админке было видно, кто ушёл сам, и отличать это от блокировки админом.
+  deletedAt     DateTime?
 
   providerProfile ProviderProfile?
   bookingsAsClient Booking[] @relation("client")

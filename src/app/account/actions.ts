@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { BookingStatus, Role } from "@prisma/client";
+import { BookingStatus, ProviderStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -118,19 +118,21 @@ export async function deleteAccount(): Promise<void> {
   });
   if (active > 0) redirect("/account?err=active");
 
-  // Обезличивание: email должен остаться уникальным, поэтому подставляем метку.
+  // Самостоятельное удаление аккаунта. Имя и email сохраняем, чтобы админ видел,
+  // кто ушёл сам; вход в систему при этом отзываем ниже (Supabase Auth), телефон
+  // освобождаем, статус - BANNED, ставим отметку времени deletedAt.
   try {
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        name: "Deleted user",
-        email: `deleted+${user.id}@domora.invalid`,
-        phone: null,
-        status: "BANNED",
-      },
+      data: { phone: null, status: "BANNED", deletedAt: new Date() },
+    });
+    // Профиль исполнителя замораживаем, чтобы услуги ушедшего пропали из каталога.
+    await prisma.providerProfile.updateMany({
+      where: { userId: user.id },
+      data: { status: ProviderStatus.FROZEN },
     });
   } catch (e) {
-    console.error("anonymize on delete failed", e);
+    console.error("mark self-deletion failed", e);
   }
 
   // Удаляем вход в Supabase Auth, чтобы пользователь больше не мог войти.
