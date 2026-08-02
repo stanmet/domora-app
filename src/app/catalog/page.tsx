@@ -290,7 +290,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                   <span>{l.provider.displayName}</span>
                   <span>·</span>
                   <span>{l.provider.city}</span>
-                  {l.provider.jobsCount > 0 && rating > 0 ? (
+                  {rating > 0 ? (
                     <span className="rate">
                       <Star size={12} fill="currentColor" /> {rating.toFixed(1)}
                     </span>

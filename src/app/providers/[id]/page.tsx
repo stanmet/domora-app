@@ -187,7 +187,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             <h1 className="ptitle">{provider.displayName}</h1>
             {profession && <div className="pprof">{profession}</div>}
             <div className="pmeta">
-              {provider.jobsCount > 0 && rating > 0 ? (
+              {rating > 0 ? (
                 <span className="rate">
                   <Star size={14} fill="currentColor" /> {rating.toFixed(1)}
                 </span>

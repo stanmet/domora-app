@@ -54,6 +54,11 @@ const en = {
   unblock: "Unblock",
   usersEmpty: "No users.",
   providersEmpty: "No providers.",
+  colRating: "Rating",
+  ratingSave: "Save",
+  ratingManualTag: "manual",
+  ratingAutoTag: "auto",
+  ratingHint: "0–5. Empty = automatic from reviews.",
 
   // Заказы и возвраты
   colClient: "Client",
@@ -177,6 +182,11 @@ const ru: AdminDict = {
   unblock: "Разблокировать",
   usersEmpty: "Пользователей нет.",
   providersEmpty: "Исполнителей нет.",
+  colRating: "Рейтинг",
+  ratingSave: "Сохранить",
+  ratingManualTag: "вручную",
+  ratingAutoTag: "авто",
+  ratingHint: "0–5. Пусто - автоматически по отзывам.",
 
   colClient: "Клиент",
   colService: "Услуга",

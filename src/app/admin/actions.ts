@@ -7,6 +7,7 @@ import {
   BookingStatus,
   ListingStatus,
   PaymentStatus,
+  Prisma,
   PriceUnit,
   ProviderStatus,
   Role,
@@ -134,6 +135,36 @@ export async function setProviderFrozen(userId: string, frozen: boolean): Promis
 
   revalidatePath("/admin");
   revalidatePath("/catalog");
+}
+
+// Ручной рейтинг исполнителя. Пустое значение - вернуть автоматический подсчёт по
+// отзывам; число 0..5 - зафиксировать рейтинг вручную (не перетирается пересчётом).
+export async function setProviderRating(userId: string, formData: FormData): Promise<void> {
+  const admin = await requireAdminScope("providers");
+
+  const provider = await prisma.providerProfile.findUnique({ where: { userId }, select: { userId: true } });
+  if (!provider) return;
+
+  const raw = String(formData.get("rating") ?? "").trim().replace(",", ".");
+  let manual: Prisma.Decimal | null = null;
+  if (raw !== "") {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 5) return; // вне диапазона - игнорируем
+    manual = new Prisma.Decimal(Math.round(n * 100) / 100);
+  }
+
+  await prisma.$transaction([
+    prisma.providerProfile.update({ where: { userId }, data: { ratingManual: manual } }),
+    adminActionLog(admin.id, "provider", userId, manual ? `rating_set_${manual.toFixed(2)}` : "rating_auto"),
+  ]);
+
+  // Применяем сразу в ratingCached (пересчёт учитывает ручное значение).
+  await recomputeRating(userId);
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+  revalidatePath(`/providers/${userId}`);
 }
 
 export type RefundResult = { ok: true } | { error: string };
