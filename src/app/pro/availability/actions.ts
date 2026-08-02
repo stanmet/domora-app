@@ -27,9 +27,10 @@ export async function saveSchedule(formData: FormData): Promise<void> {
   const endMinRaw = Math.max(0, Math.min(1439, hhmmToMin(String(formData.get("end") ?? "20:00"))));
   const endMin = Math.max(endMinRaw, startMin + 30); // окно минимум 30 минут
 
+  const now = new Date();
   await prisma.providerProfile.upsert({
     where: { userId: user.id },
-    update: { workDays, workStartMin: startMin, workEndMin: endMin },
+    update: { workDays, workStartMin: startMin, workEndMin: endMin, availabilitySetAt: now },
     create: {
       userId: user.id,
       displayName: user.name,
@@ -37,9 +38,11 @@ export async function saveSchedule(formData: FormData): Promise<void> {
       workDays,
       workStartMin: startMin,
       workEndMin: endMin,
+      availabilitySetAt: now,
     },
   });
   revalidatePath("/pro/availability");
+  revalidatePath("/pro"); // обновляем чеклист онбординга (шаг доступности)
 }
 
 export async function addTimeOff(formData: FormData): Promise<void> {
@@ -53,8 +56,8 @@ export async function addTimeOff(formData: FormData): Promise<void> {
   // Профиль обязателен для внешнего ключа: создаём, если ещё нет.
   await prisma.providerProfile.upsert({
     where: { userId: user.id },
-    update: {},
-    create: { userId: user.id, displayName: user.name, city: user.city ?? "Dublin" },
+    update: { availabilitySetAt: new Date() },
+    create: { userId: user.id, displayName: user.name, city: user.city ?? "Dublin", availabilitySetAt: new Date() },
   });
   await prisma.timeOff.upsert({
     where: { providerId_date: { providerId: user.id, date } },
@@ -62,6 +65,7 @@ export async function addTimeOff(formData: FormData): Promise<void> {
     create: { providerId: user.id, date },
   });
   revalidatePath("/pro/availability");
+  revalidatePath("/pro"); // обновляем чеклист онбординга (шаг доступности)
 }
 
 export async function removeTimeOff(formData: FormData): Promise<void> {

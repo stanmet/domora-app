@@ -220,6 +220,10 @@ model ProviderProfile {
   workDays     Int[] @default([1, 2, 3, 4, 5]) // по умолчанию будни
   workStartMin Int   @default(540)  // 09:00
   workEndMin   Int   @default(1200) // 20:00
+  // Момент, когда исполнитель впервые сам сохранил расписание/выходной. Нужен,
+  // чтобы шаг онбординга «Настройте доступность» отмечался выполненным по факту
+  // (у рабочих дней/часов есть значения по умолчанию, отличить их иначе нельзя).
+  availabilitySetAt DateTime?
 
   listings  Listing[]
   bookings  Booking[] @relation("provider")

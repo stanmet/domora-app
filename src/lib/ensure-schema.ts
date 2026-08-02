@@ -64,7 +64,7 @@ export async function ensureSchema(): Promise<void> {
     const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
       `SELECT EXISTS(
          SELECT 1 FROM information_schema.columns
-         WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='ratingManual'
+         WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='availabilitySetAt'
        ) AS ok`,
     );
     if (ready?.[0]?.ok) {
@@ -261,8 +261,10 @@ export async function ensureSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ChatBlock_blockedId_idx" ON "ChatBlock"("blockedId")`);
 
     // Ручной рейтинг от администратора (null - автоматически по отзывам).
-    // ВАЖНО: это поле - "маячок" быстрого пути выше; добавляем его последним.
     await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "ratingManual" DECIMAL(3,2)`);
+    // Отметка о том, что исполнитель сам настроил доступность (для онбординга).
+    // ВАЖНО: это поле - "маячок" быстрого пути выше; добавляем его последним.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "availabilitySetAt" TIMESTAMP(3)`);
 
     // RLS (защиту строк) включаем ОДИН раз в setup.sql, а не на каждом запросе:
     // прогон DDL по всем таблицам на каждый рендер через пул Supabase рискован
