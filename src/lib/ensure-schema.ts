@@ -54,13 +54,18 @@ export async function ensureRls(): Promise<void> {
 export async function ensureSchema(): Promise<void> {
   if (ensured) return;
 
-  // Быстрый путь для холодных стартов: если последняя из досоздаваемых таблиц
-  // (ChatBlock - создаётся в самом конце) уже есть, значит вся схема применена.
-  // Тогда не гоняем 50+ DDL-запросов к базе на каждый новый инстанс сервера -
-  // это заметно ускоряет открытие сайта. Один дешёвый запрос вместо полусотни.
+  // Быстрый путь для холодных стартов: если последнее из досоздаваемых полей
+  // (ProviderProfile.ratingManual - добавляется в самом конце) уже есть, значит
+  // вся схема применена. Тогда не гоняем 50+ DDL-запросов к базе на каждый новый
+  // инстанс сервера - это заметно ускоряет открытие сайта. Один дешёвый запрос
+  // вместо полусотни. При добавлении новых полей меняем этот "маячок" на самое
+  // новое из них, чтобы досоздание один раз прошло после деплоя.
   try {
     const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
-      `SELECT to_regclass('public."ChatBlock"') IS NOT NULL AS ok`,
+      `SELECT EXISTS(
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='ratingManual'
+       ) AS ok`,
     );
     if (ready?.[0]?.ok) {
       ensured = true;
@@ -254,6 +259,10 @@ export async function ensureSchema(): Promise<void> {
     );
     await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ChatBlock_blockerId_blockedId_key" ON "ChatBlock"("blockerId", "blockedId")`);
     await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ChatBlock_blockedId_idx" ON "ChatBlock"("blockedId")`);
+
+    // Ручной рейтинг от администратора (null - автоматически по отзывам).
+    // ВАЖНО: это поле - "маячок" быстрого пути выше; добавляем его последним.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "ratingManual" DECIMAL(3,2)`);
 
     // RLS (защиту строк) включаем ОДИН раз в setup.sql, а не на каждом запросе:
     // прогон DDL по всем таблицам на каждый рендер через пул Supabase рискован

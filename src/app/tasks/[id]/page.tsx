@@ -336,7 +336,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                           <div>
                             <div className="offer-name">{offer.provider.displayName}</div>
                             <div className="offer-sub">
-                              {offer.provider.jobsCount > 0 && rating > 0 ? (
+                              {rating > 0 ? (
                                 <span className="rate">
                                   <Star size={12} fill="currentColor" /> {rating.toFixed(1)}
                                 </span>

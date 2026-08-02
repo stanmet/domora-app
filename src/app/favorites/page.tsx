@@ -59,7 +59,7 @@ export default async function FavoritesPage() {
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                     <MapPin size={12} /> {p.city}
                   </span>
-                  {p.jobsCount > 0 && rating > 0 ? (
+                  {rating > 0 ? (
                     <span className="rate">
                       <Star size={12} fill="currentColor" /> {rating.toFixed(1)}
                     </span>

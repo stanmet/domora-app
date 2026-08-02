@@ -22,6 +22,7 @@ import {
   deleteUser,
   resolveComplaint,
   setProviderFrozen,
+  setProviderRating,
   setUserFrozen,
   updateCategory,
 } from "./actions";
@@ -233,6 +234,8 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
       displayName: true,
       city: true,
       status: true,
+      ratingCached: true,
+      ratingManual: true,
       user: { select: { email: true, roles: true } },
     },
   });
@@ -247,6 +250,7 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
             <th>{at.colName}</th>
             <th>{at.colEmail}</th>
             <th>{at.colCity}</th>
+            <th>{at.colRating}</th>
             <th>{at.colStatus}</th>
             <th>{at.colActions}</th>
           </tr>
@@ -254,11 +258,33 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
         <tbody>
           {providers.map((p) => {
             const frozen = p.status === ProviderStatus.FROZEN;
+            const isManual = p.ratingManual != null;
+            const ratingNum = Number(p.ratingCached);
             return (
               <tr key={p.userId}>
                 <td>{p.displayName}</td>
                 <td className="adm-mono">{p.user.email}</td>
                 <td>{p.city}</td>
+                <td>
+                  <form action={setProviderRating.bind(null, p.userId)} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input
+                      name="rating"
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      defaultValue={isManual ? ratingNum.toFixed(1) : ""}
+                      placeholder={ratingNum > 0 ? ratingNum.toFixed(1) : "0.0"}
+                      title={at.ratingHint}
+                      className="f"
+                      style={{ width: 62, padding: "6px 8px" }}
+                    />
+                    <button className="btn btn-line btn-sm">{at.ratingSave}</button>
+                  </form>
+                  <span className="adm-muted" style={{ fontSize: 11 }}>
+                    {isManual ? at.ratingManualTag : at.ratingAutoTag}
+                  </span>
+                </td>
                 <td>
                   <span className={"pill " + (frozen ? "dec" : p.status === ProviderStatus.ACTIVE ? "ok" : "req")}>
                     {adminStatus(at, p.status)}
