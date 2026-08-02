@@ -3,6 +3,17 @@
 // категорий просто не показывается).
 import Link from "next/link";
 import { Clock, Mail, MapPin, ShieldCheck } from "lucide-react";
+
+// Логотип Instagram (в наборе lucide брендовые иконки убраны, поэтому inline SVG).
+function InstagramIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
 import { prisma } from "@/lib/prisma";
 import { categoryLabel, type Dict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
@@ -70,6 +81,9 @@ export default async function SiteFooter({ t, locale }: { t: Dict; locale: Local
           </span>
           <a className="foot-contact" href="mailto:domora.irish@gmail.com">
             <Mail size={14} /> domora.irish@gmail.com
+          </a>
+          <a className="foot-contact" href="https://instagram.com/domora.ie" target="_blank" rel="noopener noreferrer">
+            <InstagramIcon size={14} /> @domora.ie
           </a>
           <span className="foot-contact">
             <Clock size={14} /> {t.footerHours}
