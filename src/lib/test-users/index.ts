@@ -11,7 +11,8 @@ import { encrypt } from "@/lib/crypto";
 import { CATEGORY_ORDER } from "@/components/categories";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { generatePersonas, type GenerationMethod, type TextQuality } from "./ai";
-import { categoryPhotos, listingBlurb, portraitUrl } from "./photos";
+import { categoryPhotos, portraitUrl } from "./photos";
+import { richBio, richListingDesc, richStats } from "./richProfile";
 import { pickListingTitles, TEST_CITIES, type PersonaRole } from "./personas";
 
 export const TEST_EMAIL_DOMAIN = "testuser.domora.local";
@@ -143,6 +144,7 @@ async function insertProvider(
   const seed = randomUUID();
   const profession = p.profession ?? cat.nameRu;
   const n = Math.max(1, Math.min(5, listingsPerProvider || 1));
+  const stats = richStats(seed);
 
   // Первая услуга - из персоны (её текст мог сгенерировать AI); остальные - из
   // набора категории, без повторов, с небольшой вариацией цены.
@@ -154,8 +156,8 @@ async function insertProvider(
     categoryId: cat.id,
     professionLabel: profession,
     title,
-    titleLang: p.bioLang,
-    description: listingBlurb(profession, title, p.city, p.bioLang),
+    titleLang: "ru",
+    description: richListingDesc({ title, city: p.city, seed, index: i }),
     priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
     unit: cat.unitDefault,
     photos: categoryPhotos(cat.slug, `${seed}:${i}`, 3),
@@ -175,10 +177,15 @@ async function insertProvider(
         create: {
           displayName,
           customProfession: profession,
-          bio: p.bio ?? null,
-          bioLang: p.bioLang,
+          bio: richBio({ profession, city: p.city, years: stats.years, categorySlug: cat.slug, seed }),
+          bioLang: "ru",
           city: p.city,
           status: ProviderStatus.ACTIVE,
+          travelRadiusKm: stats.travelRadiusKm,
+          ratingCached: stats.rating,
+          jobsCount: stats.jobsCount,
+          responseMinutes: stats.responseMinutes,
+          acceptanceRate: stats.acceptanceRate,
           portfolioPhotos: categoryPhotos(cat.slug, seed, 4),
           listings: { create: listings },
         },
@@ -356,14 +363,23 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
     if (pp) {
       const firstCat = pp.listings[0] ? catById.get(pp.listings[0].categoryId) : undefined;
       const slug = firstCat?.slug ?? "other";
-      const profession = pp.customProfession ?? firstCat?.nameRu ?? "Master";
-      const lang = pp.bioLang ?? u.locale ?? "en";
+      const profession = pp.customProfession ?? firstCat?.nameRu ?? "Мастер";
       const city = pp.city ?? u.city ?? "Ireland";
+      const stats = richStats(seed);
 
       ops.push(
         prisma.providerProfile.update({
           where: { userId: pp.userId },
-          data: { portfolioPhotos: categoryPhotos(slug, seed, 4) },
+          data: {
+            bio: richBio({ profession, city, years: stats.years, categorySlug: slug, seed }),
+            bioLang: "ru",
+            travelRadiusKm: stats.travelRadiusKm,
+            ratingCached: stats.rating,
+            jobsCount: stats.jobsCount,
+            responseMinutes: stats.responseMinutes,
+            acceptanceRate: stats.acceptanceRate,
+            portfolioPhotos: categoryPhotos(slug, seed, 4),
+          },
         }),
       );
       pp.listings.forEach((l, i) => {
@@ -373,7 +389,8 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
             where: { id: l.id },
             data: {
               photos: categoryPhotos(lslug, `${seed}:${i}`, 3),
-              description: l.description || listingBlurb(profession, l.title, city, lang),
+              description: richListingDesc({ title: l.title, city, seed, index: i }),
+              titleLang: "ru",
             },
           }),
         );
