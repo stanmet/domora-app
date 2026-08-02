@@ -1,8 +1,8 @@
-// Богатый генератор анкет для ботов: разнообразные, непохожие друг на друга
-// биографии и описания услуг. Собираются из независимых наборов фраз по seed,
-// что даёт десятки тысяч уникальных комбинаций. Тексты на русском - язык
-// оригинала (bioLang="ru"); на странице они автоматически переводятся на язык
-// посетителя. Детерминировано по seed: у бота стабильная анкета.
+// Rich generator of unique, varied bot profiles (bios and service descriptions).
+// Built from independent phrase pools by seed, giving tens of thousands of unique
+// combinations. Text is in ENGLISH (bioLang="en") - the default language of the
+// marketplace; it is auto-translated to the visitor's language on the page.
+// Deterministic by seed: a bot always gets the same profile.
 import { CATEGORY_PACKS } from "./personas";
 
 function hash(s: string): number {
@@ -15,47 +15,47 @@ function pick<T>(arr: T[], seed: number): T {
 }
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-// --- БИО исполнителя ---
+// --- Provider bio ---
 const B_INTRO = [
-  "Профессиональный {prof} из города {city}.",
-  "Меня зовут по-простому, а по делу я {profLower} - работаю в {city} и рядом.",
-  "{prof}. Живу и работаю в {city}, выезжаю по всему региону.",
-  "Здравствуйте! Я {profLower}, помогаю жителям {city} уже не первый год.",
-  "{prof} с любовью к своему делу. База - {city}.",
-  "Частный специалист: {profLower}. Район работы - {city} и пригороды.",
-  "Опытный {prof}. Беру заказы по {city} и области.",
-  "{prof}, для меня это не подработка, а профессия. Работаю в {city}.",
+  "Professional {prof} based in {city}.",
+  "I'm a {profLower} working across {city} and nearby areas.",
+  "{prof}. I live and work in {city} and travel around the region.",
+  "Hi! I'm a {profLower}, helping people in {city} for years.",
+  "{prof} who loves the craft. Based in {city}.",
+  "Private specialist: {profLower}. I cover {city} and its suburbs.",
+  "Experienced {prof} taking jobs across {city} and the area.",
+  "{prof} - this is my profession, not a side gig. Based in {city}.",
 ];
 const B_EXP = [
-  "Опыт - {years} лет.",
-  "В профессии больше {years} лет.",
-  "За {years} лет выполнил сотни заказов разной сложности.",
-  "{years} лет практики и довольных клиентов.",
-  "Уже {years} лет делаю эту работу и продолжаю учиться новому.",
-  "Стаж {years} лет: за это время повидал почти всё.",
+  "Over {years} years of experience.",
+  "More than {years} years in the trade.",
+  "In {years} years I've completed hundreds of jobs.",
+  "{years} years of practice and happy clients.",
+  "I've been doing this for {years} years and keep learning.",
+  "{years} years on the job - I've pretty much seen it all.",
 ];
 const B_SPEC = [
-  "Специализируюсь на: {skills}.",
-  "Особенно хорошо получается {skill1} и {skill2}.",
-  "Мои сильные стороны - {skills}.",
-  "Чаще всего заказывают {skills}.",
-  "Люблю задачи, где нужен {skill1}, но берусь и за {skill2}.",
+  "I specialise in {skills}.",
+  "I'm especially good at {skill1} and {skill2}.",
+  "My strong points are {skills}.",
+  "Most requests are for {skills}.",
+  "I love jobs that need {skill1}, but I also handle {skill2}.",
 ];
 const B_APPROACH = [
-  "Работаю аккуратно, чисто и без спешки.",
-  "Ценю пунктуальность и честную цену без скрытых доплат.",
-  "К каждой задаче подхожу индивидуально и всегда на связи.",
-  "Сначала обсуждаем детали, потом приступаю - никаких сюрпризов.",
-  "Спокойно объясню, что и зачем делаю, отвечу на все вопросы.",
-  "Берусь и за мелочь, и за большой объём - подстроюсь под вас.",
+  "I work tidily, cleanly and without rushing.",
+  "I value punctuality and fair pricing with no hidden extras.",
+  "I treat every job individually and stay in touch.",
+  "We agree the details first, then I start - no surprises.",
+  "I'll calmly explain what I do and answer any questions.",
+  "I take on both small tasks and big jobs - I'll adapt to you.",
 ];
 const B_CTA = [
-  "Даю гарантию на результат.",
-  "Свой инструмент и материалы под задачу.",
-  "Напишите в чат - отвечу быстро и подскажу по цене.",
-  "Гибкий график, можно вечером и в выходные.",
-  "Работаю официально, по договорённости о цене заранее.",
-  "Дорожу отзывами, поэтому делаю на совесть.",
+  "I guarantee the result.",
+  "I bring my own tools and materials for the job.",
+  "Message me in chat - I reply fast and can advise on price.",
+  "Flexible schedule, evenings and weekends possible.",
+  "I work openly, with the price agreed in advance.",
+  "I care about my reviews, so I do the job properly.",
 ];
 
 export function richBio(opts: { profession: string; city: string; years: number; categorySlug: string; seed: string }): string {
@@ -83,25 +83,25 @@ export function richBio(opts: { profession: string; city: string; years: number;
   ].join(" ");
 }
 
-// --- Описание услуги ---
+// --- Service description ---
 const D_OPEN = [
   "{title}.",
-  "Предлагаю услугу: {title}.",
-  "{title} - быстро и качественно.",
-  "Возьмусь за задачу: {title}.",
+  "Service offered: {title}.",
+  "{title} - fast and done well.",
+  "Happy to take on: {title}.",
 ];
 const D_BODY = [
-  "Работаю в {city} и ближайших районах, выезжаю на дом.",
-  "Приеду в удобное время, в том числе вечером и в выходные.",
-  "Всё необходимое привожу с собой, от вас - только доступ к месту.",
-  "Заранее оценю объём и назову честную цену без накруток.",
-  "Аккуратно, с уважением к вашему дому и времени.",
+  "I work in {city} and nearby areas, and travel to you.",
+  "I'll come at a convenient time, including evenings and weekends.",
+  "I bring everything needed - you just provide access to the place.",
+  "I'll assess the scope in advance and quote a fair price with no markups.",
+  "Careful and respectful of your home and your time.",
 ];
 const D_END = [
-  "Напишите в чат - согласуем детали и время.",
-  "Готов начать в ближайшие дни.",
-  "Есть вопросы по цене - спрашивайте, всё расскажу.",
-  "Дорожу репутацией, поэтому делаю на совесть.",
+  "Message me in chat - let's agree the details and timing.",
+  "I can start within the next few days.",
+  "Questions about the price - just ask, I'll explain everything.",
+  "I care about my reputation, so I do the job properly.",
 ];
 
 export function richListingDesc(opts: { title: string; city: string; seed: string; index: number }): string {
@@ -110,8 +110,8 @@ export function richListingDesc(opts: { title: string; city: string; seed: strin
   return [fill(pick(D_OPEN, h)), fill(pick(D_BODY, h >> 4)), fill(pick(D_END, h >> 8))].join(" ");
 }
 
-// Правдоподобные «живые» показатели профиля по seed: опыт, рейтинг, число работ,
-// радиус выезда, скорость ответа. Чтобы боты не были все «новыми» и одинаковыми.
+// Believable "live" profile metrics by seed: experience, rating, jobs done, travel
+// radius, response speed. So bots are not all "new" and identical.
 export function richStats(seed: string): {
   years: number;
   jobsCount: number;

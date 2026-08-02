@@ -49,7 +49,7 @@ async function fetchPool(keyword: string): Promise<string[]> {
   try {
     const q = PEXELS_QUERY[keyword] ?? keyword;
     const res = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=30&orientation=landscape`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=80&orientation=landscape`,
       { headers: { Authorization: key } },
     );
     if (!res.ok) throw new Error(`pexels ${res.status}`);
