@@ -1,7 +1,9 @@
-// Реалистичные фото и описания для тестовых аккаунтов (ботов).
-// Фото - внешние публичные картинки (портреты людей и тематические фото по
-// категории). Они загружаются браузером посетителя напрямую, детерминированы
-// по seed, поэтому у каждого бота стабильный набор изображений.
+// Реалистичные фото для тестовых аккаунтов (ботов).
+// - Аватар профиля: портрет человека (randomuser.me).
+// - Фото услуг и портфолио: снимки ПО ТЕМЕ конкретной услуги. Тему определяем
+//   по названию услуги (стрижка -> haircut, газон -> lawn и т.п.), а не по общей
+//   категории, поэтому картинка соответствует именно этой работе.
+// Все картинки грузит браузер посетителя напрямую; детерминированы по seed.
 
 function hashNum(s: string): number {
   let h = 0;
@@ -17,34 +19,51 @@ export function portraitUrl(seed: string): string {
   return `https://randomuser.me/api/portraits/${gender}/${n}.jpg`;
 }
 
-// Ключевые слова тем по категориям - чтобы фото услуги было по делу.
-const CAT_KEYWORDS: Record<string, string[]> = {
-  chef: ["chef", "cooking", "homemade,food"],
-  clean: ["cleaning", "housekeeping", "clean,home"],
-  handy: ["handyman", "tools", "furniture,assembly"],
-  massage: ["massage", "spa", "wellness"],
-  beauty: ["manicure", "makeup", "hairdresser"],
-  events: ["party,dj", "photographer", "celebration"],
-  other: ["gardening", "tutoring", "dog,walking"],
+// Определение темы (англ. ключевое слово для фото) по названию услуги. Порядок
+// важен: более узкие темы проверяем раньше (например «газон» до «стрижки»).
+const TITLE_KEYWORDS: [RegExp, string][] = [
+  [/газон|сад(?!ик)|двор|клумб|ландшафт/i, "gardening"],
+  [/собак|выгул|питом|кошк|zоо|груминг/i, "dog"],
+  [/переезд|перевоз|грузчик/i, "moving"],
+  [/репетит|английск|математ|урок|обучен|язык/i, "tutoring"],
+  [/маникюр|ногт|педикюр/i, "manicure"],
+  [/макияж|визаж/i, "makeup"],
+  [/бров|ресниц/i, "eyebrows"],
+  [/стрижк|укладк|парикмах|волос|причёск|причес/i, "haircut"],
+  [/массаж/i, "massage"],
+  [/сантех|смесител|кран|труб|унитаз|засор/i, "plumbing"],
+  [/электрик|проводк|розетк|светильник/i, "electrician"],
+  [/мебел|сборк|полк|картин|телевизор|ремонт|навес|установк|карниз/i, "handyman"],
+  [/диджей|\bdj\b/i, "dj"],
+  [/фотограф|фотосъ|съёмк|съемк/i, "photographer"],
+  [/аниматор|детск/i, "party"],
+  [/ведущ|юбилей|праздник|вечеринк|торжеств|свадьб/i, "party"],
+  [/уборк|убрать|окон|окна|мытьё|чист|клинин/i, "cleaning"],
+  [/повар|ужин|меню|стейк|паст[аы]|готов|блюд|кейтеринг|еда|гриль|выпечк/i, "cooking"],
+];
+
+// Запасная тема по категории, если по названию ничего не нашли.
+const CATEGORY_FALLBACK: Record<string, string> = {
+  chef: "cooking",
+  clean: "cleaning",
+  handy: "handyman",
+  massage: "massage",
+  beauty: "haircut",
+  events: "party",
+  other: "gardening",
 };
 
-// Набор тематических фото для услуги/портфолио. loremflickr отдаёт фото по
-// ключевым словам; параметр lock фиксирует конкретный снимок (стабильность).
-export function categoryPhotos(slug: string, seed: string, count: number): string[] {
-  const keys = CAT_KEYWORDS[slug] ?? CAT_KEYWORDS.other;
-  const base = hashNum(seed);
-  return Array.from({ length: Math.max(1, count) }, (_, i) => {
-    const kw = keys[i % keys.length];
-    const lock = (base + i * 97) % 100000;
-    return `https://loremflickr.com/800/600/${kw}?lock=${lock}`;
-  });
+export function serviceKeyword(title: string, categorySlug: string): string {
+  for (const [re, kw] of TITLE_KEYWORDS) if (re.test(title)) return kw;
+  return CATEGORY_FALLBACK[categorySlug] ?? "handyman";
 }
 
-// Короткое реалистичное описание услуги. Язык - ru или en (остальные показываются
-// через автоперевод пользовательского контента на язык посетителя).
-export function listingBlurb(profession: string, title: string, city: string, lang: string): string {
-  if (lang === "ru" || lang === "uk") {
-    return `${profession} в ${city}. ${title}. Работаю аккуратно и в срок, беру свой инструмент и материалы под задачу. Напишите в чат - обсудим детали, объём и удобное время.`;
-  }
-  return `${profession} in ${city}. ${title}. Reliable and on time, I bring my own tools and materials. Message me in chat to agree the details, scope and a convenient time.`;
+// Набор фото по теме. loremflickr отдаёт фото по ключевому слову; lock фиксирует
+// конкретный снимок (стабильность и разные фото у разных ботов).
+export function servicePhotos(keyword: string, seed: string, count: number): string[] {
+  const base = hashNum(seed);
+  return Array.from({ length: Math.max(1, count) }, (_, i) => {
+    const lock = (base + i * 97) % 100000;
+    return `https://loremflickr.com/800/600/${keyword}?lock=${lock}`;
+  });
 }

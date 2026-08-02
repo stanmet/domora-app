@@ -11,7 +11,7 @@ import { encrypt } from "@/lib/crypto";
 import { CATEGORY_ORDER } from "@/components/categories";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { generatePersonas, type GenerationMethod, type TextQuality } from "./ai";
-import { categoryPhotos, portraitUrl } from "./photos";
+import { portraitUrl, serviceKeyword, servicePhotos } from "./photos";
 import { richBio, richListingDesc, richStats } from "./richProfile";
 import { pickListingTitles, TEST_CITIES, type PersonaRole } from "./personas";
 
@@ -160,9 +160,10 @@ async function insertProvider(
     description: richListingDesc({ title, city: p.city, seed, index: i }),
     priceCents: i === 0 ? base : Math.round((base * (0.85 + i * 0.15)) / 50) * 50,
     unit: cat.unitDefault,
-    photos: categoryPhotos(cat.slug, `${seed}:${i}`, 3),
+    photos: servicePhotos(serviceKeyword(title, cat.slug), `${seed}:${i}`, 3),
     status: ListingStatus.ACTIVE,
   }));
+  const primaryKeyword = serviceKeyword(titles[0] ?? profession, cat.slug);
 
   await prisma.user.create({
     data: {
@@ -186,7 +187,7 @@ async function insertProvider(
           jobsCount: stats.jobsCount,
           responseMinutes: stats.responseMinutes,
           acceptanceRate: stats.acceptanceRate,
-          portfolioPhotos: categoryPhotos(cat.slug, seed, 4),
+          portfolioPhotos: servicePhotos(primaryKeyword, seed, 4),
           listings: { create: listings },
         },
       },
@@ -366,6 +367,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
       const profession = pp.customProfession ?? firstCat?.nameRu ?? "Мастер";
       const city = pp.city ?? u.city ?? "Ireland";
       const stats = richStats(seed);
+      const primaryKeyword = serviceKeyword(pp.listings[0]?.title ?? profession, slug);
 
       ops.push(
         prisma.providerProfile.update({
@@ -378,7 +380,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
             jobsCount: stats.jobsCount,
             responseMinutes: stats.responseMinutes,
             acceptanceRate: stats.acceptanceRate,
-            portfolioPhotos: categoryPhotos(slug, seed, 4),
+            portfolioPhotos: servicePhotos(primaryKeyword, seed, 4),
           },
         }),
       );
@@ -388,7 +390,7 @@ export async function backfillTestUserMedia(): Promise<{ updated: number }> {
           prisma.listing.update({
             where: { id: l.id },
             data: {
-              photos: categoryPhotos(lslug, `${seed}:${i}`, 3),
+              photos: servicePhotos(serviceKeyword(l.title, lslug), `${seed}:${i}`, 3),
               description: richListingDesc({ title: l.title, city, seed, index: i }),
               titleLang: "ru",
             },
