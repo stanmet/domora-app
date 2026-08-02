@@ -15,7 +15,10 @@
 /* overflow-x:clip не даёт офф-канвас меню и широким блокам вылезать за рамку
    экрана и не ломает залипающую (sticky) шапку. */
 html,body{min-height:100%;overflow-x:clip}
-.dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:clip}
+.dm{background:var(--paper);color:var(--ink);font-family:var(--font-inter),'Inter',system-ui,sans-serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:clip}
+/* Прилипающий подвал: основной блок растягивается и толкает футер вниз, поэтому
+   на коротких страницах подвал всегда внизу экрана, а не посередине. */
+.dm>main{flex:1 0 auto}
 .dm a{color:inherit;text-decoration:none}
 .dm img{max-width:100%}
 /* Мгновенный отклик на тап: без 300ms-задержки и серого блика на iOS. */
