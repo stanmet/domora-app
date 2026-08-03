@@ -3,7 +3,7 @@
 // Точный адрес клиента не показывается до подтверждения брони.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, MapPin, Tag, Users, Wallet } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Tag, Users, Wallet } from "lucide-react";
 import { Role, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -41,6 +41,9 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
   // Доска задач доступна только исполнителям с активной услугой.
   const notAvailable = (
     <main className="wrap sec">
+      <Link href="/pro" className="back">
+        <ArrowLeft size={14} /> {t.proDash}
+      </Link>
       <h1 className="page">{t.tasksFeedTitle}</h1>
       <div className="empty">
         {t.tasksProvidersOnly}
@@ -110,6 +113,9 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
 
   return (
     <main className="wrap sec">
+      <Link href="/pro" className="back">
+        <ArrowLeft size={14} /> {t.proDash}
+      </Link>
       <h1 className="page">{t.tasksFeedTitle}</h1>
       <p className="sub">{t.tasksFeedSub}</p>
 

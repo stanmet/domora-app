@@ -1,7 +1,7 @@
 // Каталог: активные плашки услуг из базы, поиск по названию,
 // фильтры по категории и городу. Разметка карточек из prototypes/Marketplace.jsx.
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
@@ -214,6 +214,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="wrap sec">
+      <Link href="/" className="back">
+        <ArrowLeft size={14} /> {t.navHome}
+      </Link>
       <CatalogFilters
         q={q}
         cat={cat}

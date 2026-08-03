@@ -10,6 +10,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { minToHHMM, dayKeyUTC } from "@/lib/availability";
+import SubmitButton from "@/components/SubmitButton";
 import { saveSchedule, addTimeOff, removeTimeOff } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +26,14 @@ function weekdayNames(locale: string): string[] {
   });
 }
 
-export default async function ProAvailabilityPage() {
+export default async function ProAvailabilityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/pro/availability");
+  const { saved } = await searchParams;
 
   const locale = await getLocale();
   const t = getDict(locale);
@@ -83,8 +89,9 @@ export default async function ProAvailabilityPage() {
             <input type="time" name="end" defaultValue={end} step={1800} />
           </label>
         </div>
-        <div style={{ marginTop: 12 }}>
-          <button className="btn btn-green">{t.avSave}</button>
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <SubmitButton className="btn btn-green" pendingLabel={t.bSending}>{t.avSave}</SubmitButton>
+          {saved === "1" && <span className="tu-note ok" style={{ margin: 0 }}>{t.avSaved}</span>}
         </div>
       </form>
 
@@ -93,7 +100,7 @@ export default async function ProAvailabilityPage() {
       <p className="tu-muted" style={{ marginBottom: 10 }}>{t.avTimeOffSub}</p>
       <form action={addTimeOff} className="av-addoff">
         <input type="date" name="date" required min={todayKey} />
-        <button className="btn btn-ink btn-sm">{t.avAdd}</button>
+        <SubmitButton className="btn btn-ink btn-sm">{t.avAdd}</SubmitButton>
       </form>
       {timeOff.length === 0 ? (
         <div className="empty" style={{ marginTop: 12 }}>{t.avNoBlocks}</div>

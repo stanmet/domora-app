@@ -3,6 +3,7 @@
 // Управление расписанием исполнителя: рабочие дни и часы + блокировка дат
 // (выходной/отпуск). Профиль создаётся при необходимости.
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -43,6 +44,8 @@ export async function saveSchedule(formData: FormData): Promise<void> {
   });
   revalidatePath("/pro/availability");
   revalidatePath("/pro"); // обновляем чеклист онбординга (шаг доступности)
+  // Явная реакция на сохранение: возвращаемся с отметкой ?saved=1 (баннер).
+  redirect("/pro/availability?saved=1");
 }
 
 export async function addTimeOff(formData: FormData): Promise<void> {

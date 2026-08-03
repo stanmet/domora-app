@@ -1,7 +1,7 @@
 // ТОП исполнителей: активные исполнители с самым высоким рейтингом (в духе
 // /top-performers Kabanchik). Карточки в стиле каталога.
 import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
 import { getDict, unitLabel } from "@/i18n/dictionaries";
@@ -28,6 +28,9 @@ export default async function TopPerformersPage() {
 
   return (
     <main className="wrap sec">
+      <Link href="/" className="back">
+        <ArrowLeft size={14} /> {t.navHome}
+      </Link>
       <h1 className="page">{t.topTitle}</h1>
       <p className="sub">{t.topSub}</p>
 
