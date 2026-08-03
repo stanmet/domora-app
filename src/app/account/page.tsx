@@ -1,7 +1,7 @@
 // Личный кабинет: данные пользователя из таблицы User, роль и выход.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarClock, Store, Ticket, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Store, Ticket, UserRound, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -77,39 +77,58 @@ export default async function AccountPage({
         {err === "phone" && <div className="err" style={{ marginBottom: 12 }}>{tx.accPhoneTaken}</div>}
         {err === "upload" && <div className="err" style={{ marginBottom: 12 }}>{tx.genericError}</div>}
 
-        <div className="form" style={{ marginBottom: 8 }}>
+        <div className="form" style={{ marginBottom: 14 }}>
           <label>{t.emailL}</label>
           <div className="acc-val">{user.email}</div>
-          <label>{t.roleTitle}</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <span className="tag">{t.roleClient}</span>
-            {isPro && <span className="tag">{t.rolePro}</span>}
-          </div>
         </div>
 
-        {!isPro && (
-          <div
-            className="card"
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "center",
-              flexWrap: "wrap",
-              background: "var(--sage, #EAF3EC)",
-              marginBottom: 12,
-            }}
-          >
-            <div className="icircle" style={{ background: "var(--green)", color: "#fff" }}>
-              <Store size={22} strokeWidth={1.7} />
-            </div>
-            <p style={{ flex: 1, minWidth: 200, margin: 0, fontWeight: 600 }}>{t.becomeProHint}</p>
-            <form action={becomeProvider}>
-              <button className="btn btn-green">
-                {t.becomePro} <ArrowRight size={15} />
+        {/* Роль: две крупные плашки. Видно, кто ты сейчас, и можно переключиться.
+            Нажатие на «Исполнитель» у клиента сразу открывает кабинет исполнителя. */}
+        <label className="role-label">{t.roleTitle}</label>
+        <div className="role-tiles">
+          <Link href="/catalog" className="role-tile active">
+            <span className="rt-ic">
+              <UserRound size={22} strokeWidth={1.7} />
+            </span>
+            <span className="rt-active">
+              <Check size={13} strokeWidth={3} /> {t.roleActiveTag}
+            </span>
+            <h4>{t.roleClient}</h4>
+            <p>{t.roleClientSub}</p>
+            <span className="rt-foot">
+              {t.findPro} <ArrowRight size={14} />
+            </span>
+          </Link>
+
+          {isPro ? (
+            <Link href="/pro" className="role-tile active">
+              <span className="rt-ic">
+                <Store size={22} strokeWidth={1.7} />
+              </span>
+              <span className="rt-active">
+                <Check size={13} strokeWidth={3} /> {t.roleActiveTag}
+              </span>
+              <h4>{t.rolePro}</h4>
+              <p>{t.roleProSub}</p>
+              <span className="rt-foot">
+                {t.openPro} <ArrowRight size={14} />
+              </span>
+            </Link>
+          ) : (
+            <form action={becomeProvider} className="role-tile-form">
+              <button type="submit" className="role-tile">
+                <span className="rt-ic">
+                  <Store size={22} strokeWidth={1.7} />
+                </span>
+                <h4>{t.rolePro}</h4>
+                <p>{t.roleProSub}</p>
+                <span className="rt-foot">
+                  {t.becomePro} <ArrowRight size={14} />
+                </span>
               </button>
             </form>
-          </div>
-        )}
+          )}
+        </div>
 
         <AccountForm
           action={updateProfile}
@@ -124,11 +143,6 @@ export default async function AccountPage({
           <Link href="/tasks/mine" className="btn btn-line">
             {t.myTasks}
           </Link>
-          {isPro && (
-            <Link href="/pro" className="btn btn-green">
-              {t.openPro} <ArrowRight size={15} />
-            </Link>
-          )}
           {isAdmin && (
             <Link href="/admin" className="btn btn-ink">
               {t.adminPanel} <ArrowRight size={15} />

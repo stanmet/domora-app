@@ -61,7 +61,7 @@ export default function ProfileForm({ t, values, tax }: { t: Dict; values: Value
       </label>
       <label className="f-row">
         <span>{t.ppRadius}</span>
-        <input type="number" name="travelRadiusKm" defaultValue={values.travelRadiusKm} min={1} max={500} step={5} />
+        <input type="number" name="travelRadiusKm" defaultValue={values.travelRadiusKm} min={1} max={500} step={1} inputMode="numeric" />
         <small className="tu-muted">{t.ppRadiusHint}</small>
       </label>
 
