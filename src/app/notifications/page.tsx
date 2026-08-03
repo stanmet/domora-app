@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { Bell } from "lucide-react";
+import { Bell, Megaphone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -128,13 +128,15 @@ export default async function NotificationsPage() {
             const meta = notifMeta(n.type);
             const bId = bookingIdOf(n.payload);
             const ref = bId ? refById.get(bId) : null;
+            const isAdminMsg = n.type === "admin_message";
             return (
               <Link href={meta.href} className={"notif" + (n.readAt ? "" : " unread")} key={n.id}>
-                <span className="notif-ic">
-                  <Bell size={16} />
+                <span className={"notif-ic" + (isAdminMsg ? " brand" : "")}>
+                  {isAdminMsg ? <Megaphone size={16} /> : <Bell size={16} />}
                 </span>
                 <span className="notif-main">
-                  <span className="notif-text" style={n.type === "admin_message" ? { whiteSpace: "pre-line" } : undefined}>
+                  {isAdminMsg && <span className="notif-from">Domora</span>}
+                  <span className="notif-text" style={isAdminMsg ? { whiteSpace: "pre-line" } : undefined}>
                     {notifText(n.type, n.payload, t)}
                     {ref && <span style={{ color: "var(--muted)" }}> · #{ref}</span>}
                   </span>
