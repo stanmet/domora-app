@@ -135,11 +135,11 @@ const en = {
     // UserStatus
     ACTIVE: "Active",
     RESTRICTED: "Restricted",
-    FROZEN: "Frozen",
+    FROZEN: "Quarantined",
     BANNED: "Banned",
     // ProviderStatus (пересекается по именам)
-    DRAFT: "Draft",
-    MODERATION: "Moderation",
+    DRAFT: "Draft · no services",
+    MODERATION: "On review",
     PAUSED: "Paused",
     // BookingStatus
     REQUESTED: "Requested",
@@ -286,11 +286,11 @@ const ru: AdminDict = {
   statuses: {
     ACTIVE: "Активен",
     RESTRICTED: "Ограничен",
-    FROZEN: "Заморожен",
-    BANNED: "Забанен",
-    DRAFT: "Черновик",
-    MODERATION: "На модерации",
-    PAUSED: "Пауза",
+    FROZEN: "В карантине",
+    BANNED: "Заблокирован",
+    DRAFT: "Черновик · нет услуг",
+    MODERATION: "На проверке",
+    PAUSED: "На паузе",
     REQUESTED: "Запрос",
     ACCEPTED: "Принят",
     DECLINED: "Отклонен",
