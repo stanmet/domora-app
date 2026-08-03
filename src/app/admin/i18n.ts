@@ -77,7 +77,7 @@ const en = {
   ratingSave: "Save",
   ratingManualTag: "manual",
   ratingAutoTag: "auto",
-  ratingHint: "0–5. Empty = automatic from reviews.",
+  ratingHint: "0–5. Empty = automatic (starts at 5, drops with reviews).",
 
   // Заказы и возвраты
   colClient: "Client",
@@ -224,7 +224,7 @@ const ru: AdminDict = {
   ratingSave: "Сохранить",
   ratingManualTag: "вручную",
   ratingAutoTag: "авто",
-  ratingHint: "0–5. Пусто - автоматически по отзывам.",
+  ratingHint: "0–5. Пусто - автоматически (старт 5.0, снижается по отзывам).",
 
   colClient: "Клиент",
   colService: "Услуга",

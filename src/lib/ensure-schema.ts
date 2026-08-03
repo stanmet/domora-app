@@ -54,18 +54,16 @@ export async function ensureRls(): Promise<void> {
 export async function ensureSchema(): Promise<void> {
   if (ensured) return;
 
-  // Быстрый путь для холодных стартов: если последнее из досоздаваемых полей
-  // (ProviderProfile.ratingManual - добавляется в самом конце) уже есть, значит
-  // вся схема применена. Тогда не гоняем 50+ DDL-запросов к базе на каждый новый
-  // инстанс сервера - это заметно ускоряет открытие сайта. Один дешёвый запрос
-  // вместо полусотни. При добавлении новых полей меняем этот "маячок" на самое
-  // новое из них, чтобы досоздание один раз прошло после деплоя.
+  // Быстрый путь для холодных стартов: маячок - значение по умолчанию у
+  // ProviderProfile.ratingCached. Оно становится 5.00 в самом конце досоздания
+  // (старт рейтинга 5.0). Пока дефолт ещё старый (0) - прогоняем полный блок один
+  // раз после деплоя; дальше не гоняем 50+ DDL-запросов на каждый новый инстанс.
+  // При добавлении новых полей меняем этот "маячок" на самое новое из них.
   try {
     const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
-      `SELECT EXISTS(
-         SELECT 1 FROM information_schema.columns
-         WHERE table_schema='public' AND table_name='User' AND column_name='deletedAt'
-       ) AS ok`,
+      `SELECT (column_default LIKE '5%') AS ok
+         FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='ratingCached'`,
     );
     if (ready?.[0]?.ok) {
       ensured = true;
@@ -265,8 +263,23 @@ export async function ensureSchema(): Promise<void> {
     // Отметка о том, что исполнитель сам настроил доступность (для онбординга).
     await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "availabilitySetAt" TIMESTAMP(3)`);
     // Момент самостоятельного удаления аккаунта (для админки).
-    // ВАЖНО: это поле - "маячок" быстрого пути выше; добавляем его последним.
     await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3)`);
+
+    // Стартовый рейтинг 5.0 для всех: новый дефолт колонки + разовый пересчёт
+    // существующих исполнителей по байесовской формуле (у кого нет отзывов - 5.0,
+    // у кого есть - подмешиваются реальные). Ручной рейтинг админа не трогаем.
+    // ВАЖНО: смена дефолта на 5.00 - "маячок" быстрого пути выше; делаем последней.
+    await prisma.$executeRawUnsafe(
+      `UPDATE "ProviderProfile" SET "ratingCached" = 5.00 WHERE "ratingManual" IS NULL`,
+    );
+    await prisma.$executeRawUnsafe(
+      `UPDATE "ProviderProfile" p
+          SET "ratingCached" = ROUND((25.0 + agg.s) / (5 + agg.c), 2)
+         FROM (SELECT "targetId", SUM("stars")::numeric AS s, COUNT(*) AS c
+                 FROM "Review" WHERE "publishedAt" IS NOT NULL GROUP BY "targetId") agg
+        WHERE agg."targetId" = p."userId" AND p."ratingManual" IS NULL`,
+    );
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ALTER COLUMN "ratingCached" SET DEFAULT 5.00`);
 
     // RLS (защиту строк) включаем ОДИН раз в setup.sql, а не на каждом запросе:
     // прогон DDL по всем таблицам на каждый рендер через пул Supabase рискован
