@@ -2,7 +2,7 @@
 
 // Форма публикации/редактирования задачи. Поля: категория, что нужно сделать,
 // описание, желаемая дата, город, адрес (необязательно), бюджет, фото. Оплаты нет.
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import FilePicker from "@/components/FilePicker";
 import type { Dict } from "@/i18n/dictionaries";
@@ -41,6 +41,7 @@ export default function NewTaskForm({
   photosLabel: string;
 }) {
   const [state, formAction, pending] = useActionState<CreateTaskState, FormData>(action, null);
+  const [processing, setProcessing] = useState(false); // сжатие фото в браузере
   const today = new Date().toISOString().slice(0, 10);
   const p = initial ?? {};
   const catExists = categories.some((c) => c.slug === p.category);
@@ -94,6 +95,8 @@ export default function NewTaskForm({
         chooseLabel={t.chooseFile}
         noneLabel={t.noFileChosen}
         manyLabel={t.filesChosen}
+        compressImages
+        onProcessing={setProcessing}
       />
 
       {state && "error" in state && <div className="err">{state.error}</div>}
@@ -105,7 +108,7 @@ export default function NewTaskForm({
       <button
         type="submit"
         className="btn btn-green"
-        disabled={pending}
+        disabled={pending || processing}
         style={{ width: "100%", justifyContent: "center", marginTop: 6 }}
       >
         {pending ? pendingLabel : submitLabel}
