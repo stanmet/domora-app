@@ -33,7 +33,7 @@ export default async function PortfolioPage() {
     select: { id: true, title: true, professionLabel: true, photos: true },
   });
 
-  const labels: UploaderLabels = { add: t.pfAdd, remove: t.pfRemove, full: t.pfFull, hint: t.pfHint };
+  const labels: UploaderLabels = { add: t.pfAdd, remove: t.pfRemove, full: t.pfFull, hint: t.pfHint, uploading: t.pfUploading };
 
   return (
     <main>

@@ -400,6 +400,7 @@ const en = {
   pfRemove: "Remove",
   pfFull: "Photo limit reached.",
   pfHint: "You can add {n} more.",
+  pfUploading: "Uploading {n}…",
   pfStorageOff: "Photo upload is unavailable: storage access isn't configured (SUPABASE_SERVICE_ROLE_KEY).",
   // Профиль исполнителя (референс caterkin)
   aboutTitle: "About",
@@ -905,6 +906,7 @@ const ru: Dict = {
   pfRemove: "Удалить",
   pfFull: "Достигнут лимит фото.",
   pfHint: "Можно добавить ещё {n}.",
+  pfUploading: "Загрузка {n}…",
   pfStorageOff: "Загрузка фото недоступна: не настроен доступ к хранилищу (SUPABASE_SERVICE_ROLE_KEY).",
   // Профиль исполнителя (референс caterkin)
   aboutTitle: "О себе",
@@ -1408,6 +1410,7 @@ const uk: Dict = {
   pfRemove: "Видалити",
   pfFull: "Досягнуто ліміту фото.",
   pfHint: "Можна додати ще {n}.",
+  pfUploading: "Завантаження {n}…",
   pfStorageOff: "Завантаження фото недоступне: не налаштовано доступ до сховища (SUPABASE_SERVICE_ROLE_KEY).",
   // Профіль виконавця (референс caterkin)
   aboutTitle: "Про себе",
@@ -1911,6 +1914,7 @@ const pl: Dict = {
   pfRemove: "Usuń",
   pfFull: "Osiągnięto limit zdjęć.",
   pfHint: "Możesz dodać jeszcze {n}.",
+  pfUploading: "Przesyłanie {n}…",
   pfStorageOff: "Przesyłanie zdjęć niedostępne: brak dostępu do magazynu (SUPABASE_SERVICE_ROLE_KEY).",
   // Profil wykonawcy (referencja caterkin)
   aboutTitle: "O mnie",
@@ -2414,6 +2418,7 @@ const es: Dict = {
   pfRemove: "Quitar",
   pfFull: "Límite de fotos alcanzado.",
   pfHint: "Puedes añadir {n} más.",
+  pfUploading: "Subiendo {n}…",
   pfStorageOff: "La subida de fotos no está disponible: falta el acceso al almacenamiento (SUPABASE_SERVICE_ROLE_KEY).",
   // Perfil del profesional (referencia caterkin)
   aboutTitle: "Sobre mí",
@@ -2917,6 +2922,7 @@ const pt: Dict = {
   pfRemove: "Remover",
   pfFull: "Limite de fotos atingido.",
   pfHint: "Pode adicionar mais {n}.",
+  pfUploading: "A enviar {n}…",
   pfStorageOff: "O envio de fotos está indisponível: falta o acesso ao armazenamento (SUPABASE_SERVICE_ROLE_KEY).",
   // Perfil do profissional (referência caterkin)
   aboutTitle: "Sobre mim",

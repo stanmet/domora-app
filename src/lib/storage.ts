@@ -105,12 +105,16 @@ export async function uploadDocument(file: File, folder: string): Promise<string
   return client.storage.from(PORTFOLIO_BUCKET).getPublicUrl(name).data.publicUrl;
 }
 
-// Загрузка нескольких файлов подряд. Пустые/битые пропускаются.
+// Загрузка нескольких файлов. Грузим параллельно (небольшими партиями), чтобы
+// несколько фото не ждали друг друга по очереди - так заметно быстрее. Порядок
+// сохраняем; пустые/битые/отклонённые пропускаются.
 export async function uploadImages(files: File[], folder: string): Promise<string[]> {
+  const CONCURRENCY = 4;
   const urls: string[] = [];
-  for (const f of files) {
-    const url = await uploadImage(f, folder);
-    if (url) urls.push(url);
+  for (let i = 0; i < files.length; i += CONCURRENCY) {
+    const batch = files.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(batch.map((f) => uploadImage(f, folder)));
+    for (const url of results) if (url) urls.push(url);
   }
   return urls;
 }
