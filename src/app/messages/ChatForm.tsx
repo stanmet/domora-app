@@ -3,6 +3,7 @@
 // Форма отправки сообщения в чат: текст и/или фото. Очищает поля после отправки.
 import { useRef, useState } from "react";
 import { Send, Paperclip, X } from "lucide-react";
+import { compressImage } from "@/lib/compress-image";
 
 export default function ChatForm({
   action,
@@ -19,6 +20,7 @@ export default function ChatForm({
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const clearFile = () => {
     if (fileRef.current) fileRef.current.value = "";
@@ -32,10 +34,21 @@ export default function ChatForm({
       ref={ref}
       className="chatform"
       action={async (fd) => {
-        await action(fd);
-        ref.current?.reset();
-        setText("");
-        clearFile();
+        setSending(true);
+        try {
+          // Сжимаем прикреплённое фото в браузере до отправки (быстрее загрузка).
+          const img = fd.get("image");
+          if (img instanceof File && img.size > 0) {
+            const out = await compressImage(img);
+            fd.set("image", out, out.name);
+          }
+          await action(fd);
+          ref.current?.reset();
+          setText("");
+          clearFile();
+        } finally {
+          setSending(false);
+        }
       }}
     >
       {fileName && (
@@ -71,7 +84,7 @@ export default function ChatForm({
         onChange={(e) => setText(e.target.value)}
         style={{ resize: "none" }}
       />
-      <button type="submit" className="btn btn-green" aria-label={sendLabel} disabled={!canSend}>
+      <button type="submit" className="btn btn-green" aria-label={sendLabel} disabled={!canSend || sending}>
         <Send size={16} />
       </button>
     </form>
