@@ -148,7 +148,7 @@ export async function createTask(_prev: CreateTaskState, formData: FormData): Pr
     redirect(`/tasks/${created.id}`);
   }
 
-  redirect("/tasks/mine");
+  redirect("/bookings?tab=active");
 }
 
 // Редактирование задачи клиентом: доступно только автору и только пока задача

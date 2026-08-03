@@ -29,7 +29,7 @@ function notifMeta(type: string): { textKey: keyof Dict; href: string } {
     case "payout":
       return { textKey: "ntfPayout", href: "/pro/bookings" };
     case "new_offer":
-      return { textKey: "ntfNewOffer", href: "/tasks/mine" };
+      return { textKey: "ntfNewOffer", href: "/bookings?tab=active" };
     case "offer_accepted":
       return { textKey: "ntfOfferAccepted", href: "/pro/bookings" };
     case "direct_request":
