@@ -5,10 +5,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
+import { getAdminDict } from "@/app/admin/i18n";
+import { deleteUser, liftQuarantine, quarantineProvider } from "@/app/admin/actions";
+import QuarantineControl from "@/components/QuarantineControl";
+import ConfirmAction from "@/components/ConfirmAction";
 import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { flagReview } from "@/app/bookings/reviews-actions";
@@ -79,8 +84,25 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
   // Тестовых исполнителей не показываем даже по прямой ссылке (кроме демо-режима).
   const demo = await isDemoMode();
-  if (!provider || provider.status !== "ACTIVE" || (provider.user.isTest && !demo)) notFound();
 
+  // Кто смотрит: админам разрешаем открывать и не-активные (в карантине) профили,
+  // чтобы прямо со страницы отправить в карантин / снять / удалить.
+  const authUser = await getAuthUser();
+  const viewer = authUser?.email ? await ensureDbUser(authUser, locale) : null;
+  const isAdmin = viewer?.roles.includes(Role.ADMIN) ?? false;
+
+  if (!provider || (provider.status !== "ACTIVE" && !isAdmin) || (provider.user.isTest && !demo && !isAdmin)) notFound();
+
+  const viewerIsTarget = viewer?.id === provider.userId;
+  let isFav = false;
+  if (viewer && !viewerIsTarget) {
+    const f = await prisma.favorite.findUnique({
+      where: { userId_providerId: { userId: viewer.id, providerId: provider.userId } },
+    });
+    isFav = Boolean(f);
+  }
+
+  const adminT = getAdminDict(locale);
   const rating = Number(provider.ratingCached);
   const reviews = provider.user.reviewsGot;
   const priced = provider.listings.filter((l) => l.priceCents > 0 && l.unit !== "FIXED_QUOTE" && !l.quoteFirst);
@@ -121,19 +143,6 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
   const trOf = (s: string | null | undefined) =>
     s ? tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false } : null;
 
-  // Избранное для вошедшего пользователя; заодно определяем, смотрит ли профиль
-  // сам исполнитель (тогда ему доступна жалоба на свой отзыв).
-  const authUser = await getAuthUser();
-  let isFav = false;
-  let viewerIsTarget = false;
-  if (authUser?.email) {
-    const viewer = await ensureDbUser(authUser, locale);
-    viewerIsTarget = viewer.id === provider.userId;
-    const f = await prisma.favorite.findUnique({
-      where: { userId_providerId: { userId: viewer.id, providerId: provider.userId } },
-    });
-    isFav = Boolean(f);
-  }
 
   const profession = provider.customProfession?.trim();
   // V1 без прямой оплаты: заказ идёт через доску задач, а не бронирование листинга.
@@ -173,6 +182,28 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           <PhotoGallery photos={allPhotos} label={t.viewAllPhotos} alt={provider.displayName} />
         )}
       </div>
+
+      {isAdmin && !viewerIsTarget && (
+        <div className="wrap" style={{ paddingTop: 14 }}>
+          <div className="adm-card" style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap", borderColor: "var(--orange)" }}>
+            <span className="pill req" style={{ alignSelf: "center" }}>Admin</span>
+            <QuarantineControl
+              quarantined={provider.status === "FROZEN"}
+              reason={provider.quarantineReason}
+              quarantineAction={quarantineProvider.bind(null, provider.userId)}
+              liftAction={liftQuarantine.bind(null, provider.userId)}
+              labels={{ qBtn: adminT.qBtn, qLift: adminT.qLift, qReasonPh: adminT.qReasonPh, qSend: adminT.qSend, qStatusTag: adminT.qStatusTag, cancel: adminT.cancel }}
+            />
+            <ConfirmAction
+              action={deleteUser.bind(null, provider.userId)}
+              label={adminT.userDelete}
+              warning={adminT.userDeleteWarn}
+              confirmLabel={adminT.userDeleteConfirm}
+              backLabel={adminT.back}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="wrap">
         <div className="pintro">

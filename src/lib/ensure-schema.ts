@@ -61,9 +61,10 @@ export async function ensureSchema(): Promise<void> {
   // При добавлении новых полей меняем этот "маячок" на самое новое из них.
   try {
     const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
-      `SELECT (column_default LIKE '5%') AS ok
-         FROM information_schema.columns
-        WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='ratingCached'`,
+      `SELECT EXISTS(
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='quarantineReason'
+       ) AS ok`,
     );
     if (ready?.[0]?.ok) {
       ensured = true;
@@ -280,6 +281,14 @@ export async function ensureSchema(): Promise<void> {
         WHERE agg."targetId" = p."userId" AND p."ratingManual" IS NULL`,
     );
     await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ALTER COLUMN "ratingCached" SET DEFAULT 5.00`);
+
+    // Отказ от ручной модерации: услуги и исполнители публикуются сразу. Разово
+    // активируем всё, что осталось «на модерации» от старого флоу.
+    await prisma.$executeRawUnsafe(`UPDATE "Listing" SET status='ACTIVE' WHERE status='MODERATION'`);
+    await prisma.$executeRawUnsafe(`UPDATE "ProviderProfile" SET status='ACTIVE' WHERE status IN ('MODERATION','DRAFT') AND EXISTS (SELECT 1 FROM "Listing" l WHERE l."providerId"="ProviderProfile"."userId")`);
+    // Причина карантина (когда админ временно скрыл исполнителя). Добавляем последней -
+    // это "маячок" быстрого пути выше.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "quarantineReason" TEXT`);
 
     // RLS (защиту строк) включаем ОДИН раз в setup.sql, а не на каждом запросе:
     // прогон DDL по всем таблицам на каждый рендер через пул Supabase рискован

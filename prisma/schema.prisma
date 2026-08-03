@@ -216,6 +216,9 @@ model ProviderProfile {
   acceptanceRate    Decimal @default(1) @db.Decimal(4, 3)
   responseMinutes   Int     @default(0)
   status            ProviderStatus @default(DRAFT)
+  // Причина карантина (когда админ временно скрыл исполнителя с сайта). Показывается
+  // самому исполнителю, чтобы он навёл порядок; очищается при снятии карантина.
+  quarantineReason  String?
   portfolioPhotos   String[] @default([]) // до 20 фото работ в профиле (Supabase Storage)
 
   // Календарь доступности: рабочие дни недели (0=вс..6=сб) и окно приёма заказов

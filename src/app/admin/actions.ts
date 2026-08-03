@@ -138,6 +138,69 @@ export async function setProviderFrozen(userId: string, frozen: boolean): Promis
   revalidatePath("/catalog");
 }
 
+// Карантин исполнителя: временно скрываем с сайта (ProviderStatus.FROZEN) с
+// причиной, которую видит сам исполнитель. Он наводит порядок, админ снимает
+// карантин. Причина уходит исполнителю уведомлением.
+export async function quarantineProvider(userId: string, formData: FormData): Promise<void> {
+  const admin = await requireAdminScope("providers");
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+
+  const provider = await prisma.providerProfile.findUnique({ where: { userId }, select: { userId: true } });
+  if (!provider) return;
+
+  await prisma.$transaction([
+    prisma.providerProfile.update({
+      where: { userId },
+      data: { status: ProviderStatus.FROZEN, quarantineReason: reason || null },
+    }),
+    adminActionLog(admin.id, "provider", userId, "quarantine", reason || undefined),
+  ]);
+
+  // Уведомляем исполнителя (показывается как сообщение от Domora в колокольчике).
+  try {
+    const t = getAdminDict(await getLocale());
+    const text = reason ? `${t.qNotifyText}\n${reason}` : t.qNotifyText;
+    await prisma.notification.create({ data: { userId, type: "admin_message", payload: { text } } });
+  } catch (e) {
+    console.error("quarantine notify failed", userId, e);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+  revalidatePath(`/providers/${userId}`);
+  revalidatePath("/pro");
+}
+
+// Снятие карантина: возвращаем исполнителя в поиск (ACTIVE) и очищаем причину.
+export async function liftQuarantine(userId: string): Promise<void> {
+  const admin = await requireAdminScope("providers");
+
+  const provider = await prisma.providerProfile.findUnique({ where: { userId }, select: { userId: true } });
+  if (!provider) return;
+
+  await prisma.$transaction([
+    prisma.providerProfile.update({
+      where: { userId },
+      data: { status: ProviderStatus.ACTIVE, quarantineReason: null },
+    }),
+    adminActionLog(admin.id, "provider", userId, "lift_quarantine"),
+  ]);
+
+  try {
+    const t = getAdminDict(await getLocale());
+    await prisma.notification.create({ data: { userId, type: "admin_message", payload: { text: t.qLiftedText } } });
+  } catch (e) {
+    console.error("lift quarantine notify failed", userId, e);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/catalog");
+  revalidatePath("/");
+  revalidatePath(`/providers/${userId}`);
+  revalidatePath("/pro");
+}
+
 // Рассылка сообщения от администратора. Доставляется как уведомление (колокольчик
 // + страница /notifications) каждому получателю. Режимы: всем, только клиентам,
 // только исполнителям или конкретным выбранным пользователям. Тестовые и
