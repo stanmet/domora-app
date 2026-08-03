@@ -208,7 +208,7 @@ model ProviderProfile {
   insuranceDocUrl   String?
   insuranceExpiresAt DateTime?
   gardaVetted       Boolean @default(false)
-  ratingCached      Decimal @default(0) @db.Decimal(3, 2)
+  ratingCached      Decimal @default(5.00) @db.Decimal(3, 2) // старт 5.0, дальше держится/падает по отзывам
   // Ручной рейтинг от администратора. null - рейтинг считается автоматически по
   // отзывам; если задан, он попадает в ratingCached и не перетирается пересчётом.
   ratingManual      Decimal? @db.Decimal(3, 2)
