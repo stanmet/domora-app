@@ -44,7 +44,7 @@ const META: Record<NotificationType, { textKey: keyof Dict; path: string }> = {
   declined: { textKey: "ntfDeclined", path: "/bookings" },
   completed: { textKey: "ntfCompleted", path: "/bookings" },
   payout: { textKey: "ntfPayout", path: "/pro/bookings" },
-  new_offer: { textKey: "ntfNewOffer", path: "/tasks/mine" },
+  new_offer: { textKey: "ntfNewOffer", path: "/bookings?tab=active" },
   offer_accepted: { textKey: "ntfOfferAccepted", path: "/pro/bookings" },
   direct_request: { textKey: "ntfDirectRequest", path: "/tasks" },
   message: { textKey: "ntfMessage", path: "/messages" },

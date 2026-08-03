@@ -1,21 +1,27 @@
-// Заказы клиента: список запросов и броней со статусами.
-// Карточки из prototypes/Marketplace.jsx (view "mybook"),
-// экран успеха после отправки запроса из view "done".
+// «Мои заказы» (клиент) - один раздел с двумя вкладками:
+// - «Ожидают выбора»: размещённые заявки (status OPEN) с откликами и кнопкой
+//   «Выбрать»;
+// - «В работе и завершённые»: заказы (Booking) с чатом, счётом и отзывом.
+// Объединяет прежние /tasks/mine и /bookings, чтобы у клиента было одно
+// понятное место «мои заказы», без развилки «задачи vs заказы».
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Check, FileText, MapPin, MessageCircle, Users, Wallet } from "lucide-react";
+import { AlertTriangle, Calendar, Check, FileText, MapPin, MessageCircle, Star, Users, Wallet } from "lucide-react";
+import { OfferStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
-import { getDict, statusLabel, unitLabel } from "@/i18n/dictionaries";
+import { categoryLabel, getDict, statusLabel, taskStatusLabel, unitLabel } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { dateTime, eur } from "@/lib/format";
 import { decrypt } from "@/lib/crypto";
 import { expireOverdueRequests } from "@/lib/bookings";
+import { expireOverdueTasks } from "@/lib/tasks";
 import { isDemoMode, progressDemoBookings } from "@/lib/test-users/bots";
 import { statusPillClass } from "@/lib/booking-units";
 import { bookingRef } from "@/lib/booking-ref";
+import { acceptOffer } from "@/app/tasks/actions";
 import { submitReview, editReview, deleteReview } from "./reviews-actions";
 import ReviewForm from "./ReviewForm";
 
@@ -31,7 +37,18 @@ function safeDecrypt(payload: string | null): string | null {
   }
 }
 
-export default async function BookingsPage({ searchParams }: { searchParams: Promise<{ sent?: string }> }) {
+function taskPillClass(status: string): string {
+  switch (status) {
+    case "OPEN":
+      return "req";
+    case "OFFER_ACCEPTED":
+      return "ok";
+    default:
+      return "done";
+  }
+}
+
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ sent?: string; tab?: string }> }) {
   const authUser = await getAuthUser();
   if (!authUser?.email) redirect("/login?next=/bookings");
 
@@ -39,13 +56,27 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   const t = getDict(locale);
   const tx = getExtra(locale);
   const user = await ensureDbUser(authUser, locale);
-  const { sent } = await searchParams;
+  const { sent, tab: tabParam } = await searchParams;
 
   await expireOverdueRequests({ clientId: user.id });
-  // Демо: бот-исполнитель подтверждает симулированную бронь сразу при открытии
-  // заказов, чтобы демо выглядело живым без ожидания cron.
+  await expireOverdueTasks({ clientId: user.id });
+  // Демо: бот-исполнитель подтверждает симулированную бронь сразу при открытии.
   if (await isDemoMode()) await progressDemoBookings().catch(() => 0);
 
+  // Вкладка «Ожидают выбора»: открытые заявки клиента с откликами.
+  const openTasks = await prisma.task.findMany({
+    where: { clientId: user.id, status: "OPEN" },
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: { select: { slug: true, nameEn: true, nameRu: true } },
+      offers: {
+        orderBy: { createdAt: "asc" },
+        include: { provider: { select: { userId: true, displayName: true, ratingCached: true, jobsCount: true } } },
+      },
+    },
+  });
+
+  // Вкладка «В работе и завершённые»: заказы (выбранный исполнитель).
   const bookings = await prisma.booking.findMany({
     where: { clientId: user.id },
     orderBy: { createdAt: "desc" },
@@ -57,6 +88,9 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
       reviews: { where: { authorId: user.id }, select: { stars: true, text: true } },
     },
   });
+
+  // Активная вкладка: по параметру, иначе - где есть что показать (приоритет заявкам).
+  const tab = tabParam === "orders" || tabParam === "active" ? tabParam : openTasks.length > 0 ? "active" : "orders";
 
   const reviewLabels = {
     leave: tx.reviewLeave,
@@ -82,8 +116,113 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
             <p>{t.sentP}</p>
           </div>
         )}
-        <h1 className="page">{t.myBookings}</h1>
-        {bookings.length === 0 ? (
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <h1 className="page">{t.myBookings}</h1>
+          <Link href="/tasks/new" className="btn btn-green btn-sm">
+            {t.postTask}
+          </Link>
+        </div>
+        <p className="sub">{t.ordSub}</p>
+
+        <div className="chips" style={{ marginBottom: 14 }}>
+          <Link href="/bookings?tab=active" className={"chip" + (tab === "active" ? " on" : "")}>
+            {t.ordTabAwaiting} · {openTasks.length}
+          </Link>
+          <Link href="/bookings?tab=orders" className={"chip" + (tab === "orders" ? " on" : "")}>
+            {t.ordTabActive} · {bookings.length}
+          </Link>
+        </div>
+
+        {tab === "active" ? (
+          openTasks.length === 0 ? (
+            <div className="empty">{t.myTasksEmpty}</div>
+          ) : (
+            openTasks.map((task) => (
+              <div className="bk" key={task.id}>
+                <div className="bkrow">
+                  <div>
+                    <Link href={`/tasks/${task.id}`}>
+                      <h4>{task.title}</h4>
+                    </Link>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                      {categoryLabel(t, task.category.slug, locale === "ru" ? task.category.nameRu : task.category.nameEn)}
+                    </div>
+                  </div>
+                  <span className={"pill " + taskPillClass(task.status)}>{taskStatusLabel(t, task.status)}</span>
+                </div>
+                <div className="meta">
+                  {task.dateWanted && (
+                    <span>
+                      <Calendar size={13} /> {dateTime(task.dateWanted, locale)}
+                    </span>
+                  )}
+                  <span>
+                    <MapPin size={13} /> {task.city}
+                  </span>
+                  {(task.budgetFromCents != null || task.budgetToCents != null) && (
+                    <span>
+                      <Wallet size={13} />{" "}
+                      {task.budgetFromCents != null && task.budgetToCents != null
+                        ? `${t.fromCap} ${eur(task.budgetFromCents, locale)} · ${t.budgetToL} ${eur(task.budgetToCents, locale)}`
+                        : task.budgetFromCents != null
+                          ? `${t.fromCap} ${eur(task.budgetFromCents, locale)}`
+                          : `${t.budgetToL} ${eur(task.budgetToCents as number, locale)}`}
+                    </span>
+                  )}
+                </div>
+
+                <div className="offers">
+                  <div className="offers-h">
+                    {t.taskOffersTitle}: {task.offers.length}
+                  </div>
+                  {task.offers.length === 0 ? (
+                    <div className="empty" style={{ padding: "10px 0", textAlign: "left" }}>
+                      {t.taskNoOffers}
+                    </div>
+                  ) : (
+                    task.offers.map((offer) => {
+                      const rating = Number(offer.provider.ratingCached);
+                      const rejected = offer.status === OfferStatus.REJECTED;
+                      const accepted = offer.status === OfferStatus.ACCEPTED;
+                      return (
+                        <div className={"offer" + (rejected ? " off" : "") + (accepted ? " on" : "")} key={offer.id}>
+                          <div className="offer-top">
+                            <div className="offer-who">
+                              <span className="avatar">{offer.provider.displayName[0]}</span>
+                              <div>
+                                <div className="offer-name">{offer.provider.displayName}</div>
+                                <div className="offer-sub">
+                                  {rating > 0 ? (
+                                    <span className="rate">
+                                      <Star size={12} fill="currentColor" /> {rating.toFixed(1)}
+                                    </span>
+                                  ) : (
+                                    <span className="tag">{t.newPro}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="offer-price">{eur(offer.priceCents, locale)}</div>
+                          </div>
+                          {offer.message && <p className="offer-msg">{offer.message}</p>}
+                          {offer.contactFilterFlag && (
+                            <div className="offer-warn">
+                              <AlertTriangle size={13} /> {t.offerContactWarn}
+                            </div>
+                          )}
+                          <form action={acceptOffer.bind(null, offer.id)} style={{ marginTop: 10 }}>
+                            <button className="btn btn-green btn-sm">{t.chooseOffer}</button>
+                          </form>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            ))
+          )
+        ) : bookings.length === 0 ? (
           <div className="empty">{t.mybEmpty}</div>
         ) : (
           bookings.map((b) => {
@@ -95,9 +234,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   <div>
                     <h4>{b.provider.displayName}</h4>
                     <div style={{ fontSize: 13, color: "var(--muted)" }}>{b.listing.title}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>
-                      #{bookingRef(b)}
-                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>#{bookingRef(b)}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div className="amt">{eur(b.totalCents, locale)}</div>
@@ -139,7 +276,6 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   )}
                 </div>
 
-                {/* Отзыв: доступен по завершённому заказу (выполнен или закрыт) */}
                 {["COMPLETED", "CLOSED"].includes(b.status) && (
                   <ReviewForm
                     submitAction={submitReview.bind(null, b.id)}
@@ -155,11 +291,6 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
             );
           })
         )}
-        <div style={{ marginTop: 20 }}>
-          <Link href="/catalog" className="btn btn-ink btn-sm">
-            {t.findPro}
-          </Link>
-        </div>
       </div>
     </main>
   );

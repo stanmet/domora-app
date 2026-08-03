@@ -59,7 +59,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="wrap bform">
-      <Link href={directedTo ? `/providers/${directedTo.id}` : "/tasks/mine"} className="back">
+      <Link href={directedTo ? `/providers/${directedTo.id}` : "/bookings?tab=active"} className="back">
         <ArrowLeft size={14} /> {t.back}
       </Link>
       <h1>{directedTo ? t.reqToProTitle : t.taskNewTitle}</h1>

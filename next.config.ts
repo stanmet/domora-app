@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "25mb",
     },
   },
+  // «Мои задачи» объединены с «Мои заказы»: старый адрес ведём на новый раздел.
+  async redirects() {
+    return [{ source: "/tasks/mine", destination: "/bookings?tab=active", permanent: false }];
+  },
 };
 
 export default nextConfig;

@@ -140,9 +140,6 @@ export default async function AccountPage({
           <Link href="/bookings" className="btn btn-line">
             {t.myBookings}
           </Link>
-          <Link href="/tasks/mine" className="btn btn-line">
-            {t.myTasks}
-          </Link>
           {isAdmin && (
             <Link href="/admin" className="btn btn-ink">
               {t.adminPanel} <ArrowRight size={15} />

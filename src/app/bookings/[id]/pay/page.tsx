@@ -37,7 +37,7 @@ export default async function PayBookingPage({ params }: { params: Promise<{ id:
 
   return (
     <main className="wrap bform">
-      <Link href="/tasks/mine" className="back">
+      <Link href="/bookings" className="back">
         <ArrowLeft size={14} /> {t.back}
       </Link>
       <h1>{t.payTitle}</h1>
