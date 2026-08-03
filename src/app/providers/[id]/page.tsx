@@ -4,7 +4,7 @@
 // и залипающая панель заказа снизу на телефоне. Дизайн-система из globals.css.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -331,6 +331,9 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                           </>
                         )}
                       </div>
+                      <Link href={`/tasks/new?cat=${l.category.slug}`} className="btn btn-line btn-sm svc-order">
+                        {t.svcOrder} <ArrowRight size={13} />
+                      </Link>
                     </div>
                   </>
                 );

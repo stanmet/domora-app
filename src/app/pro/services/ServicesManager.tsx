@@ -10,6 +10,7 @@ import type { ListingStatus, PriceUnit } from "@prisma/client";
 import type { Locale } from "@/i18n/config";
 import { listingStatusLabel, unitLabel, unitOptionLabel, type Dict } from "@/i18n/dictionaries";
 import { eur } from "@/lib/format";
+import FilePicker from "@/components/FilePicker";
 import { createListing, toggleListing, type CreateListingState } from "./actions";
 
 export type ListingRow = {
@@ -39,6 +40,8 @@ export default function ServicesManager({
   const [adding, setAdding] = useState(false);
   const [cat, setCat] = useState(categories[0]?.slug ?? "");
   const [sub, setSub] = useState("");
+  const [processing, setProcessing] = useState(false); // сжатие фото в браузере
+  const [photoCount, setPhotoCount] = useState(0);
   const [state, formAction, pending] = useActionState<CreateListingState, FormData>(createListing, null);
   const subOptions = subcategories.filter((s) => s.categorySlug === cat);
 
@@ -99,10 +102,29 @@ export default function ServicesManager({
                 </option>
               ))}
             </select>
+            <label htmlFor="svc-photos">{t.liPhotos}</label>
+            <FilePicker
+              id="svc-photos"
+              name="photos"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              multiple
+              compressImages
+              chooseLabel={t.chooseFile}
+              noneLabel={t.noFileChosen}
+              manyLabel={t.filesChosen}
+              onProcessing={setProcessing}
+              onFiles={(files) => setPhotoCount(files?.length ?? 0)}
+            />
+            <small className="tu-muted">{t.liPhotosHint}</small>
             {state && "error" in state && <div className="err">{state.error}</div>}
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <button type="submit" className="btn btn-green" style={{ flex: 1, justifyContent: "center" }} disabled={pending}>
-                {pending ? t.bSending : t.save}
+              <button
+                type="submit"
+                className="btn btn-green"
+                style={{ flex: 1, justifyContent: "center" }}
+                disabled={pending || processing || photoCount === 0}
+              >
+                {pending ? t.bSending : processing ? "…" : t.save}
               </button>
               <button type="button" className="btn btn-line" onClick={() => setAdding(false)}>
                 {t.cancel}

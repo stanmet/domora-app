@@ -13,6 +13,7 @@ import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict } from "@/i18n/dictionaries";
 import { licenceFor } from "@/lib/subcategories";
+import { MAX_LISTING_PHOTOS, storageConfigured, uploadImages } from "@/lib/storage";
 
 // Единицы, доступные в форме. Цена по смете (FIXED_QUOTE) пойдет через сметы
 // в следующих спринтах, поэтому в форме ее нет. Из "use server"-файла можно
@@ -57,6 +58,16 @@ export async function createListing(
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { error: t.errSvcForm };
 
+  // Обязательное фото услуги: каждый должен загрузить хотя бы одно фото (кроме
+  // аватара). Требуем только когда хранилище настроено (иначе загрузить некуда).
+  const photoFiles = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  let photoUrls: string[] = [];
+  if (storageConfigured()) {
+    if (photoFiles.length === 0) return { error: t.errNeedPhoto };
+    photoUrls = await uploadImages(photoFiles.slice(0, MAX_LISTING_PHOTOS), `listings/${user.id}`);
+    if (photoUrls.length === 0) return { error: t.errNeedPhoto };
+  }
+
   // Необязательная подкатегория (должна принадлежать выбранной категории).
   const subSlug = String(formData.get("subcategory") ?? "");
   let subcategoryId: string | null = null;
@@ -100,6 +111,7 @@ export async function createListing(
         description: description || null,
         priceCents: Math.round(price * 100),
         unit,
+        photos: photoUrls,
         // Без ручной модерации: услуга публикуется сразу.
         status: ListingStatus.ACTIVE,
       },
