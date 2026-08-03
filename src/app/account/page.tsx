@@ -1,7 +1,7 @@
 // Личный кабинет: данные пользователя из таблицы User, роль и выход.
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarClock, Ticket, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Store, Ticket, X } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -87,6 +87,30 @@ export default async function AccountPage({
           </div>
         </div>
 
+        {!isPro && (
+          <div
+            className="card"
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              flexWrap: "wrap",
+              background: "var(--sage, #EAF3EC)",
+              marginBottom: 12,
+            }}
+          >
+            <div className="icircle" style={{ background: "var(--green)", color: "#fff" }}>
+              <Store size={22} strokeWidth={1.7} />
+            </div>
+            <p style={{ flex: 1, minWidth: 200, margin: 0, fontWeight: 600 }}>{t.becomeProHint}</p>
+            <form action={becomeProvider}>
+              <button className="btn btn-green">
+                {t.becomePro} <ArrowRight size={15} />
+              </button>
+            </form>
+          </div>
+        )}
+
         <AccountForm
           action={updateProfile}
           current={{ name: user.name, phone: user.phone ?? "", locale, avatarUrl: user.avatarUrl }}
@@ -100,14 +124,10 @@ export default async function AccountPage({
           <Link href="/tasks/mine" className="btn btn-line">
             {t.myTasks}
           </Link>
-          {isPro ? (
+          {isPro && (
             <Link href="/pro" className="btn btn-green">
               {t.openPro} <ArrowRight size={15} />
             </Link>
-          ) : (
-            <form action={becomeProvider}>
-              <button className="btn btn-ghost">{t.becomePro}</button>
-            </form>
           )}
           {isAdmin && (
             <Link href="/admin" className="btn btn-ink">
