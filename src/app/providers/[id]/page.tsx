@@ -145,8 +145,10 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
 
 
   const profession = provider.customProfession?.trim();
-  // V1 без прямой оплаты: заказ идёт через доску задач, а не бронирование листинга.
-  const bookHref = "/tasks/new";
+  // V1 без прямой оплаты: клиент отправляет адресный запрос именно этому
+  // исполнителю (его увидит только он и ответит ценой). Ссылка на публикацию
+  // задачи с параметром to=<id исполнителя>.
+  const bookHref = `/tasks/new?to=${provider.userId}`;
 
   // Schema.org для поисковиков: тип услуги, город, агрегированный рейтинг.
   const jsonLd = {
@@ -331,7 +333,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                           </>
                         )}
                       </div>
-                      <Link href={`/tasks/new?cat=${l.category.slug}`} className="btn btn-line btn-sm svc-order">
+                      <Link href={`/tasks/new?to=${provider.userId}&cat=${l.category.slug}`} className="btn btn-line btn-sm svc-order">
                         {t.svcOrder} <ArrowRight size={13} />
                       </Link>
                     </div>
@@ -427,7 +429,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
             )}
           </div>
           <Link href={bookHref} className="btn btn-green" style={{ width: "100%", justifyContent: "center" }}>
-            {t.postTask}
+            {t.svcOrder}
           </Link>
           <FavoriteButton
             action={toggleFavorite.bind(null, provider.userId)}
@@ -456,7 +458,7 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
           )}
         </div>
         <Link href={bookHref} className="btn btn-green">
-          {t.postTask}
+          {t.svcOrder}
         </Link>
       </div>
     </main>

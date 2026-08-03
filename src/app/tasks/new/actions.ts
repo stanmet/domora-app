@@ -3,7 +3,7 @@
 // Публикация задачи на доске. Оплаты на этом шаге нет: клиент только описывает,
 // что нужно сделать. Адрес шифруется, как в брони. Задача живёт 7 дней.
 import { redirect } from "next/navigation";
-import { TaskStatus } from "@prisma/client";
+import { ListingStatus, ProviderStatus, Role, TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
@@ -13,7 +13,30 @@ import { encrypt } from "@/lib/crypto";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
 import { uploadImage } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
+import { notify } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
+
+// Проверяет адресата прямого запроса: это должен быть активный исполнитель
+// (не сам автор) с активной услугой в выбранной категории. Возвращает его id
+// или null, если запрос не адресный либо адресат не подходит (тогда задача
+// становится обычной, на общей доске).
+async function resolveDirectedProvider(
+  toId: string,
+  authorId: string,
+  categoryId: string,
+): Promise<string | null> {
+  if (!toId || toId === authorId) return null;
+  const target = await prisma.user.findUnique({ where: { id: toId }, select: { roles: true } });
+  if (!target || !target.roles.includes(Role.PROVIDER)) return null;
+  const profile = await prisma.providerProfile.findUnique({ where: { userId: toId }, select: { status: true } });
+  if (!profile || profile.status !== ProviderStatus.ACTIVE) return null;
+  const listing = await prisma.listing.findFirst({
+    where: { providerId: toId, categoryId, status: ListingStatus.ACTIVE },
+    select: { id: true },
+  });
+  if (!listing) return null;
+  return toId;
+}
 
 export type CreateTaskState = { error: string } | null;
 
@@ -94,9 +117,13 @@ export async function createTask(_prev: CreateTaskState, formData: FormData): Pr
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { error: t.errTaskForm };
 
+  // Адресный запрос конкретному исполнителю (кнопка «Заказать» на его странице).
+  const toId = String(formData.get("to") ?? "").trim();
+  const directedProviderId = toId ? await resolveDirectedProvider(toId, user.id, category.id) : null;
+
   const photos = await uploadTaskPhotos(formData, user.id);
 
-  await prisma.task.create({
+  const created = await prisma.task.create({
     data: {
       clientId: user.id,
       categoryId: category.id,
@@ -108,10 +135,18 @@ export async function createTask(_prev: CreateTaskState, formData: FormData): Pr
       photos,
       budgetFromCents,
       budgetToCents,
+      directedProviderId,
       status: TaskStatus.OPEN,
       expiresAt: new Date(Date.now() + TASK_TTL_DAYS * 24 * 3600 * 1000),
     },
   });
+
+  // Адресный запрос: уведомляем исполнителя и ведём автора на страницу запроса,
+  // где он увидит цену исполнителя и сможет подтвердить.
+  if (directedProviderId) {
+    await notify(directedProviderId, "direct_request", { taskId: created.id });
+    redirect(`/tasks/${created.id}`);
+  }
 
   redirect("/tasks/mine");
 }

@@ -26,6 +26,7 @@ export default function NewTaskForm({
   action,
   initial,
   existingPhotos,
+  directedToId,
   submitLabel,
   pendingLabel,
   photosLabel,
@@ -36,6 +37,7 @@ export default function NewTaskForm({
   action: (prev: CreateTaskState, formData: FormData) => Promise<CreateTaskState>;
   initial?: TaskInitial;
   existingPhotos?: string[];
+  directedToId?: string;
   submitLabel: string;
   pendingLabel: string;
   photosLabel: string;
@@ -48,6 +50,7 @@ export default function NewTaskForm({
 
   return (
     <form action={formAction} className="form">
+      {directedToId && <input type="hidden" name="to" value={directedToId} />}
       <label htmlFor="task-cat">{t.liCat}</label>
       <select id="task-cat" name="category" className="f" defaultValue={catExists ? p.category : categories[0]?.slug}>
         {categories.map((c) => (

@@ -74,6 +74,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const isOwner = user?.id === task.clientId;
   const isProvider = Boolean(user?.roles.includes(Role.PROVIDER)) && !isOwner;
 
+  // Адресный запрос (клиент выбрал конкретного исполнителя) виден только автору
+  // и самому адресату. Остальные его не открывают даже по прямой ссылке.
+  if (task.directedProviderId && !isOwner && user?.id !== task.directedProviderId) notFound();
+  const isDirectedToMe = Boolean(user && task.directedProviderId && task.directedProviderId === user.id);
+
   // Исполнитель открыл задачу: фиксируем просмотр (для счётчика "N увидели").
   if (isProvider && user) {
     try {
@@ -215,6 +220,16 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
+        {/* Адресный запрос: пояснение сторонам, пока сделка ещё не согласована */}
+        {task.directedProviderId && isOwner && isOpen && !showDeal && (
+          <div className="card" style={{ marginTop: 16, padding: 14 }}>{t.reqDirectWaiting}</div>
+        )}
+        {isDirectedToMe && isOpen && !alreadyOffered && (
+          <div className="card" style={{ marginTop: 16, padding: 14, borderColor: "var(--green)" }}>
+            <b>{t.reqDirectForYou}</b>
+          </div>
+        )}
+
         {/* Согласованный заказ: контакты открыты, статус и действия */}
         {showDeal && (
           <div className="card" style={{ marginTop: 18, padding: 16 }}>
@@ -307,7 +322,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               <div className="empty" style={{ textAlign: "left", padding: "8px 0" }}>{t.offerMax}</div>
             ) : (
               <>
-                <p className="sub" style={{ marginBottom: 10 }}>{t.competitionNote}</p>
+                {!isDirectedToMe && <p className="sub" style={{ marginBottom: 10 }}>{t.competitionNote}</p>}
                 <OfferForm taskId={task.id} t={t} />
               </>
             )}

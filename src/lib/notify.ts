@@ -27,6 +27,7 @@ export type NotificationType =
   | "payout"
   | "new_offer"
   | "offer_accepted"
+  | "direct_request"
   | "message"
   | "dispute"
   | "client_cancelled"
@@ -45,6 +46,7 @@ const META: Record<NotificationType, { textKey: keyof Dict; path: string }> = {
   payout: { textKey: "ntfPayout", path: "/pro/bookings" },
   new_offer: { textKey: "ntfNewOffer", path: "/tasks/mine" },
   offer_accepted: { textKey: "ntfOfferAccepted", path: "/pro/bookings" },
+  direct_request: { textKey: "ntfDirectRequest", path: "/tasks" },
   message: { textKey: "ntfMessage", path: "/messages" },
   dispute: { textKey: "ntfDispute", path: "/bookings" },
   client_cancelled: { textKey: "ntfClientCancelled", path: "/pro/bookings" },

@@ -35,6 +35,9 @@ export function openTaskVisibilityWhere(includeTest = false): Prisma.TaskWhereIn
   return {
     status: TaskStatus.OPEN,
     expiresAt: { gt: now },
+    // Адресные запросы (клиент выбрал конкретного исполнителя) не попадают на
+    // общую доску: их видят только автор и адресат.
+    directedProviderId: null,
     // Тестовые задачи (от синтетических клиентов) не показываем реальным людям,
     // кроме включённого демо-режима.
     ...(includeTest ? {} : { client: { isTest: false } }),

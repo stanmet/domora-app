@@ -589,6 +589,9 @@ model Task {
   budgetFromCents Int?
   budgetToCents   Int?
   status          TaskStatus @default(OPEN)
+  // Адресный запрос конкретному исполнителю: задачу видят только автор и он.
+  // null - обычная задача на общей доске (её видят все подходящие исполнители).
+  directedProviderId String?
   bookingId       String?    @unique // бронь, созданная при выборе отклика
   booking         Booking?   @relation(fields: [bookingId], references: [id])
   createdAt       DateTime   @default(now())
@@ -598,6 +601,7 @@ model Task {
 
   @@index([categoryId, city, status])
   @@index([clientId, status])
+  @@index([directedProviderId])
 }
 
 model Offer {
