@@ -171,13 +171,11 @@ export default async function AccountPage({
           </section>
         )}
 
-        <section className="subs-sec">
-          <h2 className="subs-title">
-            <CalendarClock size={18} /> {t.mySubs}
-          </h2>
-          {subs.length === 0 ? (
-            <div className="empty">{t.subEmpty}</div>
-          ) : (
+        {subs.length > 0 && (
+          <section className="subs-sec">
+            <h2 className="subs-title">
+              <CalendarClock size={18} /> {t.mySubs}
+            </h2>
             <div className="subs-list">
               {subs.map((s) => (
                 <div className="subs-row" key={s.id}>
@@ -203,8 +201,8 @@ export default async function AccountPage({
                 </div>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         <section className="subs-sec">
           <a href="/api/account/export" className="btn btn-line" download>

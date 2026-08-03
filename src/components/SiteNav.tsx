@@ -145,7 +145,7 @@ export default function SiteNav({
             {t.findPro} <ArrowRight size={16} />
           </Link>
           {!isProvider && (
-            <Link href="/signup?role=pro" className="btn btn-ghost" onClick={close}>
+            <Link href={isLoggedIn ? "/account" : "/signup?role=pro"} className="btn btn-ghost" onClick={close}>
               {t.becomePro}
             </Link>
           )}
