@@ -63,7 +63,7 @@ export async function ensureSchema(): Promise<void> {
     const ready = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
       `SELECT EXISTS(
          SELECT 1 FROM information_schema.columns
-         WHERE table_schema='public' AND table_name='ProviderProfile' AND column_name='quarantineReason'
+         WHERE table_schema='public' AND table_name='Task' AND column_name='directedProviderId'
        ) AS ok`,
     );
     if (ready?.[0]?.ok) {
@@ -286,9 +286,13 @@ export async function ensureSchema(): Promise<void> {
     // активируем всё, что осталось «на модерации» от старого флоу.
     await prisma.$executeRawUnsafe(`UPDATE "Listing" SET status='ACTIVE' WHERE status='MODERATION'`);
     await prisma.$executeRawUnsafe(`UPDATE "ProviderProfile" SET status='ACTIVE' WHERE status IN ('MODERATION','DRAFT') AND EXISTS (SELECT 1 FROM "Listing" l WHERE l."providerId"="ProviderProfile"."userId")`);
-    // Причина карантина (когда админ временно скрыл исполнителя). Добавляем последней -
-    // это "маячок" быстрого пути выше.
+    // Причина карантина (когда админ временно скрыл исполнителя).
     await prisma.$executeRawUnsafe(`ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "quarantineReason" TEXT`);
+
+    // Адресный запрос конкретному исполнителю (клиент заказывает именно его).
+    // Добавляем последней - это "маячок" быстрого пути выше.
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "directedProviderId" TEXT`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Task_directedProviderId_idx" ON "Task"("directedProviderId")`);
 
     // RLS (защиту строк) включаем ОДИН раз в setup.sql, а не на каждом запросе:
     // прогон DDL по всем таблицам на каждый рендер через пул Supabase рискован

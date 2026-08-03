@@ -59,6 +59,9 @@ export async function createOffer(_prev: OfferState, formData: FormData): Promis
   }
   if (task.clientId === user.id) return { error: t.offerNoListing };
 
+  // Адресный запрос: откликнуться может только тот исполнитель, кому он адресован.
+  if (task.directedProviderId && task.directedProviderId !== user.id) return { error: t.offerClosed };
+
   // Откликаться можно только с активной услугой в категории задачи.
   const hasListing = await prisma.listing.findFirst({
     where: { providerId: user.id, categoryId: task.categoryId, status: ListingStatus.ACTIVE },

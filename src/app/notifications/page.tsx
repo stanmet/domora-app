@@ -32,6 +32,8 @@ function notifMeta(type: string): { textKey: keyof Dict; href: string } {
       return { textKey: "ntfNewOffer", href: "/tasks/mine" };
     case "offer_accepted":
       return { textKey: "ntfOfferAccepted", href: "/pro/bookings" };
+    case "direct_request":
+      return { textKey: "ntfDirectRequest", href: "/tasks" };
     case "message":
       return { textKey: "ntfMessage", href: "/messages" };
     case "dispute":

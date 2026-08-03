@@ -95,6 +95,19 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
     ? tasksRaw
     : tasksRaw.filter((task) => reachable(profile.city, profile.travelRadiusKm, task.city));
 
+  // Адресные запросы «этому исполнителю» показываем всегда сверху и вне
+  // фильтров по городу/категории: клиент выбрал именно его.
+  const directedRaw = await prisma.task.findMany({
+    where: { ...openTaskVisibilityWhere(demo), directedProviderId: user.id, clientId: { not: user.id } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: { select: { slug: true, nameEn: true, nameRu: true } },
+      offers: { select: { providerId: true } },
+    },
+  });
+  const directedIds = new Set(directedRaw.map((task) => task.id));
+  const allTasks = [...directedRaw, ...tasks];
+
   return (
     <main className="wrap sec">
       <h1 className="page">{t.tasksFeedTitle}</h1>
@@ -120,28 +133,33 @@ export default async function TasksFeedPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="count">
-        {tasks.length} {t.results}
+        {allTasks.length} {t.results}
       </div>
 
-      {tasks.length === 0 ? (
+      {allTasks.length === 0 ? (
         <div className="empty">{t.tasksEmpty}</div>
       ) : (
         <div className="tasklist">
-          {tasks.map((task) => {
+          {allTasks.map((task) => {
             const Icon = CATEGORY_ICONS[task.category.slug] ?? CATEGORY_ICONS.other;
             const offerCount = task.offers.length;
             const alreadyOffered = task.offers.some((o) => o.providerId === user.id);
             const full = offerCount >= MAX_OFFERS_PER_TASK;
             const budget = budgetText(t, locale, task.budgetFromCents, task.budgetToCents);
+            const directed = directedIds.has(task.id);
             return (
-              <div className="taskcard" key={task.id}>
+              <div className={"taskcard" + (directed ? " directed" : "")} key={task.id}>
                 <div className="taskhead">
                   <span className="tasktag">
                     <Icon size={13} /> {categoryLabel(t, task.category.slug, locale === "ru" ? task.category.nameRu : task.category.nameEn)}
                   </span>
-                  <span className="taskoffers">
-                    <Users size={13} /> {t.offerCountL}: {offerCount}
-                  </span>
+                  {directed ? (
+                    <span className="pill req">{t.directedBadge}</span>
+                  ) : (
+                    <span className="taskoffers">
+                      <Users size={13} /> {t.offerCountL}: {offerCount}
+                    </span>
+                  )}
                 </div>
                 <Link href={`/tasks/${task.id}`}>
                   <h3>{task.title}</h3>

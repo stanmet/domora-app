@@ -404,6 +404,7 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .budgetrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .dm .tasklist{display:flex;flex-direction:column;gap:14px}
 .dm .taskcard{border:1px solid var(--line);border-radius:16px;padding:18px}
+.dm .taskcard.directed{border-color:var(--green);background:var(--sage,#EAF3EC)}
 .dm .taskhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
 .dm .tasktag{display:inline-flex;align-items:center;gap:6px;background:var(--sage);color:var(--green-dark);font-size:12px;font-weight:700;border-radius:999px;padding:5px 12px}
 .dm .taskoffers{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
