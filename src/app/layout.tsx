@@ -7,7 +7,7 @@ import "./globals.css";
 // Шрифты дизайн-системы раздаются самим приложением (next/font), без запросов к Google из браузера.
 const archivo = Archivo({ subsets: ["latin"], weight: ["600", "800", "900"], variable: "--font-archivo" });
 const inter = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700"], variable: "--font-inter" });
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getLocale } from "@/i18n/server";
 import { categoryLabel, getDict } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
@@ -73,7 +73,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         isProvider = dbUser.roles.includes(Role.PROVIDER);
         isAdmin = dbUser.roles.includes(Role.ADMIN);
         try {
-          unreadCount = await prisma.notification.count({ where: { userId: dbUser.id, readAt: null } });
+          // На самой странице уведомлений метку гасим сразу: пользователь их
+          // открыл, а фактическая отметка «прочитано» проставляется после ответа.
+          const pathname = (await headers()).get("x-pathname") ?? "";
+          unreadCount = pathname === "/notifications" ? 0 : await prisma.notification.count({ where: { userId: dbUser.id, readAt: null } });
         } catch {
           // Таблица уведомлений ещё не готова.
         }
