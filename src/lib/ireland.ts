@@ -108,6 +108,16 @@ export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; ln
 // Достаёт ли исполнитель из своего города с данным радиусом до целевого города.
 // Если один из городов неизвестен таблице - падаем на точное совпадение имён
 // (обратная совместимость со старыми произвольными названиями).
+// Один ли это город (для метки «выезжает»): сравниваем по таблице, а при
+// незнакомых названиях - по строке без учёта регистра.
+export function sameCity(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const ta = findTown(a);
+  const tb = findTown(b);
+  if (ta && tb) return ta.name === tb.name;
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
 export function reachable(providerCity: string | null, radiusKm: number, targetCity: string | null): boolean {
   if (!targetCity) return true; // цель не задана (вся страна) - показываем всех
   const a = findTown(providerCity);

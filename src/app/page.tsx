@@ -14,7 +14,7 @@ import { openTaskVisibilityWhere } from "@/lib/tasks";
 import { getCachedCategories } from "@/lib/categories-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
 import { getCity } from "@/lib/city";
-import { reachable } from "@/lib/ireland";
+import { reachable, sameCity } from "@/lib/ireland";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 
@@ -65,7 +65,10 @@ export default async function Home() {
   const cats = sortByCategoryOrder(categories);
 
   // Исполнители рядом: подбор по радиусу выезда из их города до выбранного.
-  const listings = (city ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city)) : listingsRaw).slice(0, 8);
+  const reachableListings = city ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city)) : listingsRaw;
+  // Местные (из выбранного города) - выше приезжих.
+  if (city) reachableListings.sort((a, b) => Number(!sameCity(a.provider.city, city)) - Number(!sameCity(b.provider.city, city)));
+  const listings = reachableListings.slice(0, 8);
 
   // Автоперевод пользовательских текстов (заголовки задач и услуг) на язык интерфейса.
   const tr = await translateBatch([...openTasks.map((x) => x.title), ...listings.map((l) => l.title)], locale);
@@ -232,6 +235,7 @@ export default async function Home() {
               const Icon = CATEGORY_ICONS[l.category.slug] ?? CATEGORY_ICONS.other;
               const rating = Number(l.provider.ratingCached);
               const isQuote = l.unit === "FIXED_QUOTE" || l.priceCents === 0;
+              const travels = Boolean(city) && !sameCity(l.provider.city, city);
               const cover = l.photos[0];
               const lt = trOf(l.title);
               return (
@@ -256,6 +260,7 @@ export default async function Home() {
                     <span>{l.provider.displayName}</span>
                     <span>·</span>
                     <span>{l.provider.city}</span>
+                    {travels && <span className="tag travels">{t.travelsTo.replace("{city}", city!)}</span>}
                     {rating > 0 ? (
                       <span className="rate">
                         <Star size={12} fill="currentColor" /> {rating.toFixed(1)}
