@@ -20,12 +20,14 @@ import {
   deleteCategory,
   deleteListing,
   deleteUser,
+  liftQuarantine,
+  quarantineProvider,
   resolveComplaint,
-  setProviderFrozen,
   setProviderRating,
   setUserFrozen,
   updateCategory,
 } from "./actions";
+import QuarantineControl from "@/components/QuarantineControl";
 import BroadcastSection from "./BroadcastSection";
 import RejectForm from "./RejectForm";
 import ConfirmAction from "@/components/ConfirmAction";
@@ -244,6 +246,7 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
       displayName: true,
       city: true,
       status: true,
+      quarantineReason: true,
       ratingCached: true,
       ratingManual: true,
       user: { select: { email: true, roles: true } },
@@ -301,12 +304,14 @@ async function ProvidersList({ at }: { at: ReturnType<typeof getAdminDict> }) {
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                    <form action={setProviderFrozen.bind(null, p.userId, !frozen)}>
-                      <button className={"btn btn-sm " + (frozen ? "btn-green" : "btn-red")}>
-                        {frozen ? at.unblock : at.freeze}
-                      </button>
-                    </form>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+                    <QuarantineControl
+                      quarantined={frozen}
+                      reason={p.quarantineReason}
+                      quarantineAction={quarantineProvider.bind(null, p.userId)}
+                      liftAction={liftQuarantine.bind(null, p.userId)}
+                      labels={{ qBtn: at.qBtn, qLift: at.qLift, qReasonPh: at.qReasonPh, qSend: at.qSend, qStatusTag: at.qStatusTag, cancel: at.cancel }}
+                    />
                     {p.user.roles.includes(Role.ADMIN) ? (
                       <span className="adm-muted">—</span>
                     ) : (

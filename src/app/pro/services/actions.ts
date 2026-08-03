@@ -100,14 +100,17 @@ export async function createListing(
         description: description || null,
         priceCents: Math.round(price * 100),
         unit,
-        status: ListingStatus.MODERATION,
+        // Без ручной модерации: услуга публикуется сразу.
+        status: ListingStatus.ACTIVE,
       },
     }),
-    ...(profile.status === ProviderStatus.DRAFT
+    // Профиль становится активным сразу (кроме случаев санкций площадки:
+    // карантин/бан/пауза не снимаем публикацией новой услуги).
+    ...(profile.status === ProviderStatus.DRAFT || profile.status === ProviderStatus.MODERATION
       ? [
           prisma.providerProfile.update({
             where: { userId: user.id },
-            data: { status: ProviderStatus.MODERATION },
+            data: { status: ProviderStatus.ACTIVE },
           }),
         ]
       : []),

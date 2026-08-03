@@ -35,9 +35,10 @@ export default async function ProPage() {
   // или добавил выходной (availabilitySetAt проставляется в этих действиях).
   const profile = await prisma.providerProfile.findUnique({
     where: { userId: user.id },
-    select: { availabilitySetAt: true },
+    select: { availabilitySetAt: true, status: true, quarantineReason: true },
   });
   const availDone = profile?.availabilitySetAt != null;
+  const inQuarantine = profile?.status === "FROZEN";
   const health = await providerHealth(user.id);
   const pctText = (v: number | null) => (v === null ? "—" : Math.round(v * 100) + "%");
 
@@ -46,6 +47,15 @@ export default async function ProPage() {
       <div className="wrap" style={{ maxWidth: 680, paddingBottom: 64 }}>
         <h1 className="page">{t.proDash}</h1>
         <p className="sub">{t.proWelcome}</p>
+
+        {inQuarantine && (
+          <div className="err" style={{ marginBottom: 14 }}>
+            <b>{t.proQTitle}.</b> {t.proQHint}
+            {profile?.quarantineReason && (
+              <div style={{ marginTop: 6, fontWeight: 600 }}>{profile.quarantineReason}</div>
+            )}
+          </div>
+        )}
 
         <div className="card">
           <div className="ob-head" style={{ marginBottom: 0, alignItems: "center" }}>
