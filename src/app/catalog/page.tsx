@@ -12,7 +12,7 @@ import JsonLd from "@/components/JsonLd";
 import { APP_URL } from "@/lib/app-url";
 import { eur } from "@/lib/format";
 import { translateBatch } from "@/lib/translate";
-import { IRELAND_TOWN_NAMES, reachable } from "@/lib/ireland";
+import { IRELAND_TOWN_NAMES, reachable, sameCity } from "@/lib/ireland";
 import { subcatName } from "@/lib/subcategories";
 import { getCachedCategories } from "@/lib/categories-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
@@ -149,6 +149,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const filtered = city
     ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city))
     : listingsRaw;
+  // Местные (из выбранного города) - выше приезжих. Сортировка стабильная, поэтому
+  // внутри групп сохраняется порядок из выбранной сортировки.
+  if (city) {
+    filtered.sort((a, b) => Number(!sameCity(a.provider.city, city)) - Number(!sameCity(b.provider.city, city)));
+  }
   const hasNext = filtered.length > PAGE_SIZE;
   const listings = filtered.slice(0, PAGE_SIZE);
 
@@ -269,6 +274,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
             const Icon = CATEGORY_ICONS[l.category.slug] ?? CATEGORY_ICONS.other;
             const rating = Number(l.provider.ratingCached);
             const isQuote = l.unit === "FIXED_QUOTE" || l.priceCents === 0;
+            // Исполнитель не из выбранного города, но достаёт до него - помечаем «выезжает».
+            const travels = Boolean(city) && !sameCity(l.provider.city, city);
             return (
               <Link href={`/providers/${l.provider.userId}`} className="pcard2" key={l.id}>
                 <div className="photo" style={{ background: PHOTO_BG[l.category.slug] ?? PHOTO_BG.other }}>
@@ -291,6 +298,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                   <span>{l.provider.displayName}</span>
                   <span>·</span>
                   <span>{l.provider.city}</span>
+                  {travels && <span className="tag travels">{t.travelsTo.replace("{city}", city)}</span>}
                   {rating > 0 ? (
                     <span className="rate">
                       <Star size={12} fill="currentColor" /> {rating.toFixed(1)}

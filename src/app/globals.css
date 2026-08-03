@@ -145,6 +145,8 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .rate{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600}
 .dm .rate svg{color:var(--orange)}
 .dm .tag{background:var(--sage);color:var(--green-dark);font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 10px}
+/* Пометка «выезжает в город» - отличаем от зелёного «Новый» бежевым цветом */
+.dm .tag.travels{background:var(--beige-bg);color:var(--beige)}
 
 /* search + category tabs */
 .dm .search{display:flex;gap:10px;margin:16px 0 4px}
