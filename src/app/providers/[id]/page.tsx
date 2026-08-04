@@ -4,7 +4,7 @@
 // и залипающая панель заказа снизу на телефоне. Дизайн-система из globals.css.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Heart, MapPin, Navigation, ShieldCheck, Star } from "lucide-react";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -180,6 +180,13 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
         <Link href="/catalog" className="phero-back" aria-label={t.back}>
           <ArrowLeft size={18} />
         </Link>
+        {!viewerIsTarget && (
+          <form action={toggleFavorite.bind(null, provider.userId)}>
+            <button type="submit" className={"phero-fav" + (isFav ? " on" : "")} aria-label={isFav ? t.favRemove : t.favAdd}>
+              <Heart size={18} fill={isFav ? "currentColor" : "none"} />
+            </button>
+          </form>
+        )}
         {allPhotos.length > 1 && (
           <PhotoGallery photos={allPhotos} label={t.viewAllPhotos} alt={provider.displayName} />
         )}
