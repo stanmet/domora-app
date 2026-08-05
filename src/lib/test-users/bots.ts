@@ -3,6 +3,7 @@
 // с теми же параметрами (категория + город), лог активности и переключатели.
 // Боты действуют только между собой и никогда не касаются платежей.
 import { BookingStatus, ListingStatus, OfferStatus, PriceUnit, Role, TaskStatus } from "@prisma/client";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import { TASK_TTL_DAYS } from "@/lib/tasks";
@@ -49,14 +50,29 @@ export async function setBotConfig(patch: Partial<BotConfig>): Promise<void> {
     ...(patch.demoMode !== undefined ? { demoMode: patch.demoMode } : {}),
   };
   await prisma.testBotConfig.upsert({ where: { id: CONFIG_ID }, update: data, create: { id: CONFIG_ID, ...data } });
+  // Демо-режим читается почти на каждой публичной странице и закэширован
+  // (см. isDemoMode). При смене флага сбрасываем кэш, чтобы применилось сразу.
+  if (patch.demoMode !== undefined) revalidateTag(DEMO_MODE_TAG);
 }
 
+const DEMO_MODE_TAG = "demo-mode";
+
 // Демо-режим: показывать ли тестовые/ботовские данные на публичном сайте.
-// Читается на публичных страницах; ошибка/отсутствие строки = выключен (изоляция).
-export async function isDemoMode(): Promise<boolean> {
-  try {
+// Читается почти на всех публичных страницах, поэтому держим в кэше данных Next
+// (флаг меняется только админом и очень редко). Сбрасывается при смене флага и
+// сам обновляется раз в 30 c. Ошибка/отсутствие строки = выключен (изоляция).
+const readDemoMode = unstable_cache(
+  async (): Promise<boolean> => {
     const row = await prisma.testBotConfig.findUnique({ where: { id: CONFIG_ID }, select: { demoMode: true } });
     return row?.demoMode ?? false;
+  },
+  ["demo-mode"],
+  { tags: [DEMO_MODE_TAG], revalidate: 30 },
+);
+
+export async function isDemoMode(): Promise<boolean> {
+  try {
+    return await readDemoMode();
   } catch {
     return false;
   }
