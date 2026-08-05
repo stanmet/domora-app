@@ -12,6 +12,7 @@ import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/cate
 import { budgetText, dateOnly, eur } from "@/lib/format";
 import { openTaskVisibilityWhere } from "@/lib/tasks";
 import { getCachedCategories } from "@/lib/categories-cache";
+import { getHomeListings } from "@/lib/home-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
 import { getCity } from "@/lib/city";
 import { reachable, sameCity } from "@/lib/ireland";
@@ -30,7 +31,6 @@ export default async function Home() {
   // Демо-режим: когда включён, показываем тестовые (ботовские) данные на публичном
   // сайте. По умолчанию выключен — реальные клиенты не видят синтетические аккаунты.
   const demo = await isDemoMode();
-  const notTest = demo ? {} : { isTest: false };
   // Данные главной грузим одним пакетом. Если база временно недоступна или схема
   // ещё досоздаётся (первые секунды после деплоя), не роняем страницу белым
   // экраном, а показываем главную с пустыми блоками - на следующем заходе всё
@@ -47,15 +47,8 @@ export default async function Home() {
       },
     }),
     // Город не фильтруем в SQL: ниже отбираем исполнителей по радиусу выезда.
-    prisma.listing.findMany({
-      where: { status: "ACTIVE", provider: { status: "ACTIVE", user: notTest } },
-      orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
-      take: 40,
-      include: {
-        provider: { select: { userId: true, displayName: true, city: true, travelRadiusKm: true, ratingCached: true, jobsCount: true } },
-        category: { select: { slug: true } },
-      },
-    }),
+    // Выборка закэширована (см. home-cache.ts), город учитывается уже после.
+    getHomeListings(demo),
   ]).catch((e) => {
     console.error("Home data load failed (schema not ready or DB unavailable)", e);
     return null;

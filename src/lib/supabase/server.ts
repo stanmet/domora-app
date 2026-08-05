@@ -1,5 +1,6 @@
 // Серверный клиент Supabase Auth: сессия хранится в cookies (@supabase/ssr).
 // Используется в layout, серверных страницах и route-обработчиках.
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
@@ -27,10 +28,13 @@ export async function getSupabaseServer() {
 }
 
 // Проверенный пользователь Supabase из текущей сессии, либо null.
-export async function getAuthUser(): Promise<User | null> {
+// Обёрнуто в React cache(): getUser() проверяет токен по сети, а вызывается
+// несколько раз за один запрос (layout + страница). cache() схлопывает это в
+// один вызов на запрос, экономя сетевые обращения к Supabase Auth.
+export const getAuthUser = cache(async (): Promise<User | null> => {
   const supabase = await getSupabaseServer();
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
   return data.user;
-}
+});

@@ -4,8 +4,9 @@
 // Новая услуга создается в статусе MODERATION и попадает в каталог только
 // после одобрения (docs/domora-spec.md: плашки проверяет модерация).
 // Первая плашка переводит профиль исполнителя из DRAFT в MODERATION.
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { LISTINGS_TAG } from "@/lib/home-cache";
 import { ListingStatus, PriceUnit, ProviderStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/supabase/server";
@@ -130,6 +131,7 @@ export async function createListing(
 
   revalidatePath("/pro/services");
   revalidatePath("/pro");
+  revalidateTag(LISTINGS_TAG); // обновить блок «Исполнители рядом» на главной
   return { ok: true };
 }
 
@@ -151,4 +153,5 @@ export async function toggleListing(listingId: string): Promise<void> {
 
   await prisma.listing.update({ where: { id: listingId }, data: { status: next } });
   revalidatePath("/pro/services");
+  revalidateTag(LISTINGS_TAG);
 }

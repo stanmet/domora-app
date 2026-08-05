@@ -27,6 +27,7 @@ import { refundToClient } from "@/lib/cancellation";
 import { processPayouts } from "@/lib/jobs";
 import { recomputeRating } from "@/lib/reviews";
 import { CATEGORIES_TAG } from "@/lib/categories-cache";
+import { LISTINGS_TAG } from "@/lib/home-cache";
 
 // Одобрение услуги: MODERATION -> ACTIVE. Первое одобрение выводит профиль
 // исполнителя в ACTIVE, после чего он и его услуги видны в каталоге.
@@ -170,6 +171,7 @@ export async function quarantineProvider(userId: string, formData: FormData): Pr
   revalidatePath("/");
   revalidatePath(`/providers/${userId}`);
   revalidatePath("/pro");
+  revalidateTag(LISTINGS_TAG);
 }
 
 // Снятие карантина: возвращаем исполнителя в поиск (ACTIVE) и очищаем причину.
@@ -199,6 +201,7 @@ export async function liftQuarantine(userId: string): Promise<void> {
   revalidatePath("/");
   revalidatePath(`/providers/${userId}`);
   revalidatePath("/pro");
+  revalidateTag(LISTINGS_TAG);
 }
 
 // Рассылка сообщения от администратора. Доставляется как уведомление (колокольчик
@@ -493,6 +496,7 @@ export async function deleteUser(userId: string): Promise<void> {
 
   revalidatePath("/admin");
   revalidatePath("/catalog");
+  revalidateTag(LISTINGS_TAG);
 }
 
 // --- Удаление заказа (V1-модель без денег). ---
