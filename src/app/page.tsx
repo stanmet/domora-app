@@ -159,6 +159,9 @@ export default async function Home() {
             <h3>{t.openTasksTitle}</h3>
             <p>{t.openTasksSub}</p>
           </div>
+          <Link href="/tasks/browse" className="link">
+            {t.browse} <ArrowRight size={14} />
+          </Link>
         </div>
 
         {openTasks.length === 0 ? (

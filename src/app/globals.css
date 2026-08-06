@@ -531,7 +531,7 @@ html,body{min-height:100%;overflow-x:clip}
 .dm .homesec{padding-top:38px;padding-bottom:38px;border-top:1px solid var(--line)}
 .dm .homesec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:0 9px}
 .dm .homesec-head h2{font-family:var(--font-archivo),'Archivo',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(20px,4.4vw,30px);min-width:0}
-.dm .homesec-head .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green)}
+.dm .homesec-head .link,.dm .postcta .link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap}
 /* Лента открытых задач и исполнителей рядом - горизонтальная: карточки идут в
    ряд, листаются вбок свайпом, не растягивая страницу вниз. */
 .dm .scrollpanel{border:1px solid var(--line);border-radius:16px;background:#fbfbf9;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:14px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
