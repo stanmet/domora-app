@@ -142,6 +142,11 @@ html,body{min-height:100%;overflow-x:clip}
 /* Сетка карточек: ширина колонки сжимается вместе с экраном (clamp), поэтому на
    телефоне всегда 2 аккуратные колонки, а не одна колонка с огромным фото. */
 .dm .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(160px,44vw,240px),1fr));gap:16px}
+/* Колонки грида не должны раздуваться под длинный текст (цена, заголовок):
+   min-width:0 разрешает ячейкам сжиматься по ширине экрана, иначе карточки
+   вылезают за правый край. */
+.dm .grid>*{min-width:0}
+.dm .grid .taskcard h3,.dm .grid .taskcard .meta span{overflow-wrap:anywhere}
 .dm .rate{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600}
 .dm .rate svg{color:var(--orange)}
 .dm .tag{background:var(--sage);color:var(--green-dark);font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 10px}
