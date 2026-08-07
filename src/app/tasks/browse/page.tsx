@@ -1,7 +1,7 @@
 // Публичная лента открытых задач: все свежие задачи заказчиков, видны всем
 // (включая гостей). Открывается по ссылке "Смотреть" из блока на главной,
 // аналогично каталогу исполнителей. Карточка ведёт на страницу задачи.
-// Фильтр по категории; город учитывается по выбору пользователя, как на главной.
+// Фильтры по категории и городу (состояние в URL: ?cat= и ?city=).
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -13,21 +13,21 @@ import { budgetText, dateOnly } from "@/lib/format";
 import { openTaskVisibilityWhere } from "@/lib/tasks";
 import { getCachedCategories } from "@/lib/categories-cache";
 import { isDemoMode } from "@/lib/test-users/bots";
-import { getCity } from "@/lib/city";
+import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
+import CityFilter from "./CityFilter";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = { cat?: string };
+type SearchParams = { cat?: string; city?: string };
 
 export default async function OpenTasksBrowsePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { cat = "" } = await searchParams;
+  const { cat = "", city = "" } = await searchParams;
   const locale = await getLocale();
   const t = getDict(locale);
   const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
 
-  const city = await getCity();
   // Демо-режим: показываем тестовые (ботовские) задачи только когда он включён.
   const demo = await isDemoMode();
 
@@ -60,7 +60,14 @@ export default async function OpenTasksBrowsePage({ searchParams }: { searchPara
   const tr = await translateBatch(openTasks.map((x) => x.title), locale);
   const trOf = (s: string) => tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false };
 
-  const buildHref = (slug: string) => (slug ? `/tasks/browse?cat=${slug}` : "/tasks/browse");
+  // Ссылка на категорию сохраняет выбранный город.
+  const buildHref = (slug: string) => {
+    const params = new URLSearchParams();
+    if (slug) params.set("cat", slug);
+    if (city) params.set("city", city);
+    const s = params.toString();
+    return s ? `/tasks/browse?${s}` : "/tasks/browse";
+  };
 
   return (
     <main className="wrap sec">
@@ -80,6 +87,8 @@ export default async function OpenTasksBrowsePage({ searchParams }: { searchPara
           </Link>
         ))}
       </div>
+
+      <CityFilter cat={activeCat} city={city} cities={IRELAND_TOWN_NAMES} labels={{ cityL: t.taskCityL, cityAll: t.cityAll }} />
 
       <div className="count">
         {openTasks.length} {t.results}
