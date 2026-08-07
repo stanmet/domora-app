@@ -16,7 +16,7 @@ import { isDemoMode } from "@/lib/test-users/bots";
 import { IRELAND_TOWN_NAMES } from "@/lib/ireland";
 import { translateBatch } from "@/lib/translate";
 import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
-import CityFilter from "./CityFilter";
+import TaskFilters from "./TaskFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -55,19 +55,11 @@ export default async function OpenTasksBrowsePage({ searchParams }: { searchPara
 
   const cats = sortByCategoryOrder(categories);
   const activeCat = cat && cats.some((c) => c.slug === cat) ? cat : "";
+  const catOptions = cats.map((c) => ({ slug: c.slug, label: categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn) }));
 
   // Автоперевод заголовков задач на язык интерфейса.
   const tr = await translateBatch(openTasks.map((x) => x.title), locale);
   const trOf = (s: string) => tr.get(s.trim()) ?? { text: s, sourceLang: locale, translated: false };
-
-  // Ссылка на категорию сохраняет выбранный город.
-  const buildHref = (slug: string) => {
-    const params = new URLSearchParams();
-    if (slug) params.set("cat", slug);
-    if (city) params.set("city", city);
-    const s = params.toString();
-    return s ? `/tasks/browse?${s}` : "/tasks/browse";
-  };
 
   return (
     <main className="wrap sec">
@@ -77,18 +69,13 @@ export default async function OpenTasksBrowsePage({ searchParams }: { searchPara
       <h1 className="page">{t.openTasksTitle}</h1>
       <p className="sub">{t.openTasksSub}</p>
 
-      <div className="chips" style={{ marginBottom: 12 }}>
-        <Link href={buildHref("")} className={"chip" + (activeCat ? "" : " on")}>
-          {t.all}
-        </Link>
-        {cats.map((c) => (
-          <Link key={c.slug} href={buildHref(c.slug)} className={"chip" + (activeCat === c.slug ? " on" : "")}>
-            {categoryLabel(t, c.slug, locale === "ru" ? c.nameRu : c.nameEn)}
-          </Link>
-        ))}
-      </div>
-
-      <CityFilter cat={activeCat} city={city} cities={IRELAND_TOWN_NAMES} labels={{ cityL: t.taskCityL, cityAll: t.cityAll }} />
+      <TaskFilters
+        cat={activeCat}
+        city={city}
+        categories={catOptions}
+        cities={IRELAND_TOWN_NAMES}
+        labels={{ catL: t.liCat, catAll: t.catAll, cityL: t.taskCityL, cityAll: t.cityAll }}
+      />
 
       <div className="count">
         {openTasks.length} {t.results}
