@@ -24,8 +24,8 @@ export default async function CookiesPage() {
 
         <h3>Cookies we use</h3>
         <ul>
-          <li><b>Essential</b> — sign-in session and security (Supabase auth), your chosen language and city, and your cookie choice. The site cannot work without these.</li>
-          <li><b>Analytics (optional)</b> — Plausible, a privacy-friendly, cookieless analytics tool that counts visits without tracking you across sites or using advertising identifiers. It runs only if you accept.</li>
+          <li><b>Essential:</b> sign-in session and security (Supabase auth), your chosen language and city, and your cookie choice. The site cannot work without these.</li>
+          <li><b>Analytics (optional):</b> Plausible, a privacy-friendly, cookieless analytics tool that counts visits without tracking you across sites or using advertising identifiers. It runs only if you accept.</li>
         </ul>
         <p>We do not use advertising or cross-site tracking cookies, and we do not sell your data.</p>
 

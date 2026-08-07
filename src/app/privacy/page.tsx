@@ -31,18 +31,18 @@ export default async function PrivacyPage() {
 
         <h3>2. What data we collect</h3>
         <ul>
-          <li><b>Account data</b> — email, name, and optionally phone number, city and profile photo.</li>
-          <li><b>Content you create</b> — tasks, offers, chat messages, reviews and any photos you upload.</li>
-          <li><b>Provider profile</b> (if you are a provider) — description, services, prices, work area, portfolio.</li>
-          <li><b>Technical data</b> — IP address, device/browser type and privacy-friendly usage statistics.</li>
+          <li><b>Account data:</b> email, name, and optionally phone number, city and profile photo.</li>
+          <li><b>Content you create:</b> tasks, offers, chat messages, reviews and any photos you upload.</li>
+          <li><b>Provider profile</b> (if you are a provider): description, services, prices, work area, portfolio.</li>
+          <li><b>Technical data:</b> IP address, device/browser type and privacy-friendly usage statistics.</li>
         </ul>
         <p>Task and order addresses are stored encrypted. We do not collect payment card data (Domora handles no payments).</p>
 
         <h3>3. How and why we use your data (legal basis)</h3>
         <ul>
-          <li>To provide the service — matching tasks and providers, chat, and revealing contact details once you choose each other (<b>performance of a contract</b>).</li>
+          <li>To provide the service: matching tasks and providers, chat, and revealing contact details once you choose each other (<b>performance of a contract</b>).</li>
           <li>For safety, moderation and abuse prevention, and to improve the product (<b>legitimate interests</b>).</li>
-          <li>For analytics and non-essential cookies (<b>your consent</b>) — see our <Link href="/cookies">Cookie Policy</Link>.</li>
+          <li>For analytics and non-essential cookies (<b>your consent</b>): see our <Link href="/cookies">Cookie Policy</Link>.</li>
           <li>To meet legal obligations (<b>legal obligation</b>).</li>
         </ul>
 
