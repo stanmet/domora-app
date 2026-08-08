@@ -16,7 +16,9 @@ export const getHomeListings = unstable_cache(
     return prisma.listing.findMany({
       where: { status: "ACTIVE", provider: { status: "ACTIVE", user: notTest } },
       orderBy: [{ provider: { ratingCached: "desc" } }, { createdAt: "desc" }],
-      take: 40,
+      // Верхний предел на всякий случай (защита от гигантской главной), но с
+      // большим запасом: практически показываем всех активных исполнителей.
+      take: 120,
       include: {
         provider: {
           select: { userId: true, displayName: true, city: true, travelRadiusKm: true, ratingCached: true, jobsCount: true },

@@ -61,7 +61,8 @@ export default async function Home() {
   const reachableListings = city ? listingsRaw.filter((l) => reachable(l.provider.city, l.provider.travelRadiusKm, city)) : listingsRaw;
   // Местные (из выбранного города) - выше приезжих.
   if (city) reachableListings.sort((a, b) => Number(!sameCity(a.provider.city, city)) - Number(!sameCity(b.provider.city, city)));
-  const listings = reachableListings.slice(0, 16);
+  // Показываем всех подходящих исполнителей - лента листается до конца списка.
+  const listings = reachableListings;
 
   // Автоперевод пользовательских текстов (заголовки задач и услуг) на язык интерфейса.
   const tr = await translateBatch([...openTasks.map((x) => x.title), ...listings.map((l) => l.title)], locale);
