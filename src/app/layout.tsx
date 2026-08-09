@@ -25,6 +25,7 @@ import SiteFooter from "@/components/SiteFooter";
 import FooterGate from "@/components/FooterGate";
 import JsonLd from "@/components/JsonLd";
 import PwaRegister from "@/components/PwaRegister";
+import InstallBanner from "@/components/InstallBanner";
 import { APP_URL } from "@/lib/app-url";
 
 const SITE_DESC = "Find local help across Ireland: chefs, cleaners, handymen and more. Post a task for free, get offers and agree directly.";
@@ -197,6 +198,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
         <CookieConsent text={tx.cookieBanner} accept={tx.cookieAccept} reject={tx.cookieReject} cookiesLabel={tx.navCookies} />
+        <InstallBanner
+          labels={{
+            text: t.installBannerText,
+            cta: t.installNow,
+            close: t.close,
+            iosTitle: t.installIosTitle,
+            iosStep1: t.installIosStep1,
+            iosStep2: t.installIosStep2,
+          }}
+        />
       </body>
     </html>
   );
