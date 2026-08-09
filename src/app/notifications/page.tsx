@@ -10,8 +10,11 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { ensureDbUser } from "@/lib/user";
 import { getLocale } from "@/i18n/server";
 import { getDict, type Dict } from "@/i18n/dictionaries";
+import { langName } from "@/i18n/config";
 import { dateTime } from "@/lib/format";
 import { bookingRef } from "@/lib/booking-ref";
+import { translateBatch } from "@/lib/translate";
+import TranslatableText, { type TrLabels } from "@/components/TranslatableText";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +108,17 @@ export default async function NotificationsPage() {
     }
   }
 
+  // Автоперевод текста рассылок (admin_message) на язык читателя: если сообщение
+  // пришло, например, на английском, а интерфейс у пользователя русский - покажем
+  // перевод (с пометкой и возможностью открыть оригинал). Остальные уведомления
+  // уже локализованы из словаря и в переводе не нуждаются.
+  const adminTexts = items
+    .filter((n) => n.type === "admin_message")
+    .map((n) => notifText(n.type, n.payload, t))
+    .filter(Boolean);
+  const tr = await translateBatch(adminTexts, locale);
+  const trLabels: TrLabels = { from: t.translatedFrom, showOriginal: t.showOriginal, showTranslation: t.showTranslation };
+
   // Помечаем непрочитанные прочитанными после ответа (не тормозим страницу).
   after(async () => {
     try {
@@ -138,10 +152,29 @@ export default async function NotificationsPage() {
                 </span>
                 <span className="notif-main">
                   {isAdminMsg && <span className="notif-from">Domora</span>}
-                  <span className="notif-text" style={isAdminMsg ? { whiteSpace: "pre-line" } : undefined}>
-                    {notifText(n.type, n.payload, t)}
-                    {ref && <span style={{ color: "var(--muted)" }}> · #{ref}</span>}
-                  </span>
+                  {isAdminMsg ? (
+                    (() => {
+                      const raw = notifText(n.type, n.payload, t);
+                      const tt = tr.get(raw.trim()) ?? { text: raw, sourceLang: locale, translated: false };
+                      return (
+                        <TranslatableText
+                          as="span"
+                          className="notif-text"
+                          style={{ whiteSpace: "pre-line" }}
+                          display={tt.text}
+                          original={raw}
+                          translated={tt.translated}
+                          sourceLangName={langName(tt.sourceLang)}
+                          labels={trLabels}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <span className="notif-text">
+                      {notifText(n.type, n.payload, t)}
+                      {ref && <span style={{ color: "var(--muted)" }}> · #{ref}</span>}
+                    </span>
+                  )}
                   <span className="notif-time">{dateTime(n.createdAt, locale)}</span>
                 </span>
               </Link>
