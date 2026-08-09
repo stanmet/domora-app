@@ -1,5 +1,6 @@
-// Языки интерфейса Domora. Порядок совпадает с меню переключателя.
-export const LOCALES = ["en", "ru", "uk", "pl", "es", "pt"] as const;
+// Языки интерфейса Domora. Порядок совпадает с меню переключателя:
+// English, Українська, затем остальные, Русский - последним.
+export const LOCALES = ["en", "uk", "pl", "es", "pt", "ru"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "locale";
