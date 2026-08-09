@@ -315,7 +315,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                     t.byQuote
                   ) : (
                     <>
-                      {t.fromCap} <b>{eur(l.priceCents, locale)}</b> / {unitLabel(t, l.unit)}
+                      {t.fromCap} <b>{eur(l.priceCents, locale)}</b> <span className="u">/ {unitLabel(t, l.unit)}</span>
                     </>
                   )}
                 </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Lightbulb, MapPin, MessageCircle, Star, Users, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/i18n/server";
-import { categoryLabel, getDict } from "@/i18n/dictionaries";
+import { categoryLabel, getDict, unitLabel } from "@/i18n/dictionaries";
 import { getExtra } from "@/i18n/extra";
 import { langName } from "@/i18n/config";
 import { CATEGORY_ICONS, PHOTO_BG, sortByCategoryOrder } from "@/components/categories";
@@ -271,7 +271,7 @@ export default async function Home() {
                       t.byQuote
                     ) : (
                       <>
-                        {t.fromCap} <b>{eur(l.priceCents, locale)}</b>
+                        {t.fromCap} <b>{eur(l.priceCents, locale)}</b> <span className="u">/ {unitLabel(t, l.unit)}</span>
                       </>
                     )}
                   </div>

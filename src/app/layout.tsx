@@ -167,6 +167,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             favorites: t.favorites,
             messages: t.messages,
             profile: t.profile,
+            post: t.navPost,
             search: t.findPro,
             howItWorks: t.navHowItWorks,
             login: t.login,
