@@ -40,7 +40,7 @@ export default function CookieConsent({
 
   return (
     <div className="cookiebar" role="dialog" aria-label="Cookies" style={{
-      position: "fixed", left: 12, right: 12, bottom: 12, zIndex: 60, maxWidth: 720, margin: "0 auto",
+      position: "fixed", left: 12, right: 12, bottom: "calc(12px + env(safe-area-inset-bottom))", zIndex: 60, maxWidth: 720, margin: "0 auto",
       background: "var(--ink, #14201a)", color: "#fff", borderRadius: 14, padding: "14px 16px",
       display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", boxShadow: "0 8px 30px rgba(0,0,0,.25)",
     }}>
