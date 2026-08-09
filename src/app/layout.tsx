@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Archivo, Inter } from "next/font/google";
 import { Role } from "@prisma/client";
@@ -24,6 +24,7 @@ import BottomNav from "@/components/BottomNav";
 import SiteFooter from "@/components/SiteFooter";
 import FooterGate from "@/components/FooterGate";
 import JsonLd from "@/components/JsonLd";
+import PwaRegister from "@/components/PwaRegister";
 import { APP_URL } from "@/lib/app-url";
 
 const SITE_DESC = "Find local help across Ireland: chefs, cleaners, handymen and more. Post a task for free, get offers and agree directly.";
@@ -34,6 +35,20 @@ export const metadata: Metadata = {
   description: SITE_DESC,
   applicationName: "Domora",
   alternates: { canonical: "/" },
+  // Иконки приложения (устанавливается на телефон как PWA).
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  // Поведение на iPhone при запуске с рабочего стола (полноэкранный режим).
+  appleWebApp: { capable: true, title: "Domora", statusBarStyle: "default" },
+  // Явный тег для Safari на iPhone: без него часть версий iOS не открывает
+  // установленное приложение на весь экран (Next отдаёт только новый mobile-web-app-capable).
+  other: { "apple-mobile-web-app-capable": "yes" },
   openGraph: {
     type: "website",
     siteName: "Domora",
@@ -46,6 +61,13 @@ export const metadata: Metadata = {
     description: SITE_DESC,
   },
   robots: { index: true, follow: true },
+};
+
+// Цвет системной строки в установленном приложении (под белую шапку Domora).
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -158,6 +180,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           city={city}
         />
         {children}
+        <PwaRegister />
         <FooterGate full={<SiteFooter t={t} locale={locale} />} rights={t.footerRights} />
         <BottomNav
           isLoggedIn={Boolean(authUser?.email)}
