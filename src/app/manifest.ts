@@ -17,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
     // Тёмно-зелёный фон загрузочного экрана (сплэш) - в цвет логотипа, на нём
     // виден только светлый знак дома с росточком, как на макете. Цвет системной
     // строки (theme_color) оставляем белым, под белую шапку самого приложения.
-    background_color: "#14382A",
+    background_color: "#20422A",
     theme_color: "#ffffff",
     lang: "en",
     dir: "ltr",
