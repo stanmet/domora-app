@@ -18,7 +18,7 @@ export default function FooterGate({ full, rights }: { full: React.ReactNode; ri
   const tail = sep === -1 ? "" : rights.slice(sep + 2);
 
   return (
-    <footer className="site-footer">
+    <footer className="site-footer site-footer-mini">
       <div className="wrap foot-mini">
         <span className="logo">
           DOMO<span>RA</span>
