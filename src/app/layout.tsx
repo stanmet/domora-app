@@ -65,10 +65,14 @@ export const metadata: Metadata = {
 };
 
 // Цвет системной строки в установленном приложении (под белую шапку Domora).
+// viewportFit: "cover" - учитывать безопасные зоны iPhone (вырез сверху и полоса
+// жестов снизу): под них ниже задаём отступы через env(safe-area-inset-*), чтобы
+// шапка не пряталась под статус-бар, а нижняя панель - под полосу «Домой».
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
