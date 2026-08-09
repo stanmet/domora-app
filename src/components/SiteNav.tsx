@@ -25,6 +25,7 @@ import type { Locale } from "@/i18n/config";
 import LangSwitcher from "./LangSwitcher";
 import SignOutButton from "./SignOutButton";
 import SearchModal from "./SearchModal";
+import InstallApp from "./InstallApp";
 
 export default function SiteNav({
   locale,
@@ -184,6 +185,16 @@ export default function SiteNav({
                 </Link>
               );
             })}
+          <InstallApp
+            labels={{
+              install: t.installApp,
+              iosTitle: t.installIosTitle,
+              iosStep1: t.installIosStep1,
+              iosStep2: t.installIosStep2,
+              close: t.close,
+            }}
+            onDone={close}
+          />
         </nav>
 
         {(isProvider || isAdmin) && (
