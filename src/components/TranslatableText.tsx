@@ -45,7 +45,17 @@ export default function TranslatableText({
       <Tag className={className} style={style}>
         {showOrig ? original : display}
       </Tag>
-      <button type="button" className="tr-note" onClick={() => setShowOrig((v) => !v)}>
+      <button
+        type="button"
+        className="tr-note"
+        onClick={(e) => {
+          // Не даём клику по переключателю сработать как переход по ссылке-обёртке
+          // (карточка задачи, уведомление и т.п.).
+          e.preventDefault();
+          e.stopPropagation();
+          setShowOrig((v) => !v);
+        }}
+      >
         <Languages size={12} /> {labels.from} {sourceLangName} · {showOrig ? labels.showTranslation : labels.showOriginal}
       </button>
     </>
