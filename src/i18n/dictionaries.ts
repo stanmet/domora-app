@@ -386,6 +386,7 @@ const en = {
   taskBoard: "Task board",
   // Навигация и меню (переработка UX)
   navHome: "Home",
+  navPost: "Post",
   navServices: "Services",
   searchTop: "What do you need done?",
   menu: "Menu",
@@ -914,6 +915,7 @@ const ru: Dict = {
   taskBoard: "Доска задач",
   // Навигация и меню (переработка UX)
   navHome: "Главная",
+  navPost: "Разместить",
   navServices: "Услуги",
   searchTop: "Что нужно сделать?",
   menu: "Меню",
@@ -1440,6 +1442,7 @@ const uk: Dict = {
   taskBoard: "Дошка задач",
   // Навігація та меню (переробка UX)
   navHome: "Головна",
+  navPost: "Розмістити",
   navServices: "Послуги",
   searchTop: "Що потрібно зробити?",
   menu: "Меню",
@@ -1966,6 +1969,7 @@ const pl: Dict = {
   taskBoard: "Tablica zleceń",
   // Nawigacja i menu (przebudowa UX)
   navHome: "Główna",
+  navPost: "Dodaj",
   navServices: "Usługi",
   searchTop: "Co trzeba zrobić?",
   menu: "Menu",
@@ -2492,6 +2496,7 @@ const es: Dict = {
   taskBoard: "Tablón de tareas",
   // Navegación y menú (rediseño de UX)
   navHome: "Inicio",
+  navPost: "Publicar",
   navServices: "Servicios",
   searchTop: "¿Qué necesitas hacer?",
   menu: "Menú",
@@ -3018,6 +3023,7 @@ const pt: Dict = {
   taskBoard: "Quadro de tarefas",
   // Navegação e menu (redesenho de UX)
   navHome: "Início",
+  navPost: "Publicar",
   navServices: "Serviços",
   searchTop: "O que precisa de fazer?",
   menu: "Menu",
