@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Domora - offline</title>
+<style>
+  :root { --green:#4C7C3F; --ink:#141414; --muted:#6b6b6b; --sage:#EFF4EA; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; padding:32px 24px; gap:8px;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink);
+    background:#ffffff; }
+  .ic { width:76px; height:76px; border-radius:50%; background:var(--sage);
+    color:var(--green); display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px; }
+  h1 { font-size:22px; font-weight:800; }
+  p { font-size:15px; color:var(--muted); line-height:1.55; max-width:340px; margin-top:6px; }
+  button { margin-top:22px; border:none; border-radius:999px; background:var(--green);
+    color:#fff; font-size:15px; font-weight:700; padding:13px 26px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <div class="ic" aria-hidden="true">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12l9-8 9 8" /><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" />
+    </svg>
+  </div>
+  <h1>No connection</h1>
+  <p>Domora needs the internet to load. Check your connection and try again.</p>
+  <button onclick="location.reload()">Try again</button>
+</body>
+</html>
